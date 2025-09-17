@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="mobile-web-app-capable" content="yes" />
-  <title>SKF 5S - Rettifica</title>
+  <title>SKF 5S</title>
   <link rel="manifest" href="manifest.json" />
   <link rel="icon" href="assets/skf-192.png" />
   <link rel="stylesheet" href="style.css" />
@@ -14,39 +14,68 @@
   <header class="app-header">
     <div class="logo">
       <img src="assets/skf-logo.png" alt="SKF" />
-      <h1>SKF 5S - Rettifica</h1>
+      <h1>SKF 5S</h1>
     </div>
     <div class="actions">
       <div class="score-display">
-        <label>Punteggio linea:</label>
+        <label>Punteggio globale:</label>
         <span id="globalScore" class="score">0%</span>
       </div>
+      <button id="btnNewArea" class="btn">🏠 Nuova linea</button>
+      <button id="btnPrint" class="btn ghost">🖨️ Stampa</button>
+      <button id="btnTheme" class="btn ghost">🌞 Tema</button>
     </div>
   </header>
 
+  <section class="intro-grid">
+    <img src="assets/5s-hero.jpg" class="hero-img" alt="Diagramma 5S" loading="lazy" decoding="async" />
+    <div class="intro-text">
+      <h2>Il Metodo 5S</h2>
+      <p>Il metodo 5S è una strategia di gestione snella (lean) per organizzare gli spazi di lavoro. Si basa su cinque principi giapponesi che, se seguiti, migliorano l'efficienza, l'organizzazione e la sicurezza. Le 5S sono:</p>
+      <ul>
+        <li>**Seiri (Separare)**: Separare ciò che serve da ciò che non serve.</li>
+        <li>**Seiton (Sistemare)**: Sistemare ogni cosa al suo posto, in modo che sia facile da trovare e usare.</li>
+        <li>**Seiso (Splendere)**: Pulire, mantenere l'ordine e identificare le cause dello sporco.</li>
+        <li>**Seiketsu (Standardizzare)**: Standardizzare le procedure e i compiti.</li>
+        <li>**Shitsuke (Sostenere)**: Sostenere e migliorare le prime quattro S come un'abitudine quotidiana.</li>
+      </ul>
+    </div>
+  </section>
+
   <section id="areas" class="areas-section"></section>
+
+  <div id="infoPopup" class="popup-modal">
+    <div class="popup-content">
+      <h3 id="popupTitle"></h3>
+      <p id="popupDesc"></p>
+      <button class="btn close-popup">Chiudi</button>
+    </div>
+  </div>
 
   <template id="tplArea">
     <div class="area card">
       <div class="area-header">
+        <button class="btn collapse-btn" title="Comprimi/Espandi">🔽</button>
         <input class="area-line" placeholder="Nome linea (es. Rettifica 1)" />
         <div class="area-actions">
           <button class="btn ghost delete" title="Elimina area">🗑️</button>
         </div>
       </div>
-      <div class="tabs">
-        <button class="tab s active" data-s="1S">1S <span class="badge-s score-1S" data-s="1S">0%</span></button>
-        <button class="tab s" data-s="2S">2S <span class="badge-s score-2S" data-s="2S">0%</span></button>
-        <button class="tab s" data-s="3S">3S <span class="badge-s score-3S" data-s="3S">0%</span></button>
-        <button class="tab s" data-s="4S">4S <span class="badge-s score-4S" data-s="4S">0%</span></button>
-        <button class="tab s" data-s="5S">5S <span class="badge-s score-5S" data-s="5S">0%</span></button>
-      </div>
-      <div class="s-panels">
-        <div class="panel active" data-s="1S"></div>
-        <div class="panel" data-s="2S"></div>
-        <div class="panel" data-s="3S"></div>
-        <div class="panel" data-s="4S"></div>
-        <div class="panel" data-s="5S"></div>
+      <div class="area-body">
+        <div class="tabs">
+          <button class="tab s active" data-s="1S">1S <span class="badge-s score-1S" data-s="1S">0%</span></button>
+          <button class="tab s" data-s="2S">2S <span class="badge-s score-2S" data-s="2S">0%</span></button>
+          <button class="tab s" data-s="3S">3S <span class="badge-s score-3S" data-s="3S">0%</span></button>
+          <button class="tab s" data-s="4S">4S <span class="badge-s score-4S" data-s="4S">0%</span></button>
+          <button class="tab s" data-s="5S">5S <span class="badge-s score-5S" data-s="5S">0%</span></button>
+        </div>
+        <div class="s-panels">
+          <div class="panel active" data-s="1S"></div>
+          <div class="panel" data-s="2S"></div>
+          <div class="panel" data-s="3S"></div>
+          <div class="panel" data-s="4S"></div>
+          <div class="panel" data-s="5S"></div>
+        </div>
       </div>
     </div>
   </template>
