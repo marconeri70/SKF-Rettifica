@@ -1,4 +1,4 @@
-/* ================= SKF 5S – Light & Dark (v7.16.1) ================= */
+/* ================= SKF 5S – Light & Dark (v7.16.2) ================= */
 :root {
   --bg: #ffffff;
   --text: #003366;
@@ -11,11 +11,11 @@
   --accent-alt: #4b88ff;
   --desc: #00599c;
   --kpi-bg: #eaf3f3;
-  --c1: #7a56cc;
-  --c2: #ef4343;
-  --c3: #f3a11a;
-  --c4: #35b468;
-  --c5: #4b88ff;
+  --c1: #ffb400; /* 1S - Arancione */
+  --c2: #c63539; /* 2S - Rosso */
+  --c3: #4b88ff; /* 3S - Azzurro */
+  --c4: #54b25e; /* 4S - Verde */
+  --c5: #9c60df; /* 5S - Viola */
   --chip: #e8f3ff;
 }
 
@@ -128,9 +128,23 @@ h1, h2, h3 {
   color: var(--accent)
 }
 
-.intro-text p, .intro-text li {
+.intro-text p,
+.intro-text li {
   font-size: 1rem;
   line-height: 1.6
+}
+
+.chart-section {
+  padding: 20px;
+  background: var(--card);
+  margin: 20px;
+  border-radius: 10px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, .1);
+}
+
+.chart-wrapper {
+  overflow-x: auto;
+  overflow-y: hidden;
 }
 
 .areas-section {
@@ -207,6 +221,13 @@ h1, h2, h3 {
   font-size: .8rem;
   font-weight: 400
 }
+
+/* Colori delle tabs 5S */
+.tab.s-1s.active { background: var(--c1); border-color: var(--c1); }
+.tab.s-2s.active { background: var(--c2); border-color: var(--c2); }
+.tab.s-3s.active { background: var(--c3); border-color: var(--c3); }
+.tab.s-4s.active { background: var(--c4); border-color: var(--c4); }
+.tab.s-5s.active { background: var(--c5); border-color: var(--c5); }
 
 .s-panels {
   display: flex;
