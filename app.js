@@ -1,5 +1,5 @@
-/* ===================== SKF 5S – app.js (v7.16.3 - Fix Ordine) ========================= */
-const VERSION = 'v7.16.3-FixedOrder';
+/* ===================== SKF 5S – app.js (v7.16.4 - Chart.js) ========================= */
+const VERSION = 'v7.16.4-ChartJS';
 const STORE = 'skf.5s.v7.10.3';
 const CHART_STORE = STORE + '.chart';
 const POINTS = [0, 1, 3, 5];
@@ -157,7 +157,6 @@ const elAreasSection = $('#areas');
 const elGlobalScore = $('#globalScore');
 const elChart = document.getElementById('chart');
 const elChartSection = $('.chart-section');
-const elChartWrapper = $('.chart-wrapper');
 const tplArea = $('#tplArea');
 const tplItem = $('#tplItem');
 const popup = $('#infoPopup');
@@ -166,17 +165,13 @@ const popupDesc = $('#popupDesc');
 const closePopupBtn = $('.close-popup');
 
 let data = [];
-let chartPref = {
-  scroll: 0
-};
+let myChart; // Variabile per l'istanza del grafico
 
 /* ==================== Logica ==================== */
 function loadState() {
   try {
     const d = localStorage.getItem(STORE);
     if (d) data = JSON.parse(d);
-    const p = localStorage.getItem(CHART_STORE);
-    if (p) chartPref = JSON.parse(p);
     if (data.length === 0) addNewArea('');
     render();
   } catch (e) {
@@ -186,24 +181,9 @@ function loadState() {
 
 function saveState() {
   try {
-    // Prima di salvare, aggiorna l'ordine basato sull'interfaccia utente
-    const uiAreas = Array.from(elAreasSection.querySelectorAll('.area'));
-    const newData = uiAreas.map(uiArea => {
-      const id = parseInt(uiArea.id.replace('area-', ''), 10);
-      return data.find(area => area.id === id);
-    });
-    data = newData;
     localStorage.setItem(STORE, JSON.stringify(data));
   } catch (e) {
     console.error('Errore nel salvataggio', e)
-  }
-}
-
-function saveChartPref() {
-  try {
-    localStorage.setItem(CHART_STORE, JSON.stringify(chartPref));
-  } catch (e) {
-    console.error('Errore nel salvataggio pref', e)
   }
 }
 
@@ -272,70 +252,71 @@ function hideInfoPopup() {
 
 function drawChart() {
   if (!elChart || !data.length) {
+    if (myChart) myChart.destroy();
     elChartSection.style.display = 'none';
     return;
   }
   elChartSection.style.display = 'block';
-  const ctx = elChart.getContext('2d');
-  const groups = data.map(a => ({
-    line: a.line,
-    score: getAreaScore(a)
-  }));
 
-  const totalW = groups.length * 100;
-  elChart.width = Math.max(elChartWrapper.clientWidth, totalW);
-  elChart.height = 250;
-
-  const maxScore = 100;
-  const padding = 15;
-  const groupW = 90;
-  const gap = 10;
-
-  ctx.clearRect(0, 0, elChart.width, elChart.height);
-  ctx.font = '12px Arial';
-  ctx.textAlign = 'center';
-
-  ctx.beginPath();
-  ctx.moveTo(padding, elChart.height - padding);
-  ctx.lineTo(elChart.width - padding, elChart.height - padding);
-  ctx.strokeStyle = '#ccc';
-  ctx.stroke();
-
-  for (let i = 0; i <= 10; i += 2) {
-    const y = elChart.height - padding - (i / 10 * maxScore / 100 * (elChart.height - padding * 2));
-    ctx.fillStyle = '#ccc';
-    ctx.fillText(i * 10 + '%', padding / 2, y + 5);
-    ctx.beginPath();
-    ctx.moveTo(padding, y);
-    ctx.lineTo(elChart.width - padding, y);
-    ctx.strokeStyle = 'rgba(0,0,0,0.1)';
-    ctx.stroke();
-  }
-
-  let x = padding + groupW / 2;
-  groups.forEach(g => {
-    const h = g.score / 100 * (elChart.height - padding * 2);
-    ctx.fillStyle = getComputedStyle(document.documentElement).getPropertyValue('--accent');
-    ctx.fillRect(x - groupW / 2, elChart.height - padding - h, groupW, h);
-    ctx.fillStyle = 'white';
-    ctx.fillText(g.score + '%', x, elChart.height - padding - h - 10);
-    ctx.fillStyle = getComputedStyle(document.documentElement).getPropertyValue('--muted');
-    ctx.save();
-    ctx.translate(x, elChart.height - padding + 20);
-    ctx.rotate(-Math.PI / 12);
-    ctx.fillText(g.line, 0, 0);
-    ctx.restore();
-    x += groupW + gap;
+  const labels = data.map(area => area.line || `Linea ${data.indexOf(area) + 1}`);
+  const scores = data.map(getAreaScore);
+  const colors = scores.map(score => {
+    if (score < 50) return '#C63539';
+    if (score < 80) return '#F3A11A';
+    return '#35B468';
   });
 
-  const scroller = elChartWrapper;
-  if (scroller) {
-    if (typeof chartPref.scroll === 'number') scroller.scrollLeft = chartPref.scroll;
-    scroller.addEventListener('scroll', () => {
-      chartPref.scroll = scroller.scrollLeft;
-      saveChartPref();
-    }, {
-      passive: true
+  if (myChart) {
+    myChart.data.labels = labels;
+    myChart.data.datasets[0].data = scores;
+    myChart.data.datasets[0].backgroundColor = colors;
+    myChart.update();
+  } else {
+    const ctx = elChart.getContext('2d');
+    myChart = new Chart(ctx, {
+      type: 'bar',
+      data: {
+        labels: labels,
+        datasets: [{
+          label: 'Punteggio 5S',
+          data: scores,
+          backgroundColor: colors,
+          borderColor: 'rgba(0, 0, 0, 0.1)',
+          borderWidth: 1
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        scales: {
+          y: {
+            beginAtZero: true,
+            max: 100,
+            title: {
+              display: true,
+              text: 'Punteggio %'
+            }
+          },
+          x: {
+            ticks: {
+              maxRotation: 45,
+              minRotation: 45
+            }
+          }
+        },
+        plugins: {
+          legend: {
+            display: false
+          },
+          tooltip: {
+            callbacks: {
+              label: function(context) {
+                return `Punteggio: ${context.raw}%`;
+              }
+            }
+          }
+        }
+      }
     });
   }
 }
