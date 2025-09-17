@@ -1,6 +1,7 @@
-/* ===================== SKF 5S - app.js (v7.16.1 - Aggiornamento Schede) ========================= */
-const VERSION = 'v7.16.1-Updated';
+/* ===================== SKF 5S – app.js (v7.16.2 - Fix) ========================= */
+const VERSION = 'v7.16.2-Fixed';
 const STORE = 'skf.5s.v7.10.3';
+const CHART_STORE = STORE + '.chart';
 const POINTS = [0, 1, 3, 5];
 
 /* --- Voci di esempio --- */
@@ -139,6 +140,9 @@ const $ = s => document.querySelector(s);
 const $$ = s => document.querySelectorAll(s);
 const elAreasSection = $('#areas');
 const elGlobalScore = $('#globalScore');
+const elChart = document.getElementById('chart');
+const elChartSection = $('.chart-section');
+const elChartWrapper = $('.chart-wrapper');
 const tplArea = $('#tplArea');
 const tplItem = $('#tplItem');
 const popup = $('#infoPopup');
@@ -147,13 +151,17 @@ const popupDesc = $('#popupDesc');
 const closePopupBtn = $('.close-popup');
 
 let data = [];
-let ui = { mode: 'light' };
+let chartPref = {
+  scroll: 0
+};
 
 /* ==================== Logica ==================== */
 function loadState() {
   try {
     const d = localStorage.getItem(STORE);
     if (d) data = JSON.parse(d);
+    const p = localStorage.getItem(CHART_STORE);
+    if (p) chartPref = JSON.parse(p);
     if (data.length === 0) addNewArea('');
     render();
   } catch (e) {
@@ -169,13 +177,23 @@ function saveState() {
   }
 }
 
+function saveChartPref() {
+  try {
+    localStorage.setItem(CHART_STORE, JSON.stringify(chartPref));
+  } catch (e) {
+    console.error('Errore nel salvataggio pref', e)
+  }
+}
+
 function getAreaScore(area) {
   let totalScore = 0,
     totalCount = 0;
   for (const s in VOC) {
     area.scores[s] = area.scores[s] || {};
     for (const i in VOC[s]) {
-      const item = area.scores[s][i] || { v: 0 };
+      const item = area.scores[s][i] || {
+        v: 0
+      };
       totalScore += item.v;
       totalCount++;
     }
@@ -191,7 +209,9 @@ function getGlobalScore() {
     for (const s in VOC) {
       area.scores[s] = area.scores[s] || {};
       for (const i in VOC[s]) {
-        const item = area.scores[s][i] || { v: 0 };
+        const item = area.scores[s][i] || {
+          v: 0
+        };
         totalScore += item.v;
         totalCount++;
       }
@@ -228,6 +248,76 @@ function hideInfoPopup() {
   popup.classList.remove('visible');
 }
 
+function drawChart() {
+  if (!elChart || !data.length) {
+    elChartSection.style.display = 'none';
+    return;
+  }
+  elChartSection.style.display = 'block';
+  const ctx = elChart.getContext('2d');
+  const groups = data.map(a => ({
+    line: a.line,
+    score: getAreaScore(a)
+  }));
+
+  const totalW = groups.length * 100;
+  elChart.width = Math.max(elChartWrapper.clientWidth, totalW);
+  elChart.height = 250;
+
+  const maxScore = 100;
+  const padding = 15;
+  const groupW = 90;
+  const gap = 10;
+
+  ctx.clearRect(0, 0, elChart.width, elChart.height);
+  ctx.font = '12px Arial';
+  ctx.textAlign = 'center';
+
+  ctx.beginPath();
+  ctx.moveTo(padding, elChart.height - padding);
+  ctx.lineTo(elChart.width - padding, elChart.height - padding);
+  ctx.strokeStyle = '#ccc';
+  ctx.stroke();
+
+  for (let i = 0; i <= 10; i += 2) {
+    const y = elChart.height - padding - (i / 10 * maxScore / 100 * (elChart.height - padding * 2));
+    ctx.fillStyle = '#ccc';
+    ctx.fillText(i * 10 + '%', padding / 2, y + 5);
+    ctx.beginPath();
+    ctx.moveTo(padding, y);
+    ctx.lineTo(elChart.width - padding, y);
+    ctx.strokeStyle = 'rgba(0,0,0,0.1)';
+    ctx.stroke();
+  }
+
+  let x = padding + groupW / 2;
+  groups.forEach(g => {
+    const h = g.score / 100 * (elChart.height - padding * 2);
+    ctx.fillStyle = getComputedStyle(document.documentElement).getPropertyValue('--accent');
+    ctx.fillRect(x - groupW / 2, elChart.height - padding - h, groupW, h);
+    ctx.fillStyle = 'white';
+    ctx.fillText(g.score + '%', x, elChart.height - padding - h - 10);
+    ctx.fillStyle = getComputedStyle(document.documentElement).getPropertyValue('--muted');
+    ctx.save();
+    ctx.translate(x, elChart.height - padding + 20);
+    ctx.rotate(-Math.PI / 12);
+    ctx.fillText(g.line, 0, 0);
+    ctx.restore();
+    x += groupW + gap;
+  });
+
+  const scroller = elChartWrapper;
+  if (scroller) {
+    if (typeof chartPref.scroll === 'number') scroller.scrollLeft = chartPref.scroll;
+    scroller.addEventListener('scroll', () => {
+      chartPref.scroll = scroller.scrollLeft;
+      saveChartPref();
+    }, {
+      passive: true
+    });
+  }
+}
+
 function render() {
   elAreasSection.innerHTML = '';
   data.forEach(area => {
@@ -240,6 +330,7 @@ function render() {
     lineInput.addEventListener('input', () => {
       area.line = lineInput.value.trim();
       saveState();
+      drawChart();
     });
 
     areaCard.querySelector('.delete').addEventListener('click', () => {
@@ -261,6 +352,7 @@ function render() {
       const sScoreValue = Object.values(sScore).reduce((a, b) => a + (b.v || 0), 0);
       const sScorePercent = sTotalCount > 0 ? Math.round((sScoreValue / (sTotalCount * 5)) * 100) : 0;
       tab.querySelector('.badge-s').textContent = `${sScorePercent}%`;
+      tab.classList.add(`s-${s.toLowerCase()}`);
 
       const infoBtn = document.createElement('button');
       infoBtn.textContent = 'ⓘ';
@@ -291,7 +383,7 @@ function render() {
             itemData.v = parseInt(dot.dataset.val, 10);
             area.scores[s][i] = itemData;
             saveState();
-            render();
+            render(); // Ricarica l'UI per aggiornare tutto
           });
         });
         panel.appendChild(itemEl);
@@ -307,6 +399,7 @@ function render() {
     elAreasSection.appendChild(areaEl);
   });
   elGlobalScore.textContent = `${getGlobalScore()}%`;
+  drawChart();
 }
 
 /* Event Listeners */
@@ -325,4 +418,5 @@ document.addEventListener('DOMContentLoaded', () => {
   window.addEventListener('click', (event) => {
     if (event.target === popup) hideInfoPopup();
   });
+  window.addEventListener('resize', () => drawChart());
 });
