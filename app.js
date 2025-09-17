@@ -1,5 +1,5 @@
-/* ===================== SKF 5S – app.js (v7.16.2 - Fix) ========================= */
-const VERSION = 'v7.16.2-Fixed';
+/* ===================== SKF 5S – app.js (v7.16.3 - Fix Ordine) ========================= */
+const VERSION = 'v7.16.3-FixedOrder';
 const STORE = 'skf.5s.v7.10.3';
 const CHART_STORE = STORE + '.chart';
 const POINTS = [0, 1, 3, 5];
@@ -128,11 +128,26 @@ const VOC = {
 };
 
 const S_DESCRIPTIONS = {
-  '1S': { title: '1S — Separare', desc: 'Eliminare ciò che non serve. Rimuovi tutto ciò che è inutile e crea un\'area di lavoro essenziale, ordinata e sicura.' },
-  '2S': { title: '2S — Sistemare', desc: 'Ogni cosa al suo posto. Organizza gli strumenti e i materiali in modo che siano facili da trovare, usare e riporre.' },
-  '3S': { title: '3S — Splendere', desc: 'Pulire è ispezionare. Mantieni pulito il posto di lavoro e, mentre lo pulisci, cerca e risolvi le cause dello sporco o dei problemi.' },
-  '4S': { title: '4S — Standardizzare', desc: 'Rendere l\'ordine una routine. Stabilisci regole e standard visivi chiari (come etichette e colori) che tutti devono seguire.' },
-  '5S': { title: '5S — Sostenere', desc: 'Non smettere mai di migliorare. Rendi le prime 4S un\'abitudine quotidiana per tutti e promuovi il miglioramento continuo.' }
+  '1S': {
+    title: '1S — Separare',
+    desc: 'Eliminare ciò che non serve. Rimuovi tutto ciò che è inutile e crea un\'area di lavoro essenziale, ordinata e sicura.'
+  },
+  '2S': {
+    title: '2S — Sistemare',
+    desc: 'Ogni cosa al suo posto. Organizza gli strumenti e i materiali in modo che siano facili da trovare, usare e riporre.'
+  },
+  '3S': {
+    title: '3S — Splendere',
+    desc: 'Pulire è ispezionare. Mantieni pulito il posto di lavoro e, mentre lo pulisci, cerca e risolvi le cause dello sporco o dei problemi.'
+  },
+  '4S': {
+    title: '4S — Standardizzare',
+    desc: 'Rendere l\'ordine una routine. Stabilisci regole e standard visivi chiari (come etichette e colori) che tutti devono seguire.'
+  },
+  '5S': {
+    title: '5S — Sostenere',
+    desc: 'Non smettere mai di migliorare. Rendi le prime 4S un\'abitudine quotidiana per tutti e promuovi il miglioramento continuo.'
+  }
 };
 
 /* --- Elementi UI --- */
@@ -171,6 +186,13 @@ function loadState() {
 
 function saveState() {
   try {
+    // Prima di salvare, aggiorna l'ordine basato sull'interfaccia utente
+    const uiAreas = Array.from(elAreasSection.querySelectorAll('.area'));
+    const newData = uiAreas.map(uiArea => {
+      const id = parseInt(uiArea.id.replace('area-', ''), 10);
+      return data.find(area => area.id === id);
+    });
+    data = newData;
     localStorage.setItem(STORE, JSON.stringify(data));
   } catch (e) {
     console.error('Errore nel salvataggio', e)
@@ -383,7 +405,7 @@ function render() {
             itemData.v = parseInt(dot.dataset.val, 10);
             area.scores[s][i] = itemData;
             saveState();
-            render(); // Ricarica l'UI per aggiornare tutto
+            render();
           });
         });
         panel.appendChild(itemEl);
