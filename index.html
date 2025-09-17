@@ -1,0 +1,77 @@
+<!doctype html>
+<html lang="it">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <title>SKF 5S - Rettifica</title>
+  <link rel="manifest" href="manifest.json" />
+  <link rel="icon" href="assets/skf-192.png" />
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <header class="app-header">
+    <div class="logo">
+      <img src="assets/skf-logo.png" alt="SKF" />
+      <h1>SKF 5S - Rettifica</h1>
+    </div>
+    <div class="actions">
+      <div class="score-display">
+        <label>Punteggio linea:</label>
+        <span id="globalScore" class="score">0%</span>
+      </div>
+    </div>
+  </header>
+
+  <section id="areas" class="areas-section"></section>
+
+  <template id="tplArea">
+    <div class="area card">
+      <div class="area-header">
+        <input class="area-line" placeholder="Nome linea (es. Rettifica 1)" />
+        <div class="area-actions">
+          <button class="btn ghost delete" title="Elimina area">🗑️</button>
+        </div>
+      </div>
+      <div class="tabs">
+        <button class="tab s active" data-s="1S">1S <span class="badge-s score-1S" data-s="1S">0%</span></button>
+        <button class="tab s" data-s="2S">2S <span class="badge-s score-2S" data-s="2S">0%</span></button>
+        <button class="tab s" data-s="3S">3S <span class="badge-s score-3S" data-s="3S">0%</span></button>
+        <button class="tab s" data-s="4S">4S <span class="badge-s score-4S" data-s="4S">0%</span></button>
+        <button class="tab s" data-s="5S">5S <span class="badge-s score-5S" data-s="5S">0%</span></button>
+      </div>
+      <div class="s-panels">
+        <div class="panel active" data-s="1S"></div>
+        <div class="panel" data-s="2S"></div>
+        <div class="panel" data-s="3S"></div>
+        <div class="panel" data-s="4S"></div>
+        <div class="panel" data-s="5S"></div>
+      </div>
+    </div>
+  </template>
+
+  <template id="tplItem">
+    <div class="item">
+      <input class="txt" placeholder="Titolo…" />
+      <div class="points-dots" role="radiogroup" aria-label="Punteggio">
+        <button class="dot v0" data-val="0" title="0">0</button>
+        <button class="dot v1" data-val="1" title="1">1</button>
+        <button class="dot v3" data-val="3" title="3">3</button>
+        <button class="dot v5" data-val="5" title="5">5</button>
+      </div>
+    </div>
+  </template>
+
+  <script src="app.js"></script>
+  <script>
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('sw.js')
+          .then(reg => console.log('SW registrato!', reg))
+          .catch(err => console.log('SW fallito', err));
+      });
+    }
+  </script>
+</body>
+</html>
