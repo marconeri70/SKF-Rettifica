@@ -1,9 +1,9 @@
-/* ===================== SKF 5S - app.js (v7.16.0 - Rettifica) ========================= */
-const VERSION = 'v7.16.0-Rettifica';
-const STORE = 'skf.5s.v7.10.3-rettifica';
+/* ===================== SKF 5S - app.js (v7.16.1 - Aggiornamento Schede) ========================= */
+const VERSION = 'v7.16.1-Updated';
+const STORE = 'skf.5s.v7.10.3';
 const POINTS = [0, 1, 3, 5];
 
-/* --- Voci di Rettifica --- */
+/* --- Voci di esempio --- */
 const VOC_1S = [{
   t: "Zona pedonale pavimento",
   d: "Area pedonale libera da ostacoli e pericoli di inciampo"
@@ -118,18 +118,6 @@ const VOC_5S = [{
   d: "Evidenza prima/dopo; standard aggiornati"
 }];
 
-/* --- Elementi UI --- */
-const $ = s => document.querySelector(s);
-const $$ = s => document.querySelectorAll(s);
-const elAreasSection = $('#areas');
-const elGlobalScore = $('#globalScore');
-const tplArea = $('#tplArea');
-const tplItem = $('#tplItem');
-
-let ui = {
-  line: ''
-};
-let data = [];
 const VOC = {
   '1S': VOC_1S,
   '2S': VOC_2S,
@@ -138,15 +126,35 @@ const VOC = {
   '5S': VOC_5S
 };
 
-/* ==================== Logica ==================== */
+const S_DESCRIPTIONS = {
+  '1S': { title: '1S — Separare', desc: 'Eliminare ciò che non serve. Rimuovi tutto ciò che è inutile e crea un\'area di lavoro essenziale, ordinata e sicura.' },
+  '2S': { title: '2S — Sistemare', desc: 'Ogni cosa al suo posto. Organizza gli strumenti e i materiali in modo che siano facili da trovare, usare e riporre.' },
+  '3S': { title: '3S — Splendere', desc: 'Pulire è ispezionare. Mantieni pulito il posto di lavoro e, mentre lo pulisci, cerca e risolvi le cause dello sporco o dei problemi.' },
+  '4S': { title: '4S — Standardizzare', desc: 'Rendere l\'ordine una routine. Stabilisci regole e standard visivi chiari (come etichette e colori) che tutti devono seguire.' },
+  '5S': { title: '5S — Sostenere', desc: 'Non smettere mai di migliorare. Rendi le prime 4S un\'abitudine quotidiana per tutti e promuovi il miglioramento continuo.' }
+};
 
+/* --- Elementi UI --- */
+const $ = s => document.querySelector(s);
+const $$ = s => document.querySelectorAll(s);
+const elAreasSection = $('#areas');
+const elGlobalScore = $('#globalScore');
+const tplArea = $('#tplArea');
+const tplItem = $('#tplItem');
+const popup = $('#infoPopup');
+const popupTitle = $('#popupTitle');
+const popupDesc = $('#popupDesc');
+const closePopupBtn = $('.close-popup');
+
+let data = [];
+let ui = { mode: 'light' };
+
+/* ==================== Logica ==================== */
 function loadState() {
   try {
     const d = localStorage.getItem(STORE);
     if (d) data = JSON.parse(d);
-    if (data.length === 0) {
-      addNewArea('Rettifica');
-    }
+    if (data.length === 0) addNewArea('');
     render();
   } catch (e) {
     console.error('Errore nel caricamento', e)
@@ -167,9 +175,7 @@ function getAreaScore(area) {
   for (const s in VOC) {
     area.scores[s] = area.scores[s] || {};
     for (const i in VOC[s]) {
-      const item = area.scores[s][i] || {
-        v: 0
-      };
+      const item = area.scores[s][i] || { v: 0 };
       totalScore += item.v;
       totalCount++;
     }
@@ -185,9 +191,7 @@ function getGlobalScore() {
     for (const s in VOC) {
       area.scores[s] = area.scores[s] || {};
       for (const i in VOC[s]) {
-        const item = area.scores[s][i] || {
-          v: 0
-        };
+        const item = area.scores[s][i] || { v: 0 };
         totalScore += item.v;
         totalCount++;
       }
@@ -214,10 +218,19 @@ function deleteArea(areaId) {
   render();
 }
 
+function showInfoPopup(s) {
+  popupTitle.textContent = S_DESCRIPTIONS[s].title;
+  popupDesc.textContent = S_DESCRIPTIONS[s].desc;
+  popup.classList.add('visible');
+}
+
+function hideInfoPopup() {
+  popup.classList.remove('visible');
+}
+
 function render() {
-  const areas = data; // Mostra tutte le aree
   elAreasSection.innerHTML = '';
-  areas.forEach(area => {
+  data.forEach(area => {
     const areaEl = tplArea.content.cloneNode(true);
     const areaCard = areaEl.querySelector('.area');
     areaCard.id = `area-${area.id}`;
@@ -233,6 +246,12 @@ function render() {
       deleteArea(area.id);
     });
 
+    areaCard.querySelector('.collapse-btn').addEventListener('click', () => {
+      areaCard.classList.toggle('collapsed');
+      const icon = areaCard.querySelector('.collapse-btn');
+      icon.textContent = areaCard.classList.contains('collapsed') ? '▶️' : '🔽';
+    });
+
     const tabs = areaCard.querySelectorAll('.tab');
     tabs.forEach(tab => {
       const s = tab.dataset.s;
@@ -242,6 +261,16 @@ function render() {
       const sScoreValue = Object.values(sScore).reduce((a, b) => a + (b.v || 0), 0);
       const sScorePercent = sTotalCount > 0 ? Math.round((sScoreValue / (sTotalCount * 5)) * 100) : 0;
       tab.querySelector('.badge-s').textContent = `${sScorePercent}%`;
+
+      const infoBtn = document.createElement('button');
+      infoBtn.textContent = 'ⓘ';
+      infoBtn.className = 'btn info-s';
+      infoBtn.title = `Spiegazione ${s}`;
+      infoBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        showInfoPopup(s);
+      });
+      tab.appendChild(infoBtn);
 
       VOC[s].forEach((item, i) => {
         const itemEl = tplItem.content.cloneNode(true);
@@ -267,6 +296,7 @@ function render() {
         });
         panel.appendChild(itemEl);
       });
+
       tab.addEventListener('click', () => {
         tabs.forEach(t => t.classList.remove('active'));
         areaCard.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
@@ -279,6 +309,20 @@ function render() {
   elGlobalScore.textContent = `${getGlobalScore()}%`;
 }
 
+/* Event Listeners */
 document.addEventListener('DOMContentLoaded', () => {
   loadState();
+
+  $('#btnNewArea').addEventListener('click', () => addNewArea());
+  $('#btnPrint').addEventListener('click', () => window.print());
+  $('#btnTheme').addEventListener('click', () => {
+    document.documentElement.classList.toggle('dark');
+    const isDark = document.documentElement.classList.contains('dark');
+    $('#btnTheme').textContent = isDark ? '🌞 Tema' : '🌙 Tema';
+  });
+
+  closePopupBtn.addEventListener('click', hideInfoPopup);
+  window.addEventListener('click', (event) => {
+    if (event.target === popup) hideInfoPopup();
+  });
 });
