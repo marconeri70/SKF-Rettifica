@@ -1,5 +1,5 @@
-/* ===================== SKF 5S – app.js (v7.17.0 - Final) ========================= */
-const VERSION = 'v7.17.0-Final';
+/* ===================== SKF 5S – app.js (v7.18.0 - Final) ========================= */
+const VERSION = 'v7.18.0-Final';
 const STORE = 'skf.5s.v7.10.3';
 const CHART_STORE = STORE + '.chart';
 const POINTS = [0, 1, 3, 5];
@@ -323,12 +323,6 @@ function drawChart() {
           backgroundColor: backgroundColors,
           borderColor: 'rgba(0, 0, 0, 0.1)',
           borderWidth: 1,
-          datalabels: { // Aggiungi questo blocco per le etichette
-            anchor: 'end',
-            align: 'top',
-            formatter: (value) => `${value}%`,
-            color: 'black'
-          }
         }]
       },
       options: {
@@ -339,10 +333,10 @@ function drawChart() {
             beginAtZero: true,
             max: 100,
             grid: {
-              display: false // Rimuovi le linee orizzontali
+              display: false
             },
             ticks: {
-              display: false // Rimuovi le etichette dell'asse Y
+              display: false
             }
           },
           x: {
@@ -361,6 +355,12 @@ function drawChart() {
                 return `${context.label}: ${context.raw}%`;
               }
             }
+          },
+          datalabels: {
+            anchor: 'end',
+            align: 'top',
+            formatter: (value) => `${value}%`,
+            color: 'black'
           }
         }
       }
@@ -404,6 +404,17 @@ function render() {
       tab.querySelector('.badge-s').textContent = `${sScorePercent}%`;
       tab.classList.add(`s-${s.toLowerCase()}`);
 
+      // Aggiungi pulsante info per la spiegazione generale della S
+      const infoBtn = document.createElement('button');
+      infoBtn.textContent = 'ⓘ';
+      infoBtn.className = 'info-s';
+      infoBtn.title = `Spiegazione ${s}`;
+      infoBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        showInfoPopup(s);
+      });
+      tab.appendChild(infoBtn);
+
       VOC[s].forEach((item, i) => {
         const itemEl = tplItem.content.cloneNode(true);
         const itemCard = itemEl.querySelector('.item');
@@ -414,8 +425,8 @@ function render() {
         itemData.v = itemData.v || 0;
 
         itemCard.querySelector('.txt').value = item.t;
-        const infoBtn = itemCard.querySelector('.info-item');
-        infoBtn.addEventListener('click', () => {
+        const infoItemBtn = itemCard.querySelector('.info-item');
+        infoItemBtn.addEventListener('click', () => {
           showItemPopup(item.t, item.d);
         });
         
@@ -429,13 +440,12 @@ function render() {
             area.scores[s][i] = itemData;
             saveState();
             
-            // Aggiorna solo la card corrente senza ricaricare tutta la pagina
-            const areaScore = getAreaScore(area);
-            areaCard.querySelector('.score-1S').textContent = `${getAreaScoreByS(area)['1S']}%`;
-            areaCard.querySelector('.score-2S').textContent = `${getAreaScoreByS(area)['2S']}%`;
-            areaCard.querySelector('.score-3S').textContent = `${getAreaScoreByS(area)['3S']}%`;
-            areaCard.querySelector('.score-4S').textContent = `${getAreaScoreByS(area)['4S']}%`;
-            areaCard.querySelector('.score-5S').textContent = `${getAreaScoreByS(area)['5S']}%`;
+            const areaScoreByS = getAreaScoreByS(area);
+            areaCard.querySelector('.score-1S').textContent = `${areaScoreByS['1S']}%`;
+            areaCard.querySelector('.score-2S').textContent = `${areaScoreByS['2S']}%`;
+            areaCard.querySelector('.score-3S').textContent = `${areaScoreByS['3S']}%`;
+            areaCard.querySelector('.score-4S').textContent = `${areaScoreByS['4S']}%`;
+            areaCard.querySelector('.score-5S').textContent = `${areaScoreByS['5S']}%`;
             elGlobalScore.textContent = `${getGlobalScore()}%`;
             drawChart();
           });
