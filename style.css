@@ -1,4 +1,4 @@
-/* ================= SKF 5S – Light & Dark (v7.16.5) ================= */
+/* ================= SKF 5S – Light & Dark (v7.17.0) ================= */
 :root {
   --bg: #ffffff;
   --text: #003366;
@@ -54,40 +54,43 @@ h1, h2, h3 {
   align-items: center;
   padding: 10px 14px;
   background: var(--card);
-  box-shadow: 0 2px 4px rgba(0, 0, 0, .05)
+  box-shadow: 0 2px 4px rgba(0, 0, 0, .05);
+  flex-wrap: wrap; /* Rendi flessibile l'header */
 }
 
 .app-header .logo {
   display: flex;
   align-items: center;
-  gap: 10px
+  gap: 10px;
 }
 
 .app-header img {
-  height: 30px
+  height: 30px;
 }
 
 .app-header h1 {
   font-size: 1.2rem;
-  margin: 0
+  margin: 0;
 }
 
 .actions {
   display: flex;
   align-items: center;
-  gap: 10px
+  gap: 10px;
+  flex-wrap: wrap; /* Rendi flessibile la barra delle azioni */
 }
 
 .score-display {
   display: flex;
   align-items: center;
   gap: 8px;
-  font-weight: 600
+  font-weight: 600;
+  white-space: nowrap;
 }
 
 .score-display .score {
   font-size: 1.5rem;
-  color: var(--accent)
+  color: var(--accent);
 }
 
 .btn {
@@ -96,24 +99,31 @@ h1, h2, h3 {
   border: none;
   padding: 10px 15px;
   border-radius: 5px;
-  cursor: pointer
+  cursor: pointer;
+  white-space: nowrap;
 }
 
 .btn.ghost {
   background: transparent;
   color: var(--accent);
-  border: 1px solid var(--accent)
+  border: 1px solid var(--accent);
 }
 
 .intro-grid {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: 1fr; /* Una sola colonna su mobile */
   gap: 20px;
   padding: 20px;
   background: var(--card);
   margin: 20px;
   border-radius: 10px;
   box-shadow: 0 4px 8px rgba(0, 0, 0, .1);
+}
+
+@media (min-width: 768px) {
+  .intro-grid {
+    grid-template-columns: 1fr 1fr; /* Due colonne su desktop */
+  }
 }
 
 .intro-grid .hero-img {
@@ -179,7 +189,7 @@ h1, h2, h3 {
   padding: 20px;
   display: flex;
   flex-direction: column;
-  gap: 20px
+  gap: 20px;
 }
 
 .area.card {
@@ -203,7 +213,8 @@ h1, h2, h3 {
   display: flex;
   align-items: center;
   gap: 10px;
-  margin-bottom: 10px
+  margin-bottom: 10px;
+  flex-wrap: wrap;
 }
 
 .area-header .area-line {
@@ -211,18 +222,21 @@ h1, h2, h3 {
   font-size: 1.2rem;
   border: 1px solid var(--outline);
   padding: 8px;
-  border-radius: 5px
+  border-radius: 5px;
 }
 
 .area-header .area-actions {
   display: flex;
-  gap: 5px
+  gap: 5px;
+  white-space: nowrap;
 }
 
 .tabs {
   display: flex;
   gap: 5px;
-  margin-bottom: 15px
+  margin-bottom: 15px;
+  overflow-x: auto; /* Aggiungi scroll se i tab sono troppi */
+  white-space: nowrap;
 }
 
 .tabs .tab {
@@ -237,7 +251,7 @@ h1, h2, h3 {
   align-items: center;
   justify-content: space-between;
   font-weight: 600;
-  white-space: nowrap;
+  min-width: 80px; /* Previene la riduzione eccessiva dei tab */
 }
 
 .tabs .tab.active {
@@ -277,7 +291,8 @@ h1, h2, h3 {
   margin-bottom: 10px;
   padding: 10px;
   background: var(--panel-alt);
-  border-radius: 5px
+  border-radius: 5px;
+  flex-wrap: wrap; /* Aggiungi wrap per il responsive */
 }
 
 .item .txt {
@@ -285,12 +300,21 @@ h1, h2, h3 {
   border: none;
   background: transparent;
   font-size: 1rem;
-  color: var(--text)
+  color: var(--text);
+  min-width: 100px;
+}
+
+.info-item {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 1.2rem;
+  color: var(--accent);
 }
 
 .points-dots {
   display: flex;
-  gap: 5px
+  gap: 5px;
 }
 
 .points-dots .dot {
@@ -332,7 +356,8 @@ h1, h2, h3 {
   background-color: var(--card);
   padding: 20px;
   border-radius: 10px;
-  max-width: 500px;
+  max-width: 90%;
+  width: 500px;
   text-align: center;
   position: relative;
 }
@@ -341,6 +366,6 @@ h1, h2, h3 {
   color: var(--accent);
 }
 
-.close-popup {
+.close-popup, .close-popup-item {
   margin-top: 15px;
 }
