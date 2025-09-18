@@ -1,4 +1,4 @@
-/* ================= SKF 5S – Light & Dark (v7.17.0) ================= */
+/* ================= SKF 5S – Light & Dark (v7.18.0) ================= */
 :root {
   --bg: #ffffff;
   --text: #003366;
@@ -11,9 +11,9 @@
   --accent-alt: #4b88ff;
   --desc: #00599c;
   --kpi-bg: #eaf3f3;
-  --c1: #ffb400; /* 1S - Arancione */
-  --c2: #c63539; /* 2S - Rosso */
-  --c3: #4b88ff; /* 3S - Azzurro */
+  --c1: #ff7f00; /* 1S - Arancione */
+  --c2: #c0333d; /* 2S - Rosso */
+  --c3: #5896ff; /* 3S - Azzurro */
   --c4: #54b25e; /* 4S - Verde */
   --c5: #9c60df; /* 5S - Viola */
   --chip: #e8f3ff;
@@ -55,7 +55,7 @@ h1, h2, h3 {
   padding: 10px 14px;
   background: var(--card);
   box-shadow: 0 2px 4px rgba(0, 0, 0, .05);
-  flex-wrap: wrap; /* Rendi flessibile l'header */
+  flex-wrap: wrap;
 }
 
 .app-header .logo {
@@ -77,7 +77,7 @@ h1, h2, h3 {
   display: flex;
   align-items: center;
   gap: 10px;
-  flex-wrap: wrap; /* Rendi flessibile la barra delle azioni */
+  flex-wrap: wrap;
 }
 
 .score-display {
@@ -111,7 +111,7 @@ h1, h2, h3 {
 
 .intro-grid {
   display: grid;
-  grid-template-columns: 1fr; /* Una sola colonna su mobile */
+  grid-template-columns: 1fr;
   gap: 20px;
   padding: 20px;
   background: var(--card);
@@ -122,7 +122,7 @@ h1, h2, h3 {
 
 @media (min-width: 768px) {
   .intro-grid {
-    grid-template-columns: 1fr 1fr; /* Due colonne su desktop */
+    grid-template-columns: 1fr 1fr;
   }
 }
 
@@ -235,7 +235,7 @@ h1, h2, h3 {
   display: flex;
   gap: 5px;
   margin-bottom: 15px;
-  overflow-x: auto; /* Aggiungi scroll se i tab sono troppi */
+  overflow-x: auto;
   white-space: nowrap;
 }
 
@@ -251,7 +251,7 @@ h1, h2, h3 {
   align-items: center;
   justify-content: space-between;
   font-weight: 600;
-  min-width: 80px; /* Previene la riduzione eccessiva dei tab */
+  min-width: 80px;
 }
 
 .tabs .tab.active {
@@ -292,7 +292,7 @@ h1, h2, h3 {
   padding: 10px;
   background: var(--panel-alt);
   border-radius: 5px;
-  flex-wrap: wrap; /* Aggiungi wrap per il responsive */
+  flex-wrap: wrap;
 }
 
 .item .txt {
@@ -304,7 +304,7 @@ h1, h2, h3 {
   min-width: 100px;
 }
 
-.info-item {
+.info-item, .info-s {
   background: none;
   border: none;
   cursor: pointer;
