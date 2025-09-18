@@ -53,6 +53,15 @@ let chartPref=loadChartPref();
 const highlightKeys=new Set();
 
 /* DOM */
+
+// Register datalabels plugin if available
+try { if (window.ChartDataLabels && window.Chart && typeof Chart.register==='function') { Chart.register(window.ChartDataLabels); } } catch(e) {}
+// Ensure at least one default area exists if storage is empty/corrupted
+function normalizeState(){
+  if(!state || !Array.isArray(state.areas)) state = {areas:[makeArea('CH 2')]};
+  if(!state.areas.length) state.areas.push(makeArea('CH 2'));
+}
+
 const elAreas=$('#areas'), elLineFilter=$('#lineFilter'), elQ=$('#q'), elOnlyLate=$('#onlyLate');
 const tplArea=$('#tplArea'), tplItem=$('#tplItem');
 const elKpiAreas=$('#kpiAreas'), elKpiScore=$('#kpiScore'), elKpiLate=$('#kpiLate');
@@ -198,9 +207,6 @@ function hasLateByS(area, sector){
 }
 
 function renderArea(area){
-  // Ensure a default active sector to avoid undefined errors
-  if(!area.activeSector || !area.sectors?.[area.activeSector]){ area.activeSector='Rettifica'; }
-
   const node=tplArea.content.cloneNode(true).firstElementChild;
   const area_line=$('.area-line',node);
   area_line.value=area.line||'';
@@ -228,7 +234,7 @@ function renderArea(area){
     p.classList.toggle('active',p.dataset.s===area.activeSector);
     const host=$('.items',p);
     const S=p.dataset.s;
-    ((area.sectors[area.activeSector]&&area.sectors[area.activeSector][S])?area.sectors[area.activeSector][S]:[]).forEach((it,idx)=>{
+    (area.sectors[area.activeSector][S]||[]).forEach((it,idx)=>{
       host.appendChild(renderItem(area,area.activeSector,S,it,idx));
     });
     const addBtn=$('.add-item',p);
@@ -393,7 +399,7 @@ function drawChart(list){
   groups.forEach(g=>Object.keys(g.scores).forEach(S=>allScores[S]+=(g.scores[S]||0)));
   const totalScores=Object.keys(allScores).reduce((a,b)=>a+(allScores[b]||0),0);
   const globalScore=Math.round(totalScores*100/Object.keys(allScores).length/groups.length);
-  $('#kpiScore').textContent=pct(globalScore/100);
+  const kpi=$('#kpiScore'); if(kpi) kpi.textContent=pct(globalScore/100);
 
   const colors=['#8b6ad8','#ff5a5f','#f2b731','#2dbE6d','#2f7ef6'];
   const data=groups.map(g=>Object.values(g.scores).map(s=>Math.round(s*100)));
@@ -468,4 +474,4 @@ function buildLineButtons(list){
 /* Events */
 window.addEventListener('orientationchange',()=>setTimeout(()=>drawChart(),250));
 window.addEventListener('resize',()=>drawChart());
-window.addEventListener('load',()=>requestAnimationFrame(()=>render()));
+window.addEventListener('load',()=>{ normalizeState(); requestAnimationFrame(()=>render()); });
