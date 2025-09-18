@@ -4,7 +4,7 @@
    - Scheda con 5 sezioni fisse (descrizioni ufficiali)
    - Fix responsive pulsante "Elimina voce"
 =========================================================================== */
-const VERSION='v7.17.14';
+const VERSION='v7.17.15';
 const STORE='skf.5s.v7.17';
 const CHART_STORE=STORE+'.chart';
 const POINTS=[0,1,3,5];
@@ -40,7 +40,7 @@ const nextCH=()=>{
 
 /* State helpers */
 function makeSectorSet(){return JSON.parse(JSON.stringify(DEFAULT_VOCI));}
-function makeArea(line){return{line,sectors:{Rettifica:makeSectorSet(),Montaggio:makeSectorSet()}};}
+function makeArea(line){return{line,activeSector:'Rettifica',sectors:{Rettifica:makeSectorSet(),Montaggio:makeSectorSet()}};}
 function load(){try{const raw=localStorage.getItem(STORE);return raw?JSON.parse(raw):{areas:[makeArea('CH 2')]}}catch{return{areas:[makeArea('CH 2')]}}}
 function save(){localStorage.setItem(STORE,JSON.stringify(state))}
 function loadChartPref(){try{return JSON.parse(localStorage.getItem(CHART_STORE))||{zoom:1,stacked:false,scroll:0}}catch{return{zoom:1,stacked:false,scroll:0}}}
@@ -58,44 +58,26 @@ const highlightKeys=new Set();
 function setTxt(el, val){ if(el) try{ el.textContent = val; }catch(e){} }
 
 
-// Register datalabels plugin if available
-try { if (window.ChartDataLabels && window.Chart && typeof Chart.register==='function') { Chart.register(window.ChartDataLabels); } } catch(e) {}
-// Ensure at least one default area exists if storage is empty/corrupted
+
 function normalizeState(){
   if(!state || !Array.isArray(state.areas)) state = {areas:[makeArea('CH 2')]};
   if(!state.areas.length) state.areas.push(makeArea('CH 2'));
+  state.areas.forEach(a=>{
+    if(!a.activeSector) a.activeSector='Rettifica';
+    if(!a.sectors) a.sectors={Rettifica:makeSectorSet(),Montaggio:makeSectorSet()};
+    ['Rettifica','Montaggio'].forEach(sec=>{
+      if(!a.sectors[sec]) a.sectors[sec]=makeSectorSet();
+      ['1S','2S','3S','4S','5S'].forEach(S=>{
+        if(!Array.isArray(a.sectors[sec][S])) a.sectors[sec][S]=[];
+      });
+    });
+  });
 }
 
-const elAreas=$('#areas'), elLineFilter=$('#lineFilter'), elQ=$('#q'), elOnlyLate=$('#onlyLate');
-const tplArea=$('#tplArea'), tplItem=$('#tplItem');
-const elKpiAreas=$('#kpiAreas'), elKpiScore=$('#kpiScore'), elKpiLate=$('#kpiLate');
-const sectorSelect=$('#sectorFilter');
-
-/* Tema */
-const btnTheme=$('#btnTheme');
-if(localStorage.getItem('theme')==='dark') document.documentElement.classList.add('dark');
-btnTheme?.addEventListener('click',()=>{
-  const root=document.documentElement;
-  root.classList.toggle('dark');
-  localStorage.setItem('theme',root.classList.contains('dark')?'dark':'light');
-});
-
-/* Toolbar */
-$('#btnNewArea')?.addEventListener('click',()=>{
-  const proposal=nextCH();
-  const line=(prompt('Nuova linea? (es. CH 3)',proposal)||proposal).trim();
-  if(!line) return;
-  state.areas.push(makeArea(line)); save(); render();
-});
-$('#btnExport')?.addEventListener('click',()=>{
-  const blob=new Blob([JSON.stringify(state,null,2)],{type:'application/json'});
-  const a=Object.assign(document.createElement('a'),{href:URL.createObjectURL(blob),download:`SKF_5S_${todayISO()}.json`});
-  document.body.appendChild(a); a.click(); a.remove();
-});
-$('#fileImport')?.addEventListener('change',async e=>{
-  const f=e.target.files[0]; if(!f) return;
-  try{ state=JSON.parse(await f.text()); save(); render(); }catch{ alert('File non valido'); }
-});
+// Register datalabels plugin if available
+try { if (window.ChartDataLabels && window.Chart && typeof Chart.register==='function') { Chart.register(window.ChartDataLabels); } } catch(e) {}
+// Ensure at least one default area exists if storage is empty/corrupted
+);
 $('#btnPrint')?.addEventListener('click',()=>window.print());
 
 function setSegBtn(sel){['#btnAll','#btnFgr','#btnAsm'].forEach(s=>$(s)?.classList.remove('active')); $(sel)?.classList.add('active');}
@@ -179,7 +161,7 @@ function filteredAreas(){
     if(ui.line!=='ALL' && (a.line||'').trim()!==ui.line) return false;
     if(!q && !ui.onlyLate) return true;
     let ok=false;
-    secs.forEach(sec=>['1S','2S','3S','4S','5S'].forEach(S=>(a.sectors[sec][S]||[]).forEach(it=>{
+    secs.forEach(sec=>['1S','2S','3S','4S','5S'].forEach(S=>(((a.sectors||{})[sec]||{})[S]||[]).forEach(it=>{
       if(ui.onlyLate && !isOverdue(it.due)) return;
       if(!q){ ok=true; return; }
       const bag=`${it.t||''} ${it.note||''} ${it.resp||''}`.toLowerCase();
@@ -211,6 +193,7 @@ function hasLateByS(area, sector){
 }
 
 function renderArea(area){
+  if(!area.activeSector) area.activeSector='Rettifica';
   const node=tplArea.content.cloneNode(true).firstElementChild;
   const area_line=$('.area-line',node);
   area_line.value=area.line||'';
@@ -238,7 +221,7 @@ function renderArea(area){
     p.classList.toggle('active',p.dataset.s===area.activeSector);
     const host=$('.items',p);
     const S=p.dataset.s;
-    (area.sectors[area.activeSector][S]||[]).forEach((it,idx)=>{
+    ((area.sectors[area.activeSector]||area.sectors['Rettifica']||{})[S]||[]).forEach((it,idx)=>{
       host.appendChild(renderItem(area,area.activeSector,S,it,idx));
     });
     const addBtn=$('.add-item',p);
@@ -292,7 +275,7 @@ function renderItem(area,sector,S,it,idx){
   }));
   $('.info',node).addEventListener('click',()=>{/* handled globally */});
   $('.del',node).addEventListener('click',()=>{
-    const arr=area.sectors[sector][S]; arr.splice(idx,1); save(); render();
+    const arr=(area.sectors[sector]||{})[S]; if(Array.isArray(arr)){arr.splice(idx,1);} save(); render();
   });
   node.addEventListener('click',e=>{
     if(e.target.classList.contains('dot')) node.classList.remove('highlight');
@@ -308,7 +291,7 @@ function overallStats(list){
   const secs=ui.sector==='ALL'?['Rettifica','Montaggio']:[ui.sector];
   let sum=0,max=0,late=0;
   (list||filteredAreas()).forEach(a=>{
-    secs.forEach(sec=>['1S','2S','3S','4S','5S'].forEach(S=>(a.sectors[sec][S]||[]).forEach(it=>{
+    secs.forEach(sec=>['1S','2S','3S','4S','5S'].forEach(S=>(((a.sectors||{})[sec]||{})[S]||[]).forEach(it=>{
       sum+=(+it.p||0); max+=5;
       if(isOverdue(it.due)) late++;
     })));
