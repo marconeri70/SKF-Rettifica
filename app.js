@@ -1,5 +1,5 @@
-/* ===================== SKF 5S – app.js (v7.18.3 - Final) ========================= */
-const VERSION = 'v7.18.3-Final';
+/* ===================== SKF 5S – app.js (v7.18.4 - Final) ========================= */
+const VERSION = 'v7.18.4-Final';
 const STORE = 'skf.5s.v7.10.3';
 const CHART_STORE = STORE + '.chart';
 const POINTS = [0, 1, 3, 5];
@@ -218,18 +218,35 @@ function getAreaScore(area) {
 
 function getGlobalScoreByS() {
   const scoresByS = {
-    '1S': { totalScore: 0, totalCount: 0 },
-    '2S': { totalScore: 0, totalCount: 0 },
-    '3S': { totalScore: 0, totalCount: 0 },
-    '4S': { totalScore: 0, totalCount: 0 },
-    '5S': { totalScore: 0, totalCount: 0 }
+    '1S': {
+      totalScore: 0,
+      totalCount: 0
+    },
+    '2S': {
+      totalScore: 0,
+      totalCount: 0
+    },
+    '3S': {
+      totalScore: 0,
+      totalCount: 0
+    },
+    '4S': {
+      totalScore: 0,
+      totalCount: 0
+    },
+    '5S': {
+      totalScore: 0,
+      totalCount: 0
+    }
   };
 
   data.forEach(area => {
     for (const s in VOC) {
       area.scores[s] = area.scores[s] || {};
       VOC[s].forEach((item, i) => {
-        const itemScore = area.scores[s][i] || { v: 0 };
+        const itemScore = area.scores[s][i] || {
+          v: 0
+        };
         scoresByS[s].totalScore += itemScore.v;
         scoresByS[s].totalCount++;
       });
@@ -238,7 +255,10 @@ function getGlobalScoreByS() {
 
   const finalScores = {};
   for (const s in scoresByS) {
-    const { totalScore, totalCount } = scoresByS[s];
+    const {
+      totalScore,
+      totalCount
+    } = scoresByS[s];
     finalScores[s] = totalCount > 0 ? Math.round((totalScore / (totalCount * 5)) * 100) : 0;
   }
   return finalScores;
