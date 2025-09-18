@@ -1,4 +1,4 @@
-/* ================= SKF 5S – Light & Dark (v7.16.2) ================= */
+/* ================= SKF 5S – Light & Dark (v7.16.5) ================= */
 :root {
   --bg: #ffffff;
   --text: #003366;
@@ -113,26 +113,51 @@ h1, h2, h3 {
   background: var(--card);
   margin: 20px;
   border-radius: 10px;
-  box-shadow: 0 4px 8px rgba(0, 0, 0, .1)
+  box-shadow: 0 4px 8px rgba(0, 0, 0, .1);
 }
 
 .intro-grid .hero-img {
   width: 100%;
   height: auto;
   border-radius: 8px;
-  object-fit: cover
+  object-fit: contain;
 }
 
-.intro-text h2 {
-  font-size: 1.8rem;
-  color: var(--accent)
+.intro-text {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: 10px;
 }
 
-.intro-text p,
-.intro-text li {
-  font-size: 1rem;
-  line-height: 1.6
+.s-explainer {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 10px;
 }
+
+.s-explainer .s-block {
+  padding: 10px;
+  border-radius: 5px;
+  color: white;
+  text-align: center;
+}
+
+.s-explainer .s-block .s-label {
+  font-weight: bold;
+  font-size: 1.5rem;
+}
+
+.s-explainer .s-block p {
+  margin: 0;
+  font-size: 0.9rem;
+}
+
+.s-block.s-1s { background: var(--c1); }
+.s-block.s-2s { background: var(--c2); }
+.s-block.s-3s { background: var(--c3); }
+.s-block.s-4s { background: var(--c4); }
+.s-block.s-5s { background: var(--c5); }
 
 .chart-section {
   padding: 20px;
@@ -145,6 +170,9 @@ h1, h2, h3 {
 .chart-wrapper {
   overflow-x: auto;
   overflow-y: hidden;
+  height: 300px;
+  display: flex;
+  justify-content: center;
 }
 
 .areas-section {
