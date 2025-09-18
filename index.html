@@ -28,7 +28,7 @@
   </header>
 
   <section class="intro-grid">
-    <img src="assets/1000088151.jpg" class="hero-img" alt="Diagramma 5S" loading="lazy" decoding="async" />
+    <img src="assets/5s-hero.png" class="hero-img" alt="Diagramma 5S" loading="lazy" decoding="async" />
     <div class="intro-text">
       <div class="s-explainer">
         <div class="s-block s-1s">
@@ -72,6 +72,14 @@
     </div>
   </div>
 
+  <div id="itemPopup" class="popup-modal">
+    <div class="popup-content">
+      <h4 id="itemPopupTitle"></h4>
+      <p id="itemPopupDesc"></p>
+      <button class="btn close-popup-item">Chiudi</button>
+    </div>
+  </div>
+
   <template id="tplArea">
     <div class="area card">
       <div class="area-header">
@@ -103,6 +111,7 @@
   <template id="tplItem">
     <div class="item">
       <input class="txt" placeholder="Titolo…" />
+      <button class="info-item" title="Spiegazione">ⓘ</button>
       <div class="points-dots" role="radiogroup" aria-label="Punteggio">
         <button class="dot v0" data-val="0" title="0">0</button>
         <button class="dot v1" data-val="1" title="1">1</button>
