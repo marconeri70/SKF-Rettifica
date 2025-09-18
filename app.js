@@ -4,7 +4,7 @@
    - Scheda con 5 sezioni fisse (descrizioni ufficiali)
    - Fix responsive pulsante "Elimina voce"
 =========================================================================== */
-const VERSION='v7.17.12';
+const VERSION='v7.17.13';
 const STORE='skf.5s.v7.17';
 const CHART_STORE=STORE+'.chart';
 const POINTS=[0,1,3,5];
@@ -53,6 +53,10 @@ let chartPref=loadChartPref();
 const highlightKeys=new Set();
 
 /* DOM */
+
+// Safe text setter
+function setTxt(el, val){ if(el) try{ el.textContent = val; }catch(e){} }
+
 
 // Register datalabels plugin if available
 try { if (window.ChartDataLabels && window.Chart && typeof Chart.register==='function') { Chart.register(window.ChartDataLabels); } } catch(e) {}
@@ -157,7 +161,7 @@ function render(){
   if(ui.sector==='Montaggio') setSegBtn('#btnAsm');
 
   const list=filteredAreas();
-  elAreas.innerHTML='';
+  if(!elAreas) return; elAreas.innerHTML='';
   list.forEach(a=>elAreas.appendChild(renderArea(a)));
   updateDashboard(list);
   drawChart(list);
@@ -165,8 +169,8 @@ function render(){
 }
 function refreshLineFilter(){
   const lines=Array.from(new Set(state.areas.map(a=>(a.line||'').trim()).filter(Boolean))).sort((a,b)=>a.localeCompare(b,'it',{numeric:true}));
-  elLineFilter.innerHTML=`<option value="ALL">Linea: Tutte</option>` + lines.map(l=>`<option value="${l}">${l}</option>`).join('');
-  if(!lines.includes(ui.line)) ui.line='ALL'; elLineFilter.value=ui.line;
+  if(elLineFilter){ elLineFilter.innerHTML=`<option value="ALL">Linea: Tutte</option>` + lines.map(l=>`<option value="${l}">${l}</option>`).join(''); }
+  if(!lines.includes(ui.line)) ui.line='ALL'; if(elLineFilter) elLineFilter.value=ui.line;
 }
 function filteredAreas(){
   const q=(ui.q||'').toLowerCase();
@@ -256,8 +260,8 @@ function renderArea(area){
 }
 function refreshScores(areaNode,area,sector){
   const {score,byS,dom}=computeByS(area,sector);
-  $('.score-val',areaNode).textContent=pct(score);
-  $('.doms',areaNode).textContent=dom;
+  setTxt($('.score-val',areaNode), pct(score));
+  setTxt($('.doms',areaNode), dom);
   const pills=$$('.score-pill',areaNode);
   const lateMap = hasLateByS(area, sector);
   pills.forEach(p=>{
@@ -313,9 +317,9 @@ function overallStats(list){
 }
 function updateDashboard(list){
   const {score,late}=overallStats(list);
-  elKpiAreas.textContent=(list||filteredAreas()).length;
-  elKpiScore.textContent=pct(score);
-  elKpiLate.textContent=late;
+  setTxt(elKpiAreas,(list||filteredAreas()).length);
+  setTxt(elKpiScore,pct(score));
+  setTxt(elKpiLate,late);
   renderLateList(list);
 }
 function renderLateList(list){
