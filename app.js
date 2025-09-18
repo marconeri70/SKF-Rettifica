@@ -4,7 +4,7 @@
    - Scheda con 5 sezioni fisse (descrizioni ufficiali)
    - Fix responsive pulsante "Elimina voce"
 =========================================================================== */
-const VERSION='v7.17.11';
+const VERSION='v7.17.12';
 const STORE='skf.5s.v7.17';
 const CHART_STORE=STORE+'.chart';
 const POINTS=[0,1,3,5];
@@ -198,6 +198,9 @@ function hasLateByS(area, sector){
 }
 
 function renderArea(area){
+  // Ensure a default active sector to avoid undefined errors
+  if(!area.activeSector || !area.sectors?.[area.activeSector]){ area.activeSector='Rettifica'; }
+
   const node=tplArea.content.cloneNode(true).firstElementChild;
   const area_line=$('.area-line',node);
   area_line.value=area.line||'';
@@ -225,7 +228,7 @@ function renderArea(area){
     p.classList.toggle('active',p.dataset.s===area.activeSector);
     const host=$('.items',p);
     const S=p.dataset.s;
-    (area.sectors[area.activeSector][S]||[]).forEach((it,idx)=>{
+    ((area.sectors[area.activeSector]&&area.sectors[area.activeSector][S])?area.sectors[area.activeSector][S]:[]).forEach((it,idx)=>{
       host.appendChild(renderItem(area,area.activeSector,S,it,idx));
     });
     const addBtn=$('.add-item',p);
