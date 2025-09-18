@@ -1,121 +1,103 @@
-<!doctype html>
-<html lang="it">
-<head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-  <meta name="apple-mobile-web-app-capable" content="yes" />
-  <title>SKF 5S</title>
-  <link rel="manifest" href="manifest.json" />
-  <link rel="icon" href="assets/skf-192.png" />
-  <link rel="stylesheet" href="style.css" />
-</head>
-<body>
-  <header class="app-header">
-    <div class="logo">
-      <img src="assets/skf-logo.png" alt="SKF" />
-      <h1>SKF 5S</h1>
-    </div>
-    <div class="actions">
-      <button id="btnNewArea" class="btn">+ Nuova linea</button>
-      <button id="btnPrint" class="btn ghost">Stampa</button>
-      <button id="btnTheme" class="btn ghost">🌞 Tema</button>
-    </div>
-  </header>
+/* ================= SKF 5S – Light & Dark (v7.18.5) ================= */
+:root {
+  --bg: #ffffff;
+  --text: #003366;
+  --muted: #5c6f82;
+  --card: #f3f7fa;
+  --panel: #ffffff;
+  --panel-alt: #f7fbff;
+  --outline: #d0d7e1;
+  --accent: #0095d9;
+  --accent-alt: #4b88ff;
+  --desc: #00599c;
+  --kpi-bg: #eaf3f3;
+  --c1: #9c60df; /* 1S - Viola */
+  --c2: #d63d3e; /* 2S - Rosso */
+  --c3: #ffb400; /* 3S - Arancione */
+  --c4: #52b25e; /* 4S - Verde */
+  --c5: #4b88ff; /* 5S - Blu */
+  --chip: #e8f3ff;
+}
 
-  <section class="card intro-grid">
-    <img src="assets/5s-hero.png" class="hero-img" alt="Diagramma 5S" loading="lazy" decoding="async" />
-    <div>
-      <h2 class="h3">Valutazione 5S</h2>
-      <p>Questa applicazione aiuta a valutare e monitorare l'implementazione del programma 5S.</p>
-      <p>Utilizza l'app per:</p>
-      <ul>
-        <li>Creare schede di valutazione per ogni area o linea.</li>
-        <li>Assegnare un punteggio a ciascun pilastro 5S (Separare, Sistemare, Splendere, Standardizzare, Sostenere).</li>
-        <li>Visualizzare i punteggi totali e per ogni S.</li>
-      </ul>
-      <p>Inizia aggiungendo una nuova linea di produzione qui sotto:</p>
-    </div>
-  </section>
+:root.dark {
+  --bg: #0f1a36;
+  --text: #eaf0ff;
+  --muted: #9bb0c5;
+  --card: #182544;
+  --panel: #1e2d4f;
+  --panel-alt: #1a2b4a;
+  --outline: #3a4ab6;
+  --accent: #4b88ff;
+  --desc: #9bc2ff;
+  --kpi-bg: #1b2b40;
+  --chip: #12325b;
+}
 
-  <section class="chart-section" style="display: none;">
-    <div class="card">
-      <div class="chart-header">
-        <h3>Punteggio Globale</h3>
-        <span class="global-score" id="globalScore">0%</span>
-      </div>
-      <div class="chart-container">
-        <canvas id="chart"></canvas>
-      </div>
-    </div>
-  </section>
-
-  <section class="cards" id="areas"></section>
-
-  <div class="popup" id="infoPopup">
-    <div class="popup-content">
-      <h3 id="popupTitle"></h3>
-      <p id="popupDesc"></p>
-      <button class="btn ghost close-popup">Chiudi</button>
-    </div>
-  </div>
-
-  <div class="popup" id="itemPopup">
-    <div class="popup-content">
-      <h3 id="itemPopupTitle"></h3>
-      <p id="itemPopupDesc"></p>
-      <button class="btn ghost close-popup-item">Chiudi</button>
-    </div>
-  </div>
-
-  <template id="tplArea">
-    <div class="area card">
-      <div class="area-header">
-        <input class="area-line" placeholder="Nome linea/area" />
-        <div class="area-actions">
-          <button class="delete" title="Elimina area">🗑️</button>
-          <button class="collapse-btn" title="Comprimi/Espandi">🔽</button>
-        </div>
-      </div>
-      <div class="s-tabs">
-        <button class="tab active" data-s="1S">1S <span class="badge-s score-1S" data-s="1S">0%</span></button>
-        <button class="tab" data-s="2S">2S <span class="badge-s score-2S" data-s="2S">0%</span></button>
-        <button class="tab" data-s="3S">3S <span class="badge-s score-3S" data-s="3S">0%</span></button>
-        <button class="tab" data-s="4S">4S <span class="badge-s score-4S" data-s="4S">0%</span></button>
-        <button class="tab" data-s="5S">5S <span class="badge-s score-5S" data-s="5S">0%</span></button>
-      </div>
-
-      <div class="s-panels">
-        <div class="panel active" data-s="1S"></div>
-        <div class="panel" data-s="2S"></div>
-        <div class="panel" data-s="3S"></div>
-        <div class="panel" data-s="4S"></div>
-        <div class="panel" data-s="5S"></div>
-      </div>
-    </div>
-  </template>
-
-  <template id="tplItem">
-    <div class="item">
-      <button class="btn tiny info-item" title="Dettaglio">i</button>
-      <input class="txt" placeholder="Titolo…" />
-      <div class="points-dots" role="radiogroup" aria-label="Punteggio">
-        <button class="dot v0" data-val="0" title="0">0</button>
-        <button class="dot v1" data-val="1" title="1">1</button>
-        <button class="dot v3" data-val="3" title="3">3</button>
-        <button class="dot v5" data-val="5" title="5">5</button>
-      </div>
-    </div>
-  </template>
-
-  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
-  <script src="app.js"></script>
-  <script>
-    if ('serviceWorker' in navigator) {
-      window.addEventListener('load', () => {
-        navigator.serviceWorker.register('sw.js').catch(err => console.error('SW failed', err));
-      });
-    }
-  </script>
-</body>
-</html>
+*{box-sizing:border-box}
+body{margin:0;font:16px/1.45 system-ui,Segoe UI,Roboto,Arial;background:var(--bg);color:var(--text)}
+h1,h2,h3{margin:0;font-weight:600}
+.h3{font-size:1.5rem}
+p{margin:0 0 1rem}
+ul{margin:0 0 1rem;padding-left:20px}
+.app-header{display:flex;justify-content:space-between;align-items:center;padding:12px 18px;background:var(--card);box-shadow:0 1px 3px rgba(0,0,0,.08);position:sticky;top:0;z-index:10}
+.app-header .logo{display:flex;align-items:center;gap:12px}
+.app-header .logo img{height:32px;width:32px}
+.app-header .logo h1{font-size:1.5rem}
+.actions{display:flex;gap:10px;align-items:center;flex-wrap:wrap;justify-content:flex-end}
+.btn{padding:8px 16px;font-size:1rem;font-weight:500;border-radius:8px;cursor:pointer;border:1px solid var(--accent);background:var(--accent);color:#fff;transition:background .2s,border-color .2s}
+.btn:hover{background:var(--accent-alt);border-color:var(--accent-alt)}
+.btn.ghost{background:transparent;border-color:var(--outline);color:var(--muted);transition:background .2s,color .2s,border-color .2s}
+.btn.ghost:hover{background:var(--card);color:var(--text);border-color:var(--text)}
+.card{background:var(--card);border-radius:12px;padding:20px;box-shadow:0 4px 12px rgba(0,0,0,.05);margin-bottom:20px}
+.intro-grid{display:grid;grid-template-columns:1fr;gap:20px}
+@media(min-width:768px){.intro-grid{grid-template-columns:auto 1fr;align-items:center}}
+.hero-img{width:100%;height:auto;max-width:300px;justify-self:center}
+@media(min-width:768px){.hero-img{justify-self:start;max-width:400px}}
+.chart-section{padding:0 18px}
+.chart-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px}
+.chart-container{position:relative;height:250px;width:100%}
+#areas{padding:0 18px}
+.area{padding:0;overflow:hidden}
+.area-header{padding:16px 20px;display:flex;justify-content:space-between;align-items:center;gap:10px}
+.area-line{font-size:1.2rem;font-weight:600;border:none;background:transparent;color:var(--text);width:100%;padding:0;outline:none}
+.area-line::placeholder{color:var(--muted)}
+.area-actions{display:flex;gap:8px}
+.delete, .collapse-btn{border:none;background:transparent;cursor:pointer;font-size:1.2rem;color:var(--muted);transition:color .2s}
+.delete:hover{color:#d63d3e}
+.collapse-btn{font-size:1rem;font-weight:bold}
+.area.collapsed .s-panels{display:none}
+.area.collapsed .collapse-btn{transform:rotate(-90deg)}
+.s-tabs{display:flex;border-top:1px solid var(--outline);background:var(--panel-alt)}
+.tab{flex:1;padding:12px 0;border:none;background:transparent;color:var(--muted);font-weight:600;cursor:pointer;border-bottom:3px solid transparent;display:flex;justify-content:center;align-items:center;gap:5px;transition:border-color .2s,color .2s}
+.tab:hover{color:var(--text)}
+.tab.active{color:var(--text)}
+.s-tabs button[data-s="1S"].active{border-color:var(--c1)}
+.s-tabs button[data-s="2S"].active{border-color:var(--c2)}
+.s-tabs button[data-s="3S"].active{border-color:var(--c3)}
+.s-tabs button[data-s="4S"].active{border-color:var(--c4)}
+.s-tabs button[data-s="5S"].active{border-color:var(--c5)}
+.badge-s{font-size:.9rem;background:var(--chip);color:var(--text);padding:3px 8px;border-radius:12px;font-weight:500;line-height:1}
+.s-panels{padding:20px;display:none}
+.s-panels.active{display:block}
+.panel h4{margin-bottom:10px;font-size:1.2rem}
+.item{display:flex;align-items:center;gap:10px;margin-bottom:12px;border:1px solid var(--outline);padding:10px;border-radius:8px;background:var(--panel-alt);flex-wrap:wrap}
+.item .txt{border:none;background:transparent;font-size:1rem;color:var(--text);width:100%;flex-grow:1;outline:none}
+.item .txt::placeholder{color:var(--muted)}
+.info-s, .info-item{border:none;background:transparent;cursor:pointer;font-size:1rem;color:var(--muted);transition:color .2s;padding:0;margin:0}
+.info-s:hover, .info-item:hover{color:var(--accent)}
+.points-dots{display:flex;gap:4px;flex-shrink:0}
+.dot{width:24px;height:24px;border-radius:50%;border:2px solid transparent;background:var(--panel-alt);color:var(--muted);font-size:.8rem;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:background .2s,border-color .2s,color .2s}
+.dot.active{background:var(--muted);color:#fff}
+.dot[data-val="0"]{border-color:#666;color:#666}
+.dot[data-val="1"]{border-color:var(--c1);color:var(--c1)}
+.dot[data-val="3"]{border-color:var(--c3);color:var(--c3)}
+.dot[data-val="5"]{border-color:var(--c4);color:var(--c4)}
+.dot[data-val="0"].active{background:#666;color:#fff;border-color:#666}
+.dot[data-val="1"].active{background:var(--c1);color:#fff;border-color:var(--c1)}
+.dot[data-val="3"].active{background:var(--c3);color:#fff;border-color:var(--c3)}
+.dot[data-val="5"].active{background:var(--c4);color:#fff;border-color:var(--c4)}
+.popup{position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,.5);display:none;align-items:center;justify-content:center;z-index:100}
+.popup.visible{display:flex}
+.popup-content{background:var(--card);padding:20px;border-radius:12px;max-width:500px;width:90%;text-align:center;box-shadow:0 8px 24px rgba(0,0,0,.2)}
+.popup-content h3{margin-bottom:10px}
+.popup-content .btn{margin-top:15px}
