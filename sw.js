@@ -1,4 +1,4 @@
-const CACHE = 'skf5s-cache-v7.18.1';
+const CACHE = 'skf5s-cache-v7.18.3';
 const ASSETS = [
   './','index.html','style.css','app.js','manifest.json',
   'assets/skf-logo.png','assets/skf-192.png','assets/skf-512.png', 'assets/5s-hero.png'
