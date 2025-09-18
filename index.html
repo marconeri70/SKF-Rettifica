@@ -20,14 +20,14 @@
   </div>
 
   <div class="tools">
-    <button id="btnNewArea" class="btn primary">+ Nuova linea</button>
-    <button id="btnExport" class="btn">Esporta</button>
+    <button id="btnNewArea" class="btn primary" aria-label="Crea nuova linea">+ Nuova linea</button>
+    <button id="btnExport" class="btn" aria-label="Esporta dati">Esporta</button>
     <label class="btn file">
       <input id="fileImport" type="file" accept="application/json" hidden>
       <span>Importa</span>
     </label>
-    <button id="btnPrint" class="btn">Stampa</button>
-    <button id="btnTheme" class="btn ghost">🌓 Tema</button>
+    <button id="btnPrint" class="btn" aria-label="Stampa">Stampa</button>
+    <button id="btnTheme" class="btn ghost" aria-label="Cambia tema">🌓 Tema</button>
   </div>
 </header>
 
@@ -74,8 +74,8 @@
       <div class="kpi"><div class="kpi-title">Azioni in ritardo</div><div id="kpiLate" class="kpi-value">0</div></div>
 
       <div class="zoom">
-        <button id="zoomOut" class="mini">–</button>
-        <button id="zoomIn" class="mini">+</button>
+        <button id="zoomOut" class="mini" aria-label="Zoom meno">–</button>
+        <button id="zoomIn" class="mini" aria-label="Zoom più">+</button>
         <label class="chk stack">
           <input id="toggleStacked" type="checkbox">
           <span>Stacked</span>
@@ -199,7 +199,7 @@
 <template id="tplItem">
   <div class="item">
     <div class="item-hd">
-      <button class="info">i</button>
+      <button class="info" aria-label="Dettagli voce" title="Dettagli">i</button>
       <input class="txt" placeholder="Titolo voce…" />
       <div class="points-dots">
         <button class="dot" data-val="0">0</button>

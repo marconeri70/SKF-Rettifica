@@ -4,8 +4,8 @@
    - Scheda con 5 sezioni fisse (descrizioni ufficiali)
    - Fix responsive pulsante "Elimina voce"
 =========================================================================== */
-const VERSION='v7.17.10';
-const STORE='skf.5s.v7.16';
+const VERSION='v7.17.11';
+const STORE='skf.5s.v7.17';
 const CHART_STORE=STORE+'.chart';
 const POINTS=[0,1,3,5];
 
@@ -187,6 +187,16 @@ function computeByS(area,sector){
   const dom=(domKey && byS[domKey]>0)?domKey:'—';
   return {score:max?sum/max:0,byS,dom};
 }
+
+function hasLateByS(area, sector){
+  const secs = sector==='ALL'?['Rettifica','Montaggio']:[sector];
+  const res = {"1S":false,"2S":false,"3S":false,"4S":false,"5S":false};
+  secs.forEach(sec=>['1S','2S','3S','4S','5S'].forEach(S=>{
+    (area.sectors[sec][S]||[]).forEach(it=>{ if(isOverdue(it.due)) res[S]=true; });
+  }));
+  return res;
+}
+
 function renderArea(area){
   const node=tplArea.content.cloneNode(true).firstElementChild;
   const area_line=$('.area-line',node);
@@ -240,10 +250,12 @@ function refreshScores(areaNode,area,sector){
   $('.score-val',areaNode).textContent=pct(score);
   $('.doms',areaNode).textContent=dom;
   const pills=$$('.score-pill',areaNode);
+  const lateMap = hasLateByS(area, sector);
   pills.forEach(p=>{
     const S=p.dataset.s;
     $('.score-'+S,p).textContent=pct(byS[S]);
     if(byS[S]===0) p.classList.remove('has-score'); else p.classList.add('has-score');
+    p.classList.toggle('late', !!lateMap[S]);
   });
 }
 function renderItem(area,sector,S,it,idx){

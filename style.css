@@ -301,3 +301,20 @@ select{background:var(--panel) url('data:image/svg+xml;utf8,<svg xmlns="http://w
   .topbar, .tools, .filters, .fold-all{display:none}
   .card{box-shadow:none;border:none}
 }
+
+
+/* Late badge for score pills */
+.score-pill.late::after{
+  content:'•';
+  display:inline-block;
+  margin-left:6px;
+  width:8px;height:8px;line-height:8px;
+  border-radius:50%;
+  background:var(--red);
+  color:transparent;
+}
+/* Keyboard focus visibility */
+button:focus, .tab:focus, .seg-btn:focus, .line-btn:focus, .btn:focus, input:focus, select:focus{
+  outline:2px solid var(--accent);
+  outline-offset:2px;
+}
