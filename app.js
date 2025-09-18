@@ -313,6 +313,8 @@ function hideItemPopup() {
   itemPopup.classList.remove('visible');
 }
 
+/* ... codice precedente ... */
+
 function drawChart() {
   const scores = getGlobalScoreByS();
   const labels = Object.keys(scores);
