@@ -1,4 +1,4 @@
-/* ================= SKF 5S – Light & Dark (v7.18.0) ================= */
+/* ================= SKF 5S – Light & Dark (v7.18.1) ================= */
 :root {
   --bg: #ffffff;
   --text: #003366;
@@ -11,10 +11,10 @@
   --accent-alt: #4b88ff;
   --desc: #00599c;
   --kpi-bg: #eaf3f3;
-  --c1: #ff7f00; /* 1S - Arancione */
-  --c2: #c0333d; /* 2S - Rosso */
-  --c3: #5896ff; /* 3S - Azzurro */
-  --c4: #54b25e; /* 4S - Verde */
+  --c1: #ffb400; /* 1S - Arancione */
+  --c2: #d63d3e; /* 2S - Rosso */
+  --c3: #4b88ff; /* 3S - Azzurro */
+  --c4: #52b25e; /* 4S - Verde */
   --c5: #9c60df; /* 5S - Viola */
   --chip: #e8f3ff;
 }
