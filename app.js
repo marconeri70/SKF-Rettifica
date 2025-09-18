@@ -1,5 +1,5 @@
-/* ===================== SKF 5S – app.js (v7.18.1 - Final) ========================= */
-const VERSION = 'v7.18.1-Final';
+/* ===================== SKF 5S – app.js (v7.18.3 - Final) ========================= */
+const VERSION = 'v7.18.3-Final';
 const STORE = 'skf.5s.v7.10.3';
 const CHART_STORE = STORE + '.chart';
 const POINTS = [0, 1, 3, 5];
@@ -428,7 +428,7 @@ function render() {
         infoItemBtn.addEventListener('click', () => {
           showItemPopup(item.t, item.d);
         });
-        
+
         const dots = itemCard.querySelectorAll('.dot');
         dots.forEach(dot => {
           if (dot.dataset.val == itemData.v) dot.classList.add('active');
@@ -438,7 +438,7 @@ function render() {
             itemData.v = parseInt(dot.dataset.val, 10);
             area.scores[s][i] = itemData;
             saveState();
-            
+
             const areaScoreByS = getAreaScoreByS(area);
             areaCard.querySelector('.score-1S').textContent = `${areaScoreByS['1S']}%`;
             areaCard.querySelector('.score-2S').textContent = `${areaScoreByS['2S']}%`;
@@ -497,6 +497,6 @@ document.addEventListener('DOMContentLoaded', () => {
   window.addEventListener('click', (event) => {
     if (event.target === itemPopup) hideItemPopup();
   });
-  
+
   window.addEventListener('resize', () => drawChart());
 });
