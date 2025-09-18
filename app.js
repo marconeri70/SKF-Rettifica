@@ -1,5 +1,5 @@
-/* ===================== SKF 5S – app.js (v7.18.4 - Final) ========================= */
-const VERSION = 'v7.18.4-Final';
+/* ===================== SKF 5S – app.js (v7.18.5 - Final) ========================= */
+const VERSION = 'v7.18.5-Final';
 const STORE = 'skf.5s.v7.10.3';
 const CHART_STORE = STORE + '.chart';
 const POINTS = [0, 1, 3, 5];
