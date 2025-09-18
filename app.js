@@ -1,5 +1,5 @@
-/* ===================== SKF 5S – app.js (v7.16.4 - Chart.js) ========================= */
-const VERSION = 'v7.16.4-ChartJS';
+/* ===================== SKF 5S – app.js (v7.16.5 - Global S Chart) ========================= */
+const VERSION = 'v7.16.5-GlobalSChart';
 const STORE = 'skf.5s.v7.10.3';
 const CHART_STORE = STORE + '.chart';
 const POINTS = [0, 1, 3, 5];
@@ -150,6 +150,14 @@ const S_DESCRIPTIONS = {
   }
 };
 
+const S_COLORS = {
+  '1S': getComputedStyle(document.documentElement).getPropertyValue('--c1'),
+  '2S': getComputedStyle(document.documentElement).getPropertyValue('--c2'),
+  '3S': getComputedStyle(document.documentElement).getPropertyValue('--c3'),
+  '4S': getComputedStyle(document.documentElement).getPropertyValue('--c4'),
+  '5S': getComputedStyle(document.documentElement).getPropertyValue('--c5'),
+};
+
 /* --- Elementi UI --- */
 const $ = s => document.querySelector(s);
 const $$ = s => document.querySelectorAll(s);
@@ -203,23 +211,43 @@ function getAreaScore(area) {
   return totalCount > 0 ? Math.round((totalScore / (totalCount * 5)) * 100) : 0;
 }
 
-function getGlobalScore() {
-  if (data.length === 0) return 0;
-  let totalScore = 0,
-    totalCount = 0;
+function getGlobalScoreByS() {
+  const scoresByS = {
+    '1S': { totalScore: 0, totalCount: 0 },
+    '2S': { totalScore: 0, totalCount: 0 },
+    '3S': { totalScore: 0, totalCount: 0 },
+    '4S': { totalScore: 0, totalCount: 0 },
+    '5S': { totalScore: 0, totalCount: 0 }
+  };
+
   data.forEach(area => {
     for (const s in VOC) {
       area.scores[s] = area.scores[s] || {};
-      for (const i in VOC[s]) {
-        const item = area.scores[s][i] || {
-          v: 0
-        };
-        totalScore += item.v;
-        totalCount++;
-      }
+      VOC[s].forEach((item, i) => {
+        const itemScore = area.scores[s][i] || { v: 0 };
+        scoresByS[s].totalScore += itemScore.v;
+        scoresByS[s].totalCount++;
+      });
     }
   });
-  return totalCount > 0 ? Math.round((totalScore / (totalCount * 5)) * 100) : 0;
+
+  const finalScores = {};
+  for (const s in scoresByS) {
+    const { totalScore, totalCount } = scoresByS[s];
+    finalScores[s] = totalCount > 0 ? Math.round((totalScore / (totalCount * 5)) * 100) : 0;
+  }
+  return finalScores;
+}
+
+function getGlobalScore() {
+  const scoresByS = getGlobalScoreByS();
+  let totalScore = 0;
+  let totalCount = 0;
+  for (const s in scoresByS) {
+    totalScore += scoresByS[s];
+    totalCount++;
+  }
+  return totalCount > 0 ? Math.round(totalScore / totalCount) : 0;
 }
 
 function addNewArea(line = '') {
@@ -251,25 +279,22 @@ function hideInfoPopup() {
 }
 
 function drawChart() {
-  if (!elChart || !data.length) {
+  const scores = getGlobalScoreByS();
+  const labels = Object.keys(scores);
+  const dataPoints = Object.values(scores);
+  const backgroundColors = labels.map(s => S_COLORS[s]);
+
+  if (!elChart || labels.length === 0) {
     if (myChart) myChart.destroy();
     elChartSection.style.display = 'none';
     return;
   }
   elChartSection.style.display = 'block';
 
-  const labels = data.map(area => area.line || `Linea ${data.indexOf(area) + 1}`);
-  const scores = data.map(getAreaScore);
-  const colors = scores.map(score => {
-    if (score < 50) return '#C63539';
-    if (score < 80) return '#F3A11A';
-    return '#35B468';
-  });
-
   if (myChart) {
     myChart.data.labels = labels;
-    myChart.data.datasets[0].data = scores;
-    myChart.data.datasets[0].backgroundColor = colors;
+    myChart.data.datasets[0].data = dataPoints;
+    myChart.data.datasets[0].backgroundColor = backgroundColors;
     myChart.update();
   } else {
     const ctx = elChart.getContext('2d');
@@ -279,8 +304,8 @@ function drawChart() {
         labels: labels,
         datasets: [{
           label: 'Punteggio 5S',
-          data: scores,
-          backgroundColor: colors,
+          data: dataPoints,
+          backgroundColor: backgroundColors,
           borderColor: 'rgba(0, 0, 0, 0.1)',
           borderWidth: 1
         }]
@@ -298,9 +323,8 @@ function drawChart() {
             }
           },
           x: {
-            ticks: {
-              maxRotation: 45,
-              minRotation: 45
+            grid: {
+              display: false
             }
           }
         },
