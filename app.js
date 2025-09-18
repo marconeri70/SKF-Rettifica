@@ -1,5 +1,5 @@
-/* ===================== SKF 5S – app.js (v7.16.5 - Global S Chart) ========================= */
-const VERSION = 'v7.16.5-GlobalSChart';
+/* ===================== SKF 5S – app.js (v7.17.0 - Final) ========================= */
+const VERSION = 'v7.17.0-Final';
 const STORE = 'skf.5s.v7.10.3';
 const CHART_STORE = STORE + '.chart';
 const POINTS = [0, 1, 3, 5];
@@ -172,6 +172,11 @@ const popupTitle = $('#popupTitle');
 const popupDesc = $('#popupDesc');
 const closePopupBtn = $('.close-popup');
 
+const itemPopup = $('#itemPopup');
+const itemPopupTitle = $('#itemPopupTitle');
+const itemPopupDesc = $('#itemPopupDesc');
+const closeItemPopupBtn = $('.close-popup-item');
+
 let data = [];
 let myChart; // Variabile per l'istanza del grafico
 
@@ -278,6 +283,16 @@ function hideInfoPopup() {
   popup.classList.remove('visible');
 }
 
+function showItemPopup(title, desc) {
+  itemPopupTitle.textContent = title;
+  itemPopupDesc.textContent = desc;
+  itemPopup.classList.add('visible');
+}
+
+function hideItemPopup() {
+  itemPopup.classList.remove('visible');
+}
+
 function drawChart() {
   const scores = getGlobalScoreByS();
   const labels = Object.keys(scores);
@@ -307,7 +322,13 @@ function drawChart() {
           data: dataPoints,
           backgroundColor: backgroundColors,
           borderColor: 'rgba(0, 0, 0, 0.1)',
-          borderWidth: 1
+          borderWidth: 1,
+          datalabels: { // Aggiungi questo blocco per le etichette
+            anchor: 'end',
+            align: 'top',
+            formatter: (value) => `${value}%`,
+            color: 'black'
+          }
         }]
       },
       options: {
@@ -317,9 +338,11 @@ function drawChart() {
           y: {
             beginAtZero: true,
             max: 100,
-            title: {
-              display: true,
-              text: 'Punteggio %'
+            grid: {
+              display: false // Rimuovi le linee orizzontali
+            },
+            ticks: {
+              display: false // Rimuovi le etichette dell'asse Y
             }
           },
           x: {
@@ -335,7 +358,7 @@ function drawChart() {
           tooltip: {
             callbacks: {
               label: function(context) {
-                return `Punteggio: ${context.raw}%`;
+                return `${context.label}: ${context.raw}%`;
               }
             }
           }
@@ -381,16 +404,6 @@ function render() {
       tab.querySelector('.badge-s').textContent = `${sScorePercent}%`;
       tab.classList.add(`s-${s.toLowerCase()}`);
 
-      const infoBtn = document.createElement('button');
-      infoBtn.textContent = 'ⓘ';
-      infoBtn.className = 'btn info-s';
-      infoBtn.title = `Spiegazione ${s}`;
-      infoBtn.addEventListener('click', (e) => {
-        e.stopPropagation();
-        showInfoPopup(s);
-      });
-      tab.appendChild(infoBtn);
-
       VOC[s].forEach((item, i) => {
         const itemEl = tplItem.content.cloneNode(true);
         const itemCard = itemEl.querySelector('.item');
@@ -401,6 +414,11 @@ function render() {
         itemData.v = itemData.v || 0;
 
         itemCard.querySelector('.txt').value = item.t;
+        const infoBtn = itemCard.querySelector('.info-item');
+        infoBtn.addEventListener('click', () => {
+          showItemPopup(item.t, item.d);
+        });
+        
         const dots = itemCard.querySelectorAll('.dot');
         dots.forEach(dot => {
           if (dot.dataset.val == itemData.v) dot.classList.add('active');
@@ -410,7 +428,16 @@ function render() {
             itemData.v = parseInt(dot.dataset.val, 10);
             area.scores[s][i] = itemData;
             saveState();
-            render();
+            
+            // Aggiorna solo la card corrente senza ricaricare tutta la pagina
+            const areaScore = getAreaScore(area);
+            areaCard.querySelector('.score-1S').textContent = `${getAreaScoreByS(area)['1S']}%`;
+            areaCard.querySelector('.score-2S').textContent = `${getAreaScoreByS(area)['2S']}%`;
+            areaCard.querySelector('.score-3S').textContent = `${getAreaScoreByS(area)['3S']}%`;
+            areaCard.querySelector('.score-4S').textContent = `${getAreaScoreByS(area)['4S']}%`;
+            areaCard.querySelector('.score-5S').textContent = `${getAreaScoreByS(area)['5S']}%`;
+            elGlobalScore.textContent = `${getGlobalScore()}%`;
+            drawChart();
           });
         });
         panel.appendChild(itemEl);
@@ -429,6 +456,17 @@ function render() {
   drawChart();
 }
 
+function getAreaScoreByS(area) {
+  const scoresByS = {};
+  for (const s in VOC) {
+    const sScore = area.scores[s] || {};
+    const sTotalCount = VOC[s].length;
+    const sScoreValue = Object.values(sScore).reduce((a, b) => a + (b.v || 0), 0);
+    scoresByS[s] = sTotalCount > 0 ? Math.round((sScoreValue / (sTotalCount * 5)) * 100) : 0;
+  }
+  return scoresByS;
+}
+
 /* Event Listeners */
 document.addEventListener('DOMContentLoaded', () => {
   loadState();
@@ -445,5 +483,11 @@ document.addEventListener('DOMContentLoaded', () => {
   window.addEventListener('click', (event) => {
     if (event.target === popup) hideInfoPopup();
   });
+
+  closeItemPopupBtn.addEventListener('click', hideItemPopup);
+  window.addEventListener('click', (event) => {
+    if (event.target === itemPopup) hideItemPopup();
+  });
+  
   window.addEventListener('resize', () => drawChart());
 });
