@@ -1,5 +1,5 @@
-/* ===================== SKF 5S – app.js (v7.18.0 - Final) ========================= */
-const VERSION = 'v7.18.0-Final';
+/* ===================== SKF 5S – app.js (v7.18.1 - Final) ========================= */
+const VERSION = 'v7.18.1-Final';
 const STORE = 'skf.5s.v7.10.3';
 const CHART_STORE = STORE + '.chart';
 const POINTS = [0, 1, 3, 5];
@@ -404,7 +404,6 @@ function render() {
       tab.querySelector('.badge-s').textContent = `${sScorePercent}%`;
       tab.classList.add(`s-${s.toLowerCase()}`);
 
-      // Aggiungi pulsante info per la spiegazione generale della S
       const infoBtn = document.createElement('button');
       infoBtn.textContent = 'ⓘ';
       infoBtn.className = 'info-s';
