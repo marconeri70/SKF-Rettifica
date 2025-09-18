@@ -4,7 +4,6 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
-  <meta name="mobile-web-app-capable" content="yes" />
   <title>SKF 5S</title>
   <link rel="manifest" href="manifest.json" />
   <link rel="icon" href="assets/skf-192.png" />
@@ -17,101 +16,88 @@
       <h1>SKF 5S</h1>
     </div>
     <div class="actions">
-      <div class="score-display">
-        <label>Punteggio globale:</label>
-        <span id="globalScore" class="score">0%</span>
-      </div>
-      <button id="btnNewArea" class="btn">🏠 Nuova linea</button>
-      <button id="btnPrint" class="btn ghost">🖨️ Stampa</button>
+      <button id="btnNewArea" class="btn">+ Nuova linea</button>
+      <button id="btnPrint" class="btn ghost">Stampa</button>
       <button id="btnTheme" class="btn ghost">🌞 Tema</button>
     </div>
   </header>
 
-  <section class="intro-grid">
+  <section class="card intro-grid">
     <img src="assets/5s-hero.png" class="hero-img" alt="Diagramma 5S" loading="lazy" decoding="async" />
-    <div class="intro-text">
-      <div class="s-explainer">
-        <div class="s-block s-1s">
-          <span class="s-label">1S</span>
-          <p>Separare</p>
-        </div>
-        <div class="s-block s-2s">
-          <span class="s-label">2S</span>
-          <p>Sistemare</p>
-        </div>
-        <div class="s-block s-3s">
-          <span class="s-label">3S</span>
-          <p>Splendere</p>
-        </div>
-        <div class="s-block s-4s">
-          <span class="s-label">4S</span>
-          <p>Standardizzare</p>
-        </div>
-        <div class="s-block s-5s">
-          <span class="s-label">5S</span>
-          <p>Sostenere</p>
-        </div>
+    <div>
+      <h2 class="h3">Valutazione 5S</h2>
+      <p>Questa applicazione aiuta a valutare e monitorare l'implementazione del programma 5S.</p>
+      <p>Utilizza l'app per:</p>
+      <ul>
+        <li>Creare schede di valutazione per ogni area o linea.</li>
+        <li>Assegnare un punteggio a ciascun pilastro 5S (Separare, Sistemare, Splendere, Standardizzare, Sostenere).</li>
+        <li>Visualizzare i punteggi totali e per ogni S.</li>
+      </ul>
+      <p>Inizia aggiungendo una nuova linea di produzione qui sotto:</p>
+    </div>
+  </section>
+
+  <section class="chart-section" style="display: none;">
+    <div class="card">
+      <div class="chart-header">
+        <h3>Punteggio Globale</h3>
+        <span class="global-score" id="globalScore">0%</span>
+      </div>
+      <div class="chart-container">
+        <canvas id="chart"></canvas>
       </div>
     </div>
   </section>
 
-  <section class="chart-section">
-    <h2>Andamento punteggi globali per S</h2>
-    <div class="chart-wrapper">
-      <canvas id="chart"></canvas>
-    </div>
-  </section>
+  <section class="cards" id="areas"></section>
 
-  <section id="areas" class="areas-section"></section>
-
-  <div id="infoPopup" class="popup-modal">
+  <div class="popup" id="infoPopup">
     <div class="popup-content">
       <h3 id="popupTitle"></h3>
       <p id="popupDesc"></p>
-      <button class="btn close-popup">Chiudi</button>
+      <button class="btn ghost close-popup">Chiudi</button>
     </div>
   </div>
 
-  <div id="itemPopup" class="popup-modal">
+  <div class="popup" id="itemPopup">
     <div class="popup-content">
-      <h4 id="itemPopupTitle"></h4>
+      <h3 id="itemPopupTitle"></h3>
       <p id="itemPopupDesc"></p>
-      <button class="btn close-popup-item">Chiudi</button>
+      <button class="btn ghost close-popup-item">Chiudi</button>
     </div>
   </div>
 
   <template id="tplArea">
     <div class="area card">
       <div class="area-header">
-        <button class="btn collapse-btn" title="Comprimi/Espandi">🔽</button>
-        <input class="area-line" placeholder="Nome linea (es. Rettifica 1)" />
+        <input class="area-line" placeholder="Nome linea/area" />
         <div class="area-actions">
-          <button class="btn ghost delete" title="Elimina area">🗑️</button>
+          <button class="delete" title="Elimina area">🗑️</button>
+          <button class="collapse-btn" title="Comprimi/Espandi">🔽</button>
         </div>
       </div>
-      <div class="area-body">
-        <div class="tabs">
-          <button class="tab s active" data-s="1S">1S <span class="badge-s score-1S" data-s="1S">0%</span></button>
-          <button class="tab s" data-s="2S">2S <span class="badge-s score-2S" data-s="2S">0%</span></button>
-          <button class="tab s" data-s="3S">3S <span class="badge-s score-3S" data-s="3S">0%</span></button>
-          <button class="tab s" data-s="4S">4S <span class="badge-s score-4S" data-s="4S">0%</span></button>
-          <button class="tab s" data-s="5S">5S <span class="badge-s score-5S" data-s="5S">0%</span></button>
-        </div>
-        <div class="s-panels">
-          <div class="panel active" data-s="1S"></div>
-          <div class="panel" data-s="2S"></div>
-          <div class="panel" data-s="3S"></div>
-          <div class="panel" data-s="4S"></div>
-          <div class="panel" data-s="5S"></div>
-        </div>
+      <div class="s-tabs">
+        <button class="tab active" data-s="1S">1S <span class="badge-s score-1S" data-s="1S">0%</span></button>
+        <button class="tab" data-s="2S">2S <span class="badge-s score-2S" data-s="2S">0%</span></button>
+        <button class="tab" data-s="3S">3S <span class="badge-s score-3S" data-s="3S">0%</span></button>
+        <button class="tab" data-s="4S">4S <span class="badge-s score-4S" data-s="4S">0%</span></button>
+        <button class="tab" data-s="5S">5S <span class="badge-s score-5S" data-s="5S">0%</span></button>
+      </div>
+
+      <div class="s-panels">
+        <div class="panel active" data-s="1S"></div>
+        <div class="panel" data-s="2S"></div>
+        <div class="panel" data-s="3S"></div>
+        <div class="panel" data-s="4S"></div>
+        <div class="panel" data-s="5S"></div>
       </div>
     </div>
   </template>
 
   <template id="tplItem">
     <div class="item">
+      <button class="btn tiny info-item" title="Dettaglio">i</button>
       <input class="txt" placeholder="Titolo…" />
-      <button class="info-item" title="Spiegazione">ⓘ</button>
       <div class="points-dots" role="radiogroup" aria-label="Punteggio">
         <button class="dot v0" data-val="0" title="0">0</button>
         <button class="dot v1" data-val="1" title="1">1</button>
@@ -121,15 +107,13 @@
     </div>
   </template>
 
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
   <script src="app.js"></script>
   <script>
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', () => {
-        navigator.serviceWorker.register('sw.js')
-          .then(reg => console.log('SW registrato!', reg))
-          .catch(err => console.log('SW fallito', err));
+        navigator.serviceWorker.register('sw.js').catch(err => console.error('SW failed', err));
       });
     }
   </script>
