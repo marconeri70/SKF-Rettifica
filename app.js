@@ -4,7 +4,7 @@
    - Scheda con 5 sezioni fisse (descrizioni ufficiali)
    - Fix responsive pulsante "Elimina voce"
 =========================================================================== */
-const VERSION='v7.17.13';
+const VERSION='v7.17.14';
 const STORE='skf.5s.v7.17';
 const CHART_STORE=STORE+'.chart';
 const POINTS=[0,1,3,5];

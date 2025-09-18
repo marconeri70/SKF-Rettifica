@@ -9,7 +9,7 @@
   <link rel="icon" sizes="192x192" href="assets/skf-192.png" />
   <link rel="apple-touch-icon" href="assets/skf-192.png" />
 
-  <link rel="stylesheet" href="style.css" />
+  <link rel="stylesheet" href="style.css?v=7.17.14" />
   <meta name="theme-color" content="#0b66ff" />
 </head>
 <body>
@@ -225,9 +225,50 @@
   <small>© SKF – PWA offline</small>
 </footer>
 
+
+<script>
+// --- Aggressive reset for old caches / SW ---
+(function(){
+  const CURRENT='v7.17.14';
+  console.log('[SKF 5S] Boot', CURRENT);
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.getRegistrations().then(list => {
+      list.forEach(reg => {
+        try {
+          // If existing SW is from older version, unregister to avoid stale caches
+          if (!reg.active || !reg.active.scriptURL.includes('v7.17.14')) {
+            reg.unregister();
+          }
+        } catch(e){ console.warn('SW check error', e); }
+      });
+    });
+  }
+  if (window.caches && caches.keys) {
+    caches.keys().then(keys => {
+      keys.forEach(k => {
+        // Wipe any previous skf caches to avoid stale assets
+        if (/skf5s-sw-v7\./.test(k) || /skf\.5s\./.test(k)) {
+          caches.delete(k);
+        }
+      });
+    });
+  }
+  // Clear broken localStorage shapes (defensive)
+  try {
+    const s = localStorage.getItem('skf.5s.v7.17');
+    if (s) {
+      const parsed = JSON.parse(s);
+      if (!parsed || !Array.isArray(parsed.areas)) {
+        localStorage.removeItem('skf.5s.v7.17');
+      }
+    }
+  } catch(e){ localStorage.removeItem('skf.5s.v7.17'); }
+})();
+</script>
+
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.0.0/dist/chartjs-plugin-datalabels.min.js"></script>
-<script src="app.js"></script>
+<script src="app.js?v=7.17.14"></script>
 
 <script>
 if ('serviceWorker' in navigator) {
