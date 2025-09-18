@@ -1,4 +1,4 @@
-const SW_VERSION = 'skf5s-sw-v7.17.16';
+const SW_VERSION = 'skf5s-sw-v7.17.10';
 const CORE = [
   './',
   './index.html',
@@ -25,34 +25,5 @@ self.addEventListener('fetch', e=>{
     caches.match(req).then(res=> res || fetch(req).then(r=>{
       const copy=r.clone(); caches.open(SW_VERSION).then(c=>c.put(req,copy)); return r;
     }).catch(()=>caches.match('./')) )
-  );
-});
-
-self.addEventListener('fetch', e => {
-  const req = e.request;
-  const url = new URL(req.url);
-
-  const isHTML = req.mode === 'navigate' || url.pathname.endsWith('.html');
-  const isAppJS = url.pathname.endsWith('/app.js') || url.pathname.endsWith('app.js');
-
-  // Network-first for HTML and app.js
-  if (isHTML || isAppJS) {
-    e.respondWith(
-      fetch(req).then(res => {
-        const copy = res.clone();
-        caches.open(SW_VERSION).then(c => c.put(req, copy));
-        return res;
-      }).catch(() => caches.match(req).then(r => r || caches.match('./')))
-    );
-    return;
-  }
-
-  // Cache-first for everything else (assets/CSS/etc)
-  e.respondWith(
-    caches.match(req).then(res => res || fetch(req).then(r => {
-      const copy = r.clone();
-      caches.open(SW_VERSION).then(c => c.put(req, copy));
-      return r;
-    }).catch(() => caches.match('./')))
   );
 });
