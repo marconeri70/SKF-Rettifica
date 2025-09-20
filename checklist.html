@@ -34,7 +34,15 @@
     </div>
     <div id="areas"></div>
   </section>
+
+<dialog id="infoDlg"><form method="dialog" class="modal">
+<button class="close" aria-label="Chiudi">✕</button>
+<h3 id="infoTitle"></h3>
+<p id="infoBody"></p>
+</form></dialog>
 </main>
+
+
 
 <template id="tplArea">
   <article class="area card">
@@ -47,20 +55,56 @@
         <span class="score-pill s4" data-s="4S"><b>4S</b> <span class="score-4S">0%</span></span>
         <span class="score-pill s5" data-s="5S"><b>5S</b> <span class="score-5S">0%</span></span>
       </div>
+      <div class="sum">
+        <span class="badge">Punteggio: <b class="score-val">0%</b></span>
+        <span class="badge dom">Predominante: <b class="doms">—</b></span>
+      </div>
       <div class="hd-actions">
+        <button class="btn ghost collapse">Comprimi</button>
         <button class="btn danger delete-area">Elimina</button>
       </div>
     </header>
 
     <div class="panels">
-      <section class="panel" data-s="1S"><h4 class="pill s1">1S — Selezionare</h4><div class="items"></div><div class="panel-actions"><button class="btn add-item">+ Voce</button></div></section>
-      <section class="panel" data-s="2S"><h4 class="pill s2">2S — Sistemare</h4><div class="items"></div><div class="panel-actions"><button class="btn add-item">+ Voce</button></div></section>
-      <section class="panel" data-s="3S"><h4 class="pill s3">3S — Splendere</h4><div class="items"></div><div class="panel-actions"><button class="btn add-item">+ Voce</button></div></section>
-      <section class="panel" data-s="4S"><h4 class="pill s4">4S — Standardizzare</h4><div class="items"></div><div class="panel-actions"><button class="btn add-item">+ Voce</button></div></section>
-      <section class="panel" data-s="5S"><h4 class="pill s5">5S — Sostenere</h4><div class="items"></div><div class="panel-actions"><button class="btn add-item">+ Voce</button></div></section>
+      <section class="panel" data-s="1S">
+        <h4 class="pill s1">1S — Selezionare</h4>
+        <p class="s-desc">Eliminare ciò che non serve. Rimuovi tutto ciò che è inutile e crea un'area di lavoro essenziale, ordinata e sicura.</p>
+        <div class="items"></div>
+        <div class="panel-actions"><button class="btn add-item">+ Voce</button></div>
+      </section>
+
+      <section class="panel" data-s="2S">
+        <h4 class="pill s2">2S — Sistemare</h4>
+        <p class="s-desc">Ogni cosa al suo posto. Organizza strumenti e materiali per trovarli e riporli facilmente.</p>
+        <div class="items"></div>
+        <div class="panel-actions"><button class="btn add-item">+ Voce</button></div>
+      </section>
+
+      <section class="panel" data-s="3S">
+        <h4 class="pill s3">3S — Splendere</h4>
+        <p class="s-desc">Pulire è ispezionare. Mantieni pulito e risolvi le cause dello sporco.</p>
+        <div class="items"></div>
+        <div class="panel-actions"><button class="btn add-item">+ Voce</button></div>
+      </section>
+
+      <section class="panel" data-s="4S">
+        <h4 class="pill s4">4S — Standardizzare</h4>
+        <p class="s-desc">Regole e standard visivi chiari (etichette, colori) da seguire.</p>
+        <div class="items"></div>
+        <div class="panel-actions"><button class="btn add-item">+ Voce</button></div>
+      </section>
+
+      <section class="panel" data-s="5S">
+        <h4 class="pill s5">5S — Sostenere</h4>
+        <p class="s-desc">Rendi le prime 4S un'abitudine e promuovi il miglioramento continuo.</p>
+        <div class="items"></div>
+        <div class="panel-actions"><button class="btn add-item">+ Voce</button></div>
+      </section>
     </div>
   </article>
 </template>
+
+
 
 <template id="tplItem">
   <div class="item">
@@ -78,11 +122,10 @@
       <input class="due" type="date" />
       <input class="note" placeholder="Note…" />
     </div>
-    <div class="item-actions">
-      <button class="del danger">Elimina voce</button>
-    </div>
+    <div class="item-actions"><button class="del danger">Elimina voce</button></div>
   </div>
 </template>
+
 
 <footer class="app-footer"><small id="appVersionFooter"></small></footer>
 
