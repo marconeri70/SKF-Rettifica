@@ -4,7 +4,7 @@
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Checklist 5S • CH 2 Rettifica</title>
 <link rel="icon" href="assets/skf-192.png">
-<link rel="stylesheet" href="style.css?v=tp3">
+<link rel="stylesheet" href="style.v1j.css?v=tp3">
 </head>
 <body>
 <header class="topbar">
@@ -18,7 +18,7 @@
 
 <main class="container">
 
-<!-- hidden controls required by app.js to avoid early returns -->
+<!-- hidden controls required by app.v1j.js?v=hard1 to avoid early returns -->
 <div style="display:none">
   <input id="q" />
   <select id="lineFilter"></select>
@@ -130,7 +130,7 @@
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.0.0/dist/chartjs-plugin-datalabels.min.js"></script>
-<script src="app.js?v=tp3"></script>
+<script src="app.v1j.js?v=hard1"></script>
 <script>
 document.addEventListener('DOMContentLoaded',()=>{
   const b=document.getElementById('btnLock');
@@ -188,5 +188,6 @@ document.addEventListener('click', (e)=>{
 });
 </script>
 
+<script>document.addEventListener('DOMContentLoaded',()=>{const f=document.querySelector('#appVersionFooter'); if(f) f.textContent='v1j-hard';});</script>
 </body>
 </html>
