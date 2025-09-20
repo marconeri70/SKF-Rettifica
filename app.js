@@ -477,3 +477,17 @@ if(location.pathname.endsWith('checklist.html')){
     }catch(e){}
   }, {once:true});
 }
+
+
+// Ensure a single area exists, set sector, then render
+window.setupSingleCH = function(areaName, sector){
+  try{
+    if(!window.state || !Array.isArray(state.areas)) window.state={areas:[]};
+    if(!state.areas.length) state.areas.push(makeArea(areaName||'CH 2'));
+    if(state.areas.length>1) state.areas=[state.areas[0]];
+    state.areas[0].line = areaName || state.areas[0].line || 'CH 2';
+    state.areas[0].activeSector = sector || state.areas[0].activeSector || 'Rettifica';
+    save();
+    if(typeof render==='function') render();
+  }catch(e){ console.error('setupSingleCH error', e); }
+};
