@@ -1,193 +1,143 @@
 <!doctype html>
 <html lang="it">
 <head>
-<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Checklist 5S • CH 2 Rettifica</title>
-<link rel="icon" href="assets/skf-192.png">
-<link rel="stylesheet" href="style.v1j.css?v=tp3">
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+  <title>Checklist 5S • CH 2 Rettifica</title>
+  <link rel="icon" href="assets/skf-192.png" />
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
+  <meta http-equiv="Pragma" content="no-cache" />
+  <meta http-equiv="Expires" content="0" />
+  <link rel="stylesheet" href="style.v1k.css">
 </head>
 <body>
-<header class="topbar">
-  <div class="brand"><img src="assets/skf-192.png" alt="SKF"><span>SKF 5S</span></div><h2 style="margin-left:12px;font-size:1.1rem;font-weight:600">CH 2 — Rettifica</h2>
-  <div class="tools">
-    <a class="btn ghost" href="./">← Indietro</a>
-    <button id="btnLock" class="btn ghost" aria-label="Sblocca con PIN">🔒</button>
-    <button id="btnTheme" class="btn ghost" aria-label="Cambia tema">🌓 Tema</button>
+  <header class="topbar">
+    <div class="brand"><img src="assets/skf-192.png" alt="SKF"><span>SKF 5S</span></div>
+    <div class="tools">
+      <a class="btn ghost" href="./">← Indietro</a>
+      <button id="btnLock" class="btn ghost" aria-label="Sblocca con PIN">🔒</button>
+      <button id="btnTheme" class="btn ghost" aria-label="Cambia tema">🌓 Tema</button>
+    </div>
+  </header>
+
+  <!-- controlli "fantasma" per compatibilità, ma nascosti -->
+  <div class="ghost" aria-hidden="true">
+    <input id="q"><select id="lineFilter"></select><select id="sectorFilter"></select>
+    <button id="btnAll"></button><button id="btnAsm"></button>
   </div>
-</header>
 
-<main class="container">
-
-<!-- hidden controls required by app.v1j.js?v=hard1 to avoid early returns -->
-<div style="display:none">
-  <input id="q" />
-  <select id="lineFilter"></select>
-  <select id="sectorFilter"></select>
-  <button id="btnAll"></button>
-  <button id="btnAsm"></button>
-</div>
-
-  <section class="dashboard card">
-    <div class="kpis">
-      <div class="kpi"><div class="kpi-title">Punteggio medio</div><div id="kpiScore" class="kpi-value">0%</div></div>
-      <div class="kpi"><div class="kpi-title">Azioni in ritardo</div><div id="kpiLate" class="kpi-value">0</div></div>
-    </div>
-    <div id="areas"></div>
-  </section>
-
-<dialog id="infoDlg"><form method="dialog" class="modal">
-<button class="close" aria-label="Chiudi">✕</button>
-<h3 id="infoTitle"></h3>
-<p id="infoBody"></p>
-</form></dialog>
-</main>
-
-
-
-<template id="tplArea">
-  <article class="area card">
-    <header class="area-hd">
-      <div class="score">
-        <span class="score-pill s1" data-s="1S"><b>1S</b> <span class="score-1S">0%</span></span>
-        <span class="score-pill s2" data-s="2S"><b>2S</b> <span class="score-2S">0%</span></span>
-        <span class="score-pill s3" data-s="3S"><b>3S</b> <span class="score-3S">0%</span></span>
-        <span class="score-pill s4" data-s="4S"><b>4S</b> <span class="score-4S">0%</span></span>
-        <span class="score-pill s5" data-s="5S"><b>5S</b> <span class="score-5S">0%</span></span>
+  <main class="container">
+    <section class="dashboard card">
+      <div class="kpis">
+        <div class="kpi"><div class="kpi-title">Punteggio medio</div><div id="kpiScore" class="kpi-value">0%</div></div>
+        <div class="kpi"><div class="kpi-title">Azioni in ritardo</div><div id="kpiLate" class="kpi-value">0</div></div>
       </div>
-      <div class="sum">
-        <span class="badge">Punteggio: <b class="score-val">0%</b></span>
-        <span class="badge dom">Predominante: <b class="doms">—</b></span>
+      <div id="areas"></div>
+    </section>
+  </main>
+
+  <!-- Template area COMPLETO (senza CH2 sopra le percentuali, senza "Elimina") -->
+  <template id="tplArea">
+    <article class="area card">
+      <header class="area-hd">
+        <div class="score">
+          <span class="score-pill s1" data-s="1S"><b>1S</b> <span class="score-1S">0%</span></span>
+          <span class="score-pill s2" data-s="2S"><b>2S</b> <span class="score-2S">0%</span></span>
+          <span class="score-pill s3" data-s="3S"><b>3S</b> <span class="score-3S">0%</span></span>
+          <span class="score-pill s4" data-s="4S"><b>4S</b> <span class="score-4S">0%</span></span>
+          <span class="score-pill s5" data-s="5S"><b>5S</b> <span class="score-5S">0%</span></span>
+        </div>
+        <div class="sum">
+          <span class="badge">Punteggio: <b class="score-val">0%</b></span>
+          <span class="badge dom">Predominante: <b class="doms">—</b></span>
+        </div>
+        <div class="hd-actions">
+          <button class="btn ghost collapse" title="Comprimi">Comprimi</button>
+        </div>
+      </header>
+
+      <div class="panels">
+        <section class="panel" data-s="1S">
+          <h4 class="pill s1">1S — Selezionare</h4>
+          <button class="info big" data-s="s1" data-title="1S — Selezionare" data-text="Eliminare ciò che non serve. Rimuovi tutto ciò che è inutile e crea un'area di lavoro essenziale.">i</button>
+          <div class="items"></div>
+          <div class="panel-actions"><button class="btn add-item">+ Voce</button></div>
+        </section>
+
+        <section class="panel" data-s="2S">
+          <h4 class="pill s2">2S — Sistemare</h4>
+          <button class="info big" data-s="s2" data-title="2S — Sistemare" data-text="Un posto per tutto e tutto al suo posto.">i</button>
+          <div class="items"></div>
+          <div class="panel-actions"><button class="btn add-item">+ Voce</button></div>
+        </section>
+
+        <section class="panel" data-s="3S">
+          <h4 class="pill s3">3S — Splendere</h4>
+          <button class="info big" data-s="s3" data-title="3S — Splendere" data-text="Pulire è ispezionare: mantieni pulito e risolvi le cause dello sporco.">i</button>
+          <div class="items"></div>
+          <div class="panel-actions"><button class="btn add-item">+ Voce</button></div>
+        </section>
+
+        <section class="panel" data-s="4S">
+          <h4 class="pill s4">4S — Standardizzare</h4>
+          <button class="info big" data-s="s4" data-title="4S — Standardizzare" data-text="Regole e segnali visivi chiari (etichette, colori) da seguire.">i</button>
+          <div class="items"></div>
+          <div class="panel-actions"><button class="btn add-item">+ Voce</button></div>
+        </section>
+
+        <section class="panel" data-s="5S">
+          <h4 class="pill s5">5S — Sostenere</h4>
+          <button class="info big" data-s="s5" data-title="5S — Sostenere" data-text="Rendi le prime 4S un'abitudine quotidiana e promuovi il miglioramento continuo.">i</button>
+          <div class="items"></div>
+          <div class="panel-actions"><button class="btn add-item">+ Voce</button></div>
+        </section>
       </div>
-      <div class="hd-actions">
-        <button class="btn ghost collapse" title="Comprimi">Comprimi</button>
-        
+    </article>
+  </template>
+
+  <template id="tplItem">
+    <div class="item">
+      <div class="item-hd">
+        <input class="txt" placeholder="Titolo voce…" />
+        <div class="points-dots">
+          <button class="dot" data-val="0">0</button>
+          <button class="dot" data-val="1">1</button>
+          <button class="dot" data-val="3">3</button>
+          <button class="dot" data-val="5">5</button>
+        </div>
       </div>
-    </header>
-
-    <div class="panels">
-      <section class="panel" data-s="1S">
-        <h4 class="pill s1">1S — Selezionare</h4>
-        <p class="s-desc">Eliminare ciò che non serve. Rimuovi tutto ciò che è inutile e crea un'area di lavoro essenziale, ordinata e sicura.</p>
-        <div class="items"></div>
-        <div class="panel-actions"><button class="btn add-item">+ Voce</button></div>
-      </section>
-
-      <section class="panel" data-s="2S">
-        <h4 class="pill s2">2S — Sistemare</h4>
-        <p class="s-desc">Ogni cosa al suo posto. Organizza strumenti e materiali per trovarli e riporli facilmente.</p>
-        <div class="items"></div>
-        <div class="panel-actions"><button class="btn add-item">+ Voce</button></div>
-      </section>
-
-      <section class="panel" data-s="3S">
-        <h4 class="pill s3">3S — Splendere</h4>
-        <p class="s-desc">Pulire è ispezionare. Mantieni pulito e risolvi le cause dello sporco.</p>
-        <div class="items"></div>
-        <div class="panel-actions"><button class="btn add-item">+ Voce</button></div>
-      </section>
-
-      <section class="panel" data-s="4S">
-        <h4 class="pill s4">4S — Standardizzare</h4>
-        <p class="s-desc">Regole e standard visivi chiari (etichette, colori) da seguire.</p>
-        <div class="items"></div>
-        <div class="panel-actions"><button class="btn add-item">+ Voce</button></div>
-      </section>
-
-      <section class="panel" data-s="5S">
-        <h4 class="pill s5">5S — Sostenere</h4>
-        <p class="s-desc">Rendi le prime 4S un'abitudine e promuovi il miglioramento continuo.</p>
-        <div class="items"></div>
-        <div class="panel-actions"><button class="btn add-item">+ Voce</button></div>
-      </section>
-    </div>
-  </article>
-</template>
-
-
-
-<template id="tplItem">
-  <div class="item">
-    <div class="item-hd">
-      <input class="txt" placeholder="Titolo voce…" />
-      <div class="points-dots">
-        <button class="dot" data-val="0">0</button>
-        <button class="dot" data-val="1">1</button>
-        <button class="dot" data-val="3">3</button>
-        <button class="dot" data-val="5">5</button>
+      <div class="item-row">
+        <input class="resp" placeholder="Responsabile" />
+        <input class="due" type="date" />
+        <input class="note" placeholder="Note…" />
       </div>
+      <!-- niente elimina voce per operatori; sarà nascosto se non sbloccato -->
+      <div class="item-actions"><button class="del danger">Elimina voce</button></div>
     </div>
-    <div class="item-row">
-      <input class="resp" placeholder="Responsabile" />
-      <input class="due" type="date" />
-      <input class="note" placeholder="Note…" />
-    </div>
-    <div class="item-actions"><button class="del danger">Elimina voce</button></div>
-  </div>
-</template>
+  </template>
 
+  <dialog id="infoDlg">
+    <form method="dialog" class="modal">
+      <button class="close" aria-label="Chiudi">✕</button>
+      <h3 id="infoTitle"></h3>
+      <p id="infoBody"></p>
+    </form>
+  </dialog>
 
-<footer class="app-footer"><small id="appVersionFooter"></small></footer>
+  <div class="build-badge" id="buildBadge">BUILD v1k</div>
 
-<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.0.0/dist/chartjs-plugin-datalabels.min.js"></script>
-<script src="app.v1j.js?v=hard1"></script>
-<script>
-document.addEventListener('DOMContentLoaded',()=>{
-  const b=document.getElementById('btnLock');
-  if(b) b.addEventListener('click', ()=> window.askSupervisor && window.askSupervisor());
-  setTimeout(()=>{ if(window.setupSingleCH){ window.setupSingleCH('CH 2','Rettifica'); } }, 0);
-});
-</script>
-
-<script>
-document.addEventListener('DOMContentLoaded',()=>{
-  if (window.setupSingleCH) { window.setupSingleCH('CH 2','Rettifica'); }
-});
-</script>
-
-<script>
-document.addEventListener('DOMContentLoaded',()=>{
-  // 1) normal init
-  try { if (window.setupSingleCH) window.setupSingleCH('CH 2','Rettifica'); } catch(e){}
-  // 2) fallback: if nothing rendered, mount template directly so operator vede le 5S
-  setTimeout(()=>{
-    const areas = document.getElementById('areas');
-    if (areas && areas.children.length===0) {
-      const tpl = document.getElementById('tplArea');
-      if (tpl && tpl.content) {
-        areas.appendChild(tpl.content.cloneNode(true));
-        const ln = areas.querySelector('.area-line'); if (ln) ln.value='CH 2';
-      }
-    }
-  }, 120);
-});
-</script>
-
-
-<script>
-document.addEventListener('click', (e)=>{
-  const b=e.target.closest('button.info'); if(!b) return;
-  const dlg=document.getElementById('infoDlg');
-  if(!dlg) return;
-  document.getElementById('infoTitle').textContent=b.dataset.title||'';
-  document.getElementById('infoBody').textContent=b.dataset.text||'';
-  dlg.showModal();
-});
-</script>
-
-
-<script>
-document.addEventListener('click', (e)=>{
-  const b=e.target.closest('button.info.big'); if(!b) return;
-  const dlg=document.getElementById('infoDlg'); if(!dlg) return;
-  const s=b.dataset.s||'';
-  dlg.classList.remove('s1','s2','s3','s4','s5'); if(s) dlg.classList.add(s);
-  document.getElementById('infoTitle').textContent=b.dataset.title||'';
-  document.getElementById('infoBody').textContent=b.dataset.text||'';
-  dlg.showModal();
-});
-</script>
-
-<script>document.addEventListener('DOMContentLoaded',()=>{const f=document.querySelector('#appVersionFooter'); if(f) f.textContent='v1j-hard';});</script>
+  <script src="app.v1k.js"></script>
+  <script>
+    // popup tematico sulle S
+    document.addEventListener('click', (e)=>{
+      const b=e.target.closest('button.info.big'); if(!b) return;
+      const dlg=document.getElementById('infoDlg'); if(!dlg) return;
+      dlg.classList.remove('s1','s2','s3','s4','s5');
+      if(b.dataset.s) dlg.classList.add(b.dataset.s);
+      document.getElementById('infoTitle').textContent=b.dataset.title||'';
+      document.getElementById('infoBody').textContent=b.dataset.text||'';
+      dlg.showModal();
+    });
+  </script>
 </body>
 </html>
