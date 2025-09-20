@@ -102,5 +102,24 @@ document.addEventListener('DOMContentLoaded',()=>{
   if (window.setupSingleCH) { window.setupSingleCH('CH 2','Rettifica'); }
 });
 </script>
+
+<script>
+document.addEventListener('DOMContentLoaded',()=>{
+  // 1) normal init
+  try { if (window.setupSingleCH) window.setupSingleCH('CH 2','Rettifica'); } catch(e){}
+  // 2) fallback: if nothing rendered, mount template directly so operator vede le 5S
+  setTimeout(()=>{
+    const areas = document.getElementById('areas');
+    if (areas && areas.children.length===0) {
+      const tpl = document.getElementById('tplArea');
+      if (tpl && tpl.content) {
+        areas.appendChild(tpl.content.cloneNode(true));
+        const ln = areas.querySelector('.area-line'); if (ln) ln.value='CH 2';
+      }
+    }
+  }, 120);
+});
+</script>
+
 </body>
 </html>
