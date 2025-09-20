@@ -330,3 +330,6 @@ body:not(.edit-unlocked) textarea { pointer-events:none; background:var(--muted-
 .pill.s3{background:#F2B233}
 .pill.s4{background:#22A559}
 .pill.s5{background:#2E74FF}
+
+.area-line.ro{font-weight:600;padding:10px 12px;border-radius:10px;background:var(--muted-bg);}
+button.info{margin-left:8px;border-radius:50%;width:28px;height:28px;line-height:28px;text-align:center;border:1px solid rgba(0,0,0,.1)}

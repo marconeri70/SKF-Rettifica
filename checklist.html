@@ -47,7 +47,7 @@
 <template id="tplArea">
   <article class="area card">
     <header class="area-hd">
-      <input class="area-line" placeholder="CH n" />
+      <div class="area-line ro">CH 2</div>
       <div class="score">
         <span class="score-pill s1" data-s="1S"><b>1S</b> <span class="score-1S">0%</span></span>
         <span class="score-pill s2" data-s="2S"><b>2S</b> <span class="score-2S">0%</span></span>
@@ -60,7 +60,7 @@
         <span class="badge dom">Predominante: <b class="doms">—</b></span>
       </div>
       <div class="hd-actions">
-        <button class="btn ghost collapse">Comprimi</button>
+        <button class="btn ghost collapse" title="Comprimi">Comprimi</button>
         <button class="btn danger delete-area">Elimina</button>
       </div>
     </header>
@@ -161,6 +161,18 @@ document.addEventListener('DOMContentLoaded',()=>{
       }
     }
   }, 120);
+});
+</script>
+
+
+<script>
+document.addEventListener('click', (e)=>{
+  const b=e.target.closest('button.info'); if(!b) return;
+  const dlg=document.getElementById('infoDlg');
+  if(!dlg) return;
+  document.getElementById('infoTitle').textContent=b.dataset.title||'';
+  document.getElementById('infoBody').textContent=b.dataset.text||'';
+  dlg.showModal();
 });
 </script>
 
