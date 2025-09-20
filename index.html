@@ -1,0 +1,92 @@
+<!doctype html>
+<html lang="it">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>SKF 5S • CH 2 Rettifica</title>
+<link rel="icon" href="assets/skf-192.png">
+<link rel="stylesheet" href="style.css?v=tp3">
+</head>
+<body>
+<header class="topbar">
+  <div class="brand"><img src="assets/skf-192.png" alt="SKF"><span>SKF 5S</span></div>
+  <a class="btn ghost" href="checklist.html">Vai alla checklist →</a>
+</header>
+
+<main class="container narrow">
+<section class="card hero-card" style="padding:16px">
+  <img src="assets/5s-hero.png" alt="5S hero">
+  <div>
+    <h1 style="margin:.2rem 0">CH 2 — Rettifica</h1>
+    <div class="cta">
+      <a class="btn primary" href="checklist.html">Vai alla checklist</a>
+      <a class="btn" href="#about">Cos'è 5S</a>
+    </div>
+  </div>
+</section>
+
+<section id="about" class="card" style="padding:16px 18px">
+  <h2>Cosa è 5S</h2>
+  <ul class="bullets">
+    <li><span class="pill s1">1S Selezionare</span> — Avere solo ciò che serve, eliminare il superfluo.</li>
+    <li><span class="pill s2">2S Sistemare</span> — Un posto per tutto e tutto al suo posto.</li>
+    <li><span class="pill s3">3S Splendere</span> — Pulire e rimuovere le cause dello sporco.</li>
+    <li><span class="pill s4">4S Standardizzare</span> — Regole e segnali visivi chiari.</li>
+    <li><span class="pill s5">5S Sostenere</span> — Disciplina, abitudine e miglioramento continuo.</li>
+  </ul>
+</section>
+
+<section class="card" style="padding:16px 18px">
+  <h2>Andamento CH 2</h2>
+  <canvas id="introChart" height="140"></canvas>
+</section>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script>
+(function(){
+  // Try to load any 5S state from localStorage
+  function loadState(){
+    try{
+      for (let i=0;i<localStorage.length;i++){
+        const k=localStorage.key(i);
+        if(/skf\.5s/.test(k)){
+          const v=JSON.parse(localStorage.getItem(k));
+          if(v && Array.isArray(v.areas)) return v;
+        }
+      }
+    }catch(e){}
+    return {areas:[]};
+  }
+  function compute(area){
+    const secs=['Rettifica','Montaggio'];
+    const S=['1S','2S','3S','4S','5S'];
+    let tot=0, sum=0, late=0;
+    secs.forEach(sec=>S.forEach(s=>{
+      const arr=(((area.sectors||{})[sec]||{})[s]||[]);
+      arr.forEach(it=>{
+        const v = Math.max(0, Math.min(5, parseInt(it.val||0,10)||0));
+        sum += v;
+        tot += 5;
+        if (it.due){
+          try{
+            const d=new Date(it.due);
+            if(!isNaN(d) && d < new Date() && v<5) late++;
+          }catch(e){}
+        }
+      });
+    }));
+    return {score: tot? Math.round((sum/tot)*100):0, late};
+  }
+  const st=loadState();
+  const a = st.areas && st.areas[0] ? st.areas[0] : null;
+  const res = a ? compute(a) : {score:0, late:0};
+  const ctx=document.getElementById('introChart').getContext('2d');
+  new Chart(ctx, {
+    type:'bar',
+    data:{labels:['Punteggio medio','Azioni in ritardo'], datasets:[{data:[res.score, res.late]}]},
+    options:{plugins:{legend:{display:false}}, scales:{y:{beginAtZero:true, max:100}}}
+  });
+})();
+</script>
+
+</main>
+</body>
+</html>
