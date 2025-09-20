@@ -4,7 +4,7 @@
    - Scheda con 5 sezioni fisse (descrizioni ufficiali)
    - Fix responsive pulsante "Elimina voce"
 =========================================================================== */
-const VERSION='v7.17.18-CH2';
+const VERSION='v7.18.2-TP';
 const STORE='skf.5s.v7.16';
 const CHART_STORE=STORE+'.chart';
 const POINTS=[0,1,3,5];
@@ -40,7 +40,7 @@ const nextCH=()=>{
 
 /* State helpers */
 function makeSectorSet(){return JSON.parse(JSON.stringify(DEFAULT_VOCI));}
-function makeArea(line){return{line,activeSector:'Rettifica',sectors:{Rettifica:makeSectorSet(),Montaggio:makeSectorSet()}};}
+function makeArea(line){return{line,sectors:{Rettifica:makeSectorSet(),Montaggio:makeSectorSet()}};}
 function load(){try{const raw=localStorage.getItem(STORE);return raw?JSON.parse(raw):{areas:[makeArea('CH 2')]}}catch{return{areas:[makeArea('CH 2')]}}}
 function save(){localStorage.setItem(STORE,JSON.stringify(state))}
 function loadChartPref(){try{return JSON.parse(localStorage.getItem(CHART_STORE))||{zoom:1,stacked:false,scroll:0}}catch{return{zoom:1,stacked:false,scroll:0}}}
@@ -54,23 +54,10 @@ const highlightKeys=new Set();
 
 /* DOM */
 
-let role='worker'; // 'worker' or 'supervisor'
-let CFG={singleArea:false};
-
-async function loadConfig(){
-  try{
-    const r = await fetch('config.json'); if(r.ok){ CFG = await r.json(); }
-  }catch(e){}
-  if(CFG.singleArea){ document.body.classList.add('single-area'); }
-}
-function askSupervisor(){
-  const pin = prompt('Inserisci PIN supervisore');
-  if(pin && CFG?.pins?.supervisor && pin===CFG.pins.supervisor){
-    role='supervisor'; document.body.classList.add('edit-unlocked');
-  }else{
-    alert('PIN errato');
-  }
-}
+let role='worker';
+let CFG={singleArea:true,areaName:'CH 2',fixedSector:'Rettifica',pins:{supervisor:'2468'}};
+window.askSupervisor=function(){ const pin=prompt('PIN supervisore'); if(pin===CFG.pins.supervisor){ role='supervisor'; document.body.classList.add('edit-unlocked'); } };
+function makeArea(line){return{line,activeSector:'Rettifica',sectors:{Rettifica:makeSectorSet(),Montaggio:makeSectorSet()}};}
 
 const elAreas=$('#areas'), elLineFilter=$('#lineFilter'), elQ=$('#q'), elOnlyLate=$('#onlyLate');
 const tplArea=$('#tplArea'), tplItem=$('#tplItem');
@@ -234,7 +221,7 @@ function renderArea(area){
     p.classList.toggle('active',p.dataset.s===area.activeSector);
     const host=$('.items',p);
     const S=p.dataset.s;
-    (area.sectors[area.activeSector][S]||[]).forEach((it,idx)=>{
+    (((area.sectors||{})[area.activeSector]||{})[S]||[]).forEach((it,idx)=>{
       host.appendChild(renderItem(area,area.activeSector,S,it,idx));
     });
     const addBtn=$('.add-item',p);
@@ -286,7 +273,7 @@ function renderItem(area,sector,S,it,idx){
   }));
   $('.info',node).addEventListener('click',()=>{/* handled globally */});
   $('.del',node).addEventListener('click',()=>{
-    const arr=area.sectors[sector][S]; arr.splice(idx,1); save(); render();
+    const arr=((area.sectors||{})[sector]||{})[S]; if(Array.isArray(arr)){arr.splice(idx,1);} save(); render();
   });
   node.addEventListener('click',e=>{
     if(e.target.classList.contains('dot')) node.classList.remove('highlight');
@@ -472,15 +459,21 @@ function buildLineButtons(list){
 /* Events */
 window.addEventListener('orientationchange',()=>setTimeout(()=>drawChart(),250));
 window.addEventListener('resize',()=>drawChart());
-window.addEventListener('load',async()=>{ await loadConfig(); try{normalizeState();}catch(e){} try{ if(CFG.singleArea){ if(!state||!Array.isArray(state.areas)) state={areas:[]}; if(!state.areas.length) state.areas.push(makeArea(CFG.areaName||'CH 2')); if(state.areas.length>1) state.areas=[state.areas[0]]; state.areas[0].line = CFG.areaName || state.areas[0].line || 'CH 2'; if(CFG.fixedSector) state.areas[0].activeSector = CFG.fixedSector; } }catch(e){} requestAnimationFrame(()=>render()); });
+window.addEventListener('load',()=>requestAnimationFrame(()=>render()));
 
-document.addEventListener('DOMContentLoaded',()=>{
-  const b=document.getElementById('btnLock'); if(b) b.addEventListener('click', askSupervisor);
-});
 document.addEventListener('click',(e)=>{
   if(role!=='supervisor'){
-    if(e.target.closest('.delete-area')||e.target.closest('.del')){
-      e.preventDefault(); e.stopPropagation(); return;
-    }
+    if(e.target.closest('.delete-area')||e.target.closest('.del')){ e.preventDefault(); e.stopPropagation(); }
   }
 });
+if(location.pathname.endsWith('checklist.html')){
+  window.addEventListener('load', ()=>{
+    try{
+      if(!state||!Array.isArray(state.areas)) state={areas:[]};
+      if(!state.areas.length) state.areas.push(makeArea(CFG.areaName));
+      if(state.areas.length>1) state.areas=[state.areas[0]];
+      state.areas[0].line=CFG.areaName;
+      state.areas[0].activeSector=CFG.fixedSector;
+    }catch(e){}
+  }, {once:true});
+}

@@ -302,21 +302,24 @@ select{background:var(--panel) url('data:image/svg+xml;utf8,<svg xmlns="http://w
   .card{box-shadow:none;border:none}
 }
 
-/* --- Single-CH rules --- */
+/* Two pages layout + single CH rules */
+header.topbar{display:flex;align-items:center;justify-content:space-between;padding:10px 14px}
+.topbar .brand{display:flex;gap:10px;align-items:center;font-weight:700}
+.topbar .brand img{width:36px;height:36px;border-radius:8px;filter:none !important}
+.container.narrow{max-width:820px;margin:0 auto}
+.hero-card{display:flex;gap:18px;align-items:center}
+.hero-card img{width:140px;height:auto;border-radius:12px;box-shadow:0 6px 18px rgba(0,0,0,.08)}
+.cta{display:flex;gap:12px;flex-wrap:wrap;margin-top:12px}
+.btn.primary{background:var(--accent);color:#fff}
+.note{font-size:.9rem;opacity:.85;margin-top:8px}
 .single-area .tabs,
 .single-area #btnNewArea,
 .single-area #lineFilter,
 .single-area #btnAll,
 .single-area #btnAsm,
 .single-area #sectorFilter { display:none !important; }
-
-/* Workers (locked) cannot add/delete */
 body:not(.edit-unlocked) .btn.danger,
 body:not(.edit-unlocked) .add-item { display:none !important; }
-
-/* Inputs read-only look */
 body:not(.edit-unlocked) input[type="text"],
 body:not(.edit-unlocked) input[type="date"],
 body:not(.edit-unlocked) textarea { pointer-events:none; background:var(--muted-bg); color:var(--muted-fg); }
-
-.topbar .brand img { filter:none !important; } /* logo a colori */
