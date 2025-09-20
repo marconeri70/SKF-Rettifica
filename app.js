@@ -4,7 +4,7 @@
    - Scheda con 5 sezioni fisse (descrizioni ufficiali)
    - Fix responsive pulsante "Elimina voce"
 =========================================================================== */
-const VERSION='v7.17.10';
+const VERSION='v7.17.17-NOSW';
 const STORE='skf.5s.v7.16';
 const CHART_STORE=STORE+'.chart';
 const POINTS=[0,1,3,5];
@@ -40,7 +40,7 @@ const nextCH=()=>{
 
 /* State helpers */
 function makeSectorSet(){return JSON.parse(JSON.stringify(DEFAULT_VOCI));}
-function makeArea(line){return{line,sectors:{Rettifica:makeSectorSet(),Montaggio:makeSectorSet()}};}
+function makeArea(line){return{line,activeSector:'Rettifica',sectors:{Rettifica:makeSectorSet(),Montaggio:makeSectorSet()}};}
 function load(){try{const raw=localStorage.getItem(STORE);return raw?JSON.parse(raw):{areas:[makeArea('CH 2')]}}catch{return{areas:[makeArea('CH 2')]}}}
 function save(){localStorage.setItem(STORE,JSON.stringify(state))}
 function loadChartPref(){try{return JSON.parse(localStorage.getItem(CHART_STORE))||{zoom:1,stacked:false,scroll:0}}catch{return{zoom:1,stacked:false,scroll:0}}}
@@ -53,6 +53,27 @@ let chartPref=loadChartPref();
 const highlightKeys=new Set();
 
 /* DOM */
+
+// Safe text setter
+function setTxt(el,val){ if(el) try{el.textContent=val;}catch(e){} }
+// Register datalabels plugin if available
+try{ if(window.ChartDataLabels && window.Chart && typeof Chart.register==='function'){ Chart.register(window.ChartDataLabels); } }catch(e){}
+// Normalize existing saved state (fill missing activeSector/arrays)
+function normalizeState(){
+  if(!state || !Array.isArray(state.areas)) state={areas:[makeArea('CH 2')]};
+  if(!state.areas.length) state.areas.push(makeArea('CH 2'));
+  state.areas.forEach(a=>{
+    if(!a.activeSector) a.activeSector='Rettifica';
+    if(!a.sectors) a.sectors={Rettifica:makeSectorSet(),Montaggio:makeSectorSet()};
+    ['Rettifica','Montaggio'].forEach(sec=>{
+      if(!a.sectors[sec]) a.sectors[sec]=makeSectorSet();
+      ['1S','2S','3S','4S','5S'].forEach(S=>{
+        if(!Array.isArray(a.sectors[sec][S])) a.sectors[sec][S]=[];
+      });
+    });
+  });
+}
+
 const elAreas=$('#areas'), elLineFilter=$('#lineFilter'), elQ=$('#q'), elOnlyLate=$('#onlyLate');
 const tplArea=$('#tplArea'), tplItem=$('#tplItem');
 const elKpiAreas=$('#kpiAreas'), elKpiScore=$('#kpiScore'), elKpiLate=$('#kpiLate');
@@ -166,7 +187,7 @@ function filteredAreas(){
     if(ui.line!=='ALL' && (a.line||'').trim()!==ui.line) return false;
     if(!q && !ui.onlyLate) return true;
     let ok=false;
-    secs.forEach(sec=>['1S','2S','3S','4S','5S'].forEach(S=>(a.sectors[sec][S]||[]).forEach(it=>{
+    secs.forEach(sec=>['1S','2S','3S','4S','5S'].forEach(S=>(((a.sectors||{})[sec]||{})[S]||[]).forEach(it=>{
       if(ui.onlyLate && !isOverdue(it.due)) return;
       if(!q){ ok=true; return; }
       const bag=`${it.t||''} ${it.note||''} ${it.resp||''}`.toLowerCase();
@@ -187,7 +208,15 @@ function computeByS(area,sector){
   const dom=(domKey && byS[domKey]>0)?domKey:'—';
   return {score:max?sum/max:0,byS,dom};
 }
-function renderArea(area){
+
+function hasLateByS(area, sector){
+  const secs = sector==='ALL'?['Rettifica','Montaggio']:[sector];
+  const res = {"1S":false,"2S":false,"3S":false,"4S":false,"5S":false};
+  secs.forEach(sec=>['1S','2S','3S','4S','5S'].forEach(S=>(((area.sectors||{})[sec]||{})[S]||[]).forEach(it=>{ if(isOverdue(it.due)) res[S]=true; })));
+  return res;
+}
+
+function renderArea(area){ if(!area.activeSector) area.activeSector='Rettifica';
   const node=tplArea.content.cloneNode(true).firstElementChild;
   const area_line=$('.area-line',node);
   area_line.value=area.line||'';
@@ -215,7 +244,7 @@ function renderArea(area){
     p.classList.toggle('active',p.dataset.s===area.activeSector);
     const host=$('.items',p);
     const S=p.dataset.s;
-    (area.sectors[area.activeSector][S]||[]).forEach((it,idx)=>{
+    (((area.sectors||{})[area.activeSector]||{})[S]||[]).forEach((it,idx)=>{
       host.appendChild(renderItem(area,area.activeSector,S,it,idx));
     });
     const addBtn=$('.add-item',p);
@@ -237,13 +266,15 @@ function renderArea(area){
 }
 function refreshScores(areaNode,area,sector){
   const {score,byS,dom}=computeByS(area,sector);
-  $('.score-val',areaNode).textContent=pct(score);
-  $('.doms',areaNode).textContent=dom;
+  setTxt($('.score-val',areaNode),pct(score));
+  setTxt($('.doms',areaNode),dom);
   const pills=$$('.score-pill',areaNode);
+  const lateMap = hasLateByS(area, sector);
   pills.forEach(p=>{
     const S=p.dataset.s;
     $('.score-'+S,p).textContent=pct(byS[S]);
     if(byS[S]===0) p.classList.remove('has-score'); else p.classList.add('has-score');
+    p.classList.toggle('late', !!lateMap[S]);
   });
 }
 function renderItem(area,sector,S,it,idx){
@@ -267,7 +298,7 @@ function renderItem(area,sector,S,it,idx){
   }));
   $('.info',node).addEventListener('click',()=>{/* handled globally */});
   $('.del',node).addEventListener('click',()=>{
-    const arr=area.sectors[sector][S]; arr.splice(idx,1); save(); render();
+    const arr=((area.sectors||{})[sector]||{})[S]; if(Array.isArray(arr)){arr.splice(idx,1);} save(); render();
   });
   node.addEventListener('click',e=>{
     if(e.target.classList.contains('dot')) node.classList.remove('highlight');
@@ -283,7 +314,7 @@ function overallStats(list){
   const secs=ui.sector==='ALL'?['Rettifica','Montaggio']:[ui.sector];
   let sum=0,max=0,late=0;
   (list||filteredAreas()).forEach(a=>{
-    secs.forEach(sec=>['1S','2S','3S','4S','5S'].forEach(S=>(a.sectors[sec][S]||[]).forEach(it=>{
+    secs.forEach(sec=>['1S','2S','3S','4S','5S'].forEach(S=>(((a.sectors||{})[sec]||{})[S]||[]).forEach(it=>{
       sum+=(+it.p||0); max+=5;
       if(isOverdue(it.due)) late++;
     })));
@@ -292,9 +323,9 @@ function overallStats(list){
 }
 function updateDashboard(list){
   const {score,late}=overallStats(list);
-  elKpiAreas.textContent=(list||filteredAreas()).length;
-  elKpiScore.textContent=pct(score);
-  elKpiLate.textContent=late;
+  setTxt(elKpiAreas,(list||filteredAreas()).length);
+  setTxt(elKpiScore,pct(score));
+  setTxt(elKpiLate,late);
   renderLateList(list);
 }
 function renderLateList(list){
@@ -378,7 +409,7 @@ function drawChart(list){
   groups.forEach(g=>Object.keys(g.scores).forEach(S=>allScores[S]+=(g.scores[S]||0)));
   const totalScores=Object.keys(allScores).reduce((a,b)=>a+(allScores[b]||0),0);
   const globalScore=Math.round(totalScores*100/Object.keys(allScores).length/groups.length);
-  $('#kpiScore').textContent=pct(globalScore/100);
+  setTxt($('#kpiScore'),pct(globalScore/100));
 
   const colors=['#8b6ad8','#ff5a5f','#f2b731','#2dbE6d','#2f7ef6'];
   const data=groups.map(g=>Object.values(g.scores).map(s=>Math.round(s*100)));
@@ -453,4 +484,4 @@ function buildLineButtons(list){
 /* Events */
 window.addEventListener('orientationchange',()=>setTimeout(()=>drawChart(),250));
 window.addEventListener('resize',()=>drawChart());
-window.addEventListener('load',()=>requestAnimationFrame(()=>render()));
+window.addEventListener('load',()=>{ try{normalizeState();}catch(e){} requestAnimationFrame(()=>render()); });

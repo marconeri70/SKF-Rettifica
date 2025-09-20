@@ -9,7 +9,7 @@
   <link rel="icon" sizes="192x192" href="assets/skf-192.png" />
   <link rel="apple-touch-icon" href="assets/skf-192.png" />
 
-  <link rel="stylesheet" href="style.css" />
+  <link rel="stylesheet" href="style.css?v=7.17.17" />
   <meta name="theme-color" content="#0b66ff" />
 </head>
 <body>
@@ -20,14 +20,14 @@
   </div>
 
   <div class="tools">
-    <button id="btnNewArea" class="btn primary">+ Nuova linea</button>
-    <button id="btnExport" class="btn">Esporta</button>
+    <button id="btnNewArea" class="btn primary" aria-label="Crea nuova linea">+ Nuova linea</button>
+    <button id="btnExport" class="btn" aria-label="Esporta dati">Esporta</button>
     <label class="btn file">
       <input id="fileImport" type="file" accept="application/json" hidden>
       <span>Importa</span>
     </label>
-    <button id="btnPrint" class="btn">Stampa</button>
-    <button id="btnTheme" class="btn ghost">🌓 Tema</button>
+    <button id="btnPrint" class="btn" aria-label="Stampa">Stampa</button>
+    <button id="btnTheme" class="btn ghost" aria-label="Cambia tema">🌓 Tema</button>
   </div>
 </header>
 
@@ -74,8 +74,8 @@
       <div class="kpi"><div class="kpi-title">Azioni in ritardo</div><div id="kpiLate" class="kpi-value">0</div></div>
 
       <div class="zoom">
-        <button id="zoomOut" class="mini">–</button>
-        <button id="zoomIn" class="mini">+</button>
+        <button id="zoomOut" class="mini" aria-label="Zoom meno">–</button>
+        <button id="zoomIn" class="mini" aria-label="Zoom più">+</button>
         <label class="chk stack">
           <input id="toggleStacked" type="checkbox">
           <span>Stacked</span>
@@ -126,11 +126,11 @@
     <header class="area-hd">
       <input class="area-line" placeholder="CH n" />
       <div class="score">
-        <span class="score-pill s1"><b>1S</b> <span class="score-1S">0%</span></span>
-        <span class="score-pill s2"><b>2S</b> <span class="score-2S">0%</span></span>
-        <span class="score-pill s3"><b>3S</b> <span class="score-3S">0%</span></span>
-        <span class="score-pill s4"><b>4S</b> <span class="score-4S">0%</span></span>
-        <span class="score-pill s5"><b>5S</b> <span class="score-5S">0%</span></span>
+        <span class="score-pill s1" data-s="1S"><b>1S</b> <span class="score-1S">0%</span></span>
+        <span class="score-pill s2" data-s="2S"><b>2S</b> <span class="score-2S">0%</span></span>
+        <span class="score-pill s3" data-s="3S"><b>3S</b> <span class="score-3S">0%</span></span>
+        <span class="score-pill s4" data-s="4S"><b>4S</b> <span class="score-4S">0%</span></span>
+        <span class="score-pill s5" data-s="5S"><b>5S</b> <span class="score-5S">0%</span></span>
       </div>
       <div class="sum">
         <span class="badge">Punteggio: <b class="score-val">0%</b></span>
@@ -199,7 +199,7 @@
 <template id="tplItem">
   <div class="item">
     <div class="item-hd">
-      <button class="info">i</button>
+      <button class="info" aria-label="Dettagli voce" title="Dettagli">i</button>
       <input class="txt" placeholder="Titolo voce…" />
       <div class="points-dots">
         <button class="dot" data-val="0">0</button>
@@ -227,6 +227,6 @@
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.0.0/dist/chartjs-plugin-datalabels.min.js"></script>
-<script src="app.js"></script>
+<script src="app.js?v=7.17.17"></script>
 </body>
 </html>
