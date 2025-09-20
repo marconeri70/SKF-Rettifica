@@ -45,17 +45,14 @@
     </section>
   </main>
 
-  <!-- Banner build visibile per diagnosticare cache -->
-  <div class="build-badge" id="buildBadge">BUILD v1k</div>
+  <div class="build-badge" id="buildBadge">BUILD v1k-full</div>
 
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
   <script>
   (function(){
-    // kill eventuali service worker rimasti
     if ('serviceWorker' in navigator) {
       navigator.serviceWorker.getRegistrations().then(rs => rs.forEach(r => r.unregister()));
     }
-    // carica stato salvato (se presente)
     function loadState(){
       try{
         const v = localStorage.getItem('skf.5s.v1k');
@@ -65,32 +62,23 @@
     }
     const st = loadState();
     const a = st.areas[0];
-    // calcolo semplice KPI (media % su 0..5)
     function kpi(area){
       if(!area) return {score:0, late:0};
-      const secs = ['Rettifica','Montaggio'];
-      const Ss = ['1S','2S','3S','4S','5S'];
-      let sum=0, tot=0, late=0, now=Date.now();
+      const secs=['Rettifica','Montaggio']; const Ss=['1S','2S','3S','4S','5S'];
+      let sum=0,tot=0,late=0,now=Date.now();
       secs.forEach(sec=>Ss.forEach(S=>{
-        const arr = (((area.sectors||{})[sec]||{})[S]||[]);
+        const arr=(((area.sectors||{})[sec]||{})[S]||[]);
         arr.forEach(it=>{
-          const v = Math.max(0,Math.min(5,parseInt(it.val||0,10)||0));
-          sum += v; tot += 5;
-          if(it.due){ const t=Date.parse(it.due); if(!isNaN(t)&&t<now && v<5) late++; }
+          const v=Math.max(0,Math.min(5,parseInt(it.val||0,10)||0));
+          sum+=v; tot+=5;
+          if(it.due){const t=Date.parse(it.due);if(!isNaN(t)&&t<now&&v<5) late++;}
         });
-      })));
-      return {score: tot? Math.round((sum/tot)*100):0, late};
+      }));
+      return {score:tot?Math.round((sum/tot)*100):0,late};
     }
-    const {score, late} = kpi(a);
-    const ctx = document.getElementById('introChart').getContext('2d');
-    new Chart(ctx,{
-      type:'bar',
-      data:{ labels:['Punteggio medio','Azioni in ritardo'], datasets:[{ data:[score, late] }] },
-      options:{
-        plugins:{ legend:{display:false} },
-        scales:{ y:{ beginAtZero:true, max:100, grid:{display:false} }, x:{ grid:{display:false} } }
-      }
-    });
+    const {score,late}=kpi(a);
+    const ctx=document.getElementById('introChart').getContext('2d');
+    new Chart(ctx,{type:'bar',data:{labels:['Punteggio medio','Azioni in ritardo'],datasets:[{data:[score,late]}]},options:{plugins:{legend:{display:false}},scales:{y:{beginAtZero:true,max:100,grid:{display:false}},x:{grid:{display:false}}}}});
   })();
   </script>
 </body>
