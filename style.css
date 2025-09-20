@@ -323,3 +323,10 @@ body:not(.edit-unlocked) .add-item { display:none !important; }
 body:not(.edit-unlocked) input[type="text"],
 body:not(.edit-unlocked) input[type="date"],
 body:not(.edit-unlocked) textarea { pointer-events:none; background:var(--muted-bg); color:var(--muted-fg); }
+
+.pill{display:inline-block;padding:6px 10px;border-radius:8px;color:#fff;font-weight:600}
+.pill.s1{background:#8064E9}
+.pill.s2{background:#F04A47}
+.pill.s3{background:#F2B233}
+.pill.s4{background:#22A559}
+.pill.s5{background:#2E74FF}

@@ -17,6 +17,16 @@
 </header>
 
 <main class="container">
+
+<!-- hidden controls required by app.js to avoid early returns -->
+<div style="display:none">
+  <input id="q" />
+  <select id="lineFilter"></select>
+  <select id="sectorFilter"></select>
+  <button id="btnAll"></button>
+  <button id="btnAsm"></button>
+</div>
+
   <section class="dashboard card">
     <div class="kpis">
       <div class="kpi"><div class="kpi-title">Punteggio medio</div><div id="kpiScore" class="kpi-value">0%</div></div>
@@ -43,11 +53,11 @@
     </header>
 
     <div class="panels">
-      <section class="panel" data-s="1S"><h4>1S — Selezionare</h4><div class="items"></div><div class="panel-actions"><button class="btn add-item">+ Voce</button></div></section>
-      <section class="panel" data-s="2S"><h4>2S — Sistemare</h4><div class="items"></div><div class="panel-actions"><button class="btn add-item">+ Voce</button></div></section>
-      <section class="panel" data-s="3S"><h4>3S — Splendere</h4><div class="items"></div><div class="panel-actions"><button class="btn add-item">+ Voce</button></div></section>
-      <section class="panel" data-s="4S"><h4>4S — Standardizzare</h4><div class="items"></div><div class="panel-actions"><button class="btn add-item">+ Voce</button></div></section>
-      <section class="panel" data-s="5S"><h4>5S — Sostenere</h4><div class="items"></div><div class="panel-actions"><button class="btn add-item">+ Voce</button></div></section>
+      <section class="panel" data-s="1S"><h4 class="pill s1">1S — Selezionare</h4><div class="items"></div><div class="panel-actions"><button class="btn add-item">+ Voce</button></div></section>
+      <section class="panel" data-s="2S"><h4 class="pill s2">2S — Sistemare</h4><div class="items"></div><div class="panel-actions"><button class="btn add-item">+ Voce</button></div></section>
+      <section class="panel" data-s="3S"><h4 class="pill s3">3S — Splendere</h4><div class="items"></div><div class="panel-actions"><button class="btn add-item">+ Voce</button></div></section>
+      <section class="panel" data-s="4S"><h4 class="pill s4">4S — Standardizzare</h4><div class="items"></div><div class="panel-actions"><button class="btn add-item">+ Voce</button></div></section>
+      <section class="panel" data-s="5S"><h4 class="pill s5">5S — Sostenere</h4><div class="items"></div><div class="panel-actions"><button class="btn add-item">+ Voce</button></div></section>
     </div>
   </article>
 </template>
