@@ -333,3 +333,18 @@ body:not(.edit-unlocked) textarea { pointer-events:none; background:var(--muted-
 
 .area-line.ro{font-weight:600;padding:10px 12px;border-radius:10px;background:var(--muted-bg);}
 button.info{margin-left:8px;border-radius:50%;width:28px;height:28px;line-height:28px;text-align:center;border:1px solid rgba(0,0,0,.1)}
+
+button.info.big{margin-left:10px;width:34px;height:34px;border-radius:50%;font-weight:700;border:none;color:#fff}
+.panel[data-s="1S"] button.info.big{background:#8064E9;}
+.panel[data-s="2S"] button.info.big{background:#F04A47;}
+.panel[data-s="3S"] button.info.big{background:#F2B233;color:#111;}
+.panel[data-s="4S"] button.info.big{background:#22A559;}
+.panel[data-s="5S"] button.info.big{background:#2E74FF;}
+
+#infoDlg::backdrop{background:rgba(0,0,0,.4)}
+#infoDlg .modal{border-radius:16px;padding:16px 18px}
+#infoDlg.s1 .modal{border-top:6px solid #8064E9}
+#infoDlg.s2 .modal{border-top:6px solid #F04A47}
+#infoDlg.s3 .modal{border-top:6px solid #F2B233}
+#infoDlg.s4 .modal{border-top:6px solid #22A559}
+#infoDlg.s5 .modal{border-top:6px solid #2E74FF}
