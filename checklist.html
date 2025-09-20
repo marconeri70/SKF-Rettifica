@@ -8,7 +8,7 @@
 </head>
 <body>
 <header class="topbar">
-  <div class="brand"><img src="assets/skf-192.png" alt="SKF"><span>SKF 5S</span></div>
+  <div class="brand"><img src="assets/skf-192.png" alt="SKF"><span>SKF 5S</span></div><h2 style="margin-left:12px;font-size:1.1rem;font-weight:600">CH 2 — Rettifica</h2>
   <div class="tools">
     <a class="btn ghost" href="./">← Indietro</a>
     <button id="btnLock" class="btn ghost" aria-label="Sblocca con PIN">🔒</button>
@@ -83,6 +83,7 @@
 document.addEventListener('DOMContentLoaded',()=>{
   const b=document.getElementById('btnLock');
   if(b) b.addEventListener('click', ()=> window.askSupervisor && window.askSupervisor());
+  setTimeout(()=>{ if(window.setupSingleCH){ window.setupSingleCH('CH 2','Rettifica'); } }, 0);
 });
 </script>
 
