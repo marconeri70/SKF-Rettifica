@@ -1,110 +1,90 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="it">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
-  <title>Checklist 5S • CH 2 Rettifica</title>
-  <link rel="icon" href="assets/skf-192.png" />
-  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
-  <meta http-equiv="Pragma" content="no-cache" />
-  <meta http-equiv="Expires" content="0" />
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SKF 5S – CH2 Rettifica</title>
   <link rel="stylesheet" href="style.v1k.css">
 </head>
 <body>
-  <a class="fab back" href="./" aria-label="Indietro">←</a>
   <header class="topbar">
-    <div class="brand"><img src="assets/skf-192.png" alt="SKF"><span>SKF 5S</span></div>
-    <div class="tools">
-      <a class="btn ghost" href="./">← Indietro</a>
-      <button id="btnTheme" class="btn ghost" aria-label="Cambia tema">🌓 Tema</button>
+    <div class="brand">
+      <img src="assets/skf-192.png" alt="SKF">
+      <span>SKF 5S</span>
     </div>
+    <a class="btn ghost" href="index.html">← Indietro</a>
   </header>
-  <main class="container">
-    <section class="dashboard card">
+
+  <main class="container narrow">
+    <div class="card">
       <div class="kpis">
-        <div class="kpi"><div class="kpi-title">Punteggio medio</div><div id="kpiScore" class="kpi-value">0%</div></div>
-        <div class="kpi"><div class="kpi-title">Azioni in ritardo</div><div id="kpiLate" class="kpi-value">0</div></div>
+        <div class="kpi">
+          <div class="kpi-title">Punteggio medio</div>
+          <div class="kpi-value" id="kpiScore">0%</div>
+        </div>
+        <div class="kpi">
+          <div class="kpi-title">Azioni in ritardo</div>
+          <div class="kpi-value" id="kpiLate">0</div>
+        </div>
       </div>
-      <div class="stack-controls" style="margin:8px 0 12px; display:flex; gap:8px;">
-        <button id="btnCollapseAll" class="btn">Comprimi tutto</button>
-        <button id="btnExpandAll" class="btn">Espandi tutto</button>
-      </div>
-      <div id="areas"></div>
-    </section>
+    </div>
+
+    <div id="areas"></div>
   </main>
+
   <template id="tplArea">
-    <article class="area card">
-      <header class="area-hd">
-        <div class="score">
-          <span class="score-pill s1" data-s="1S"><b>1S</b> <span class="score-1S">0%</span></span>
-          <span class="score-pill s2" data-s="2S"><b>2S</b> <span class="score-2S">0%</span></span>
-          <span class="score-pill s3" data-s="3S"><b>3S</b> <span class="score-3S">0%</span></span>
-          <span class="score-pill s4" data-s="4S"><b>4S</b> <span class="score-4S">0%</span></span>
-          <span class="score-pill s5" data-s="5S"><b>5S</b> <span class="score-5S">0%</span></span>
-        </div>
-        <div class="sum">
-          <span class="badge">Punteggio: <b class="score-val">0%</b></span>
-          <span class="badge dom">Predominante: <b class="doms">—</b></span>
-        </div>
-        <div class="hd-actions">
-          <button class="btn ghost collapse" title="Comprimi">Comprimi</button>
-        </div>
-      </header>
+    <div class="area card">
+      <div class="score">
+        <div class="score-pill s1">1S <b class="score-1S">0%</b></div>
+        <div class="score-pill s2">2S <b class="score-2S">0%</b></div>
+        <div class="score-pill s3">3S <b class="score-3S">0%</b></div>
+        <div class="score-pill s4">4S <b class="score-4S">0%</b></div>
+        <div class="score-pill s5">5S <b class="score-5S">0%</b></div>
+      </div>
+      <div class="sum">
+        <span>Punteggio: <b class="score-val">0%</b></span>
+        <span>Predominante: <b class="doms">—</b></span>
+      </div>
+      <button class="btn ghost collapse">Comprimi / Espandi</button>
+
       <div class="panels">
-        <section class="panel" data-s="1S">
-          <h4 class="pill s1">1S — Selezionare</h4>
-          <button class="info big" data-s="s1" data-title="1S — Selezionare" data-text="Eliminare ciò che non serve.">i</button>
-          <div class="items"></div><div class="panel-actions"><button class="btn add-item">+ Voce</button></div>
-        </section>
-        <section class="panel" data-s="2S">
-          <h4 class="pill s2">2S — Sistemare</h4>
-          <button class="info big" data-s="s2" data-title="2S — Sistemare" data-text="Un posto per tutto.">i</button>
-          <div class="items"></div><div class="panel-actions"><button class="btn add-item">+ Voce</button></div>
-        </section>
-        <section class="panel" data-s="3S">
-          <h4 class="pill s3">3S — Splendere</h4>
-          <button class="info big" data-s="s3" data-title="3S — Splendere" data-text="Pulire è ispezionare.">i</button>
-          <div class="items"></div><div class="panel-actions"><button class="btn add-item">+ Voce</button></div>
-        </section>
-        <section class="panel" data-s="4S">
-          <h4 class="pill s4">4S — Standardizzare</h4>
-          <button class="info big" data-s="s4" data-title="4S — Standardizzare" data-text="Regole e segnali chiari.">i</button>
-          <div class="items"></div><div class="panel-actions"><button class="btn add-item">+ Voce</button></div>
-        </section>
-        <section class="panel" data-s="5S">
-          <h4 class="pill s5">5S — Sostenere</h4>
-          <button class="info big" data-s="s5" data-title="5S — Sostenere" data-text="Abitudine e miglioramento continuo.">i</button>
-          <div class="items"></div><div class="panel-actions"><button class="btn add-item">+ Voce</button></div>
-        </section>
-      </div>
-    </article>
-  </template>
-  <template id="tplItem">
-    <div class="item">
-      <div class="item-hd"><input class="txt" placeholder="Titolo voce…">
-        <div class="points-dots">
-          <button class="dot" data-val="0">0</button><button class="dot" data-val="1">1</button><button class="dot" data-val="3">3</button><button class="dot" data-val="5">5</button>
+        <div class="panel" data-s="1S">
+          <div class="pill s1">1S — Selezionare</div>
+          <button class="info big">i</button>
+          <div class="items"></div>
+          <button class="btn ghost add">+ Voce</button>
+        </div>
+        <div class="panel" data-s="2S">
+          <div class="pill s2">2S — Sistemare</div>
+          <button class="info big">i</button>
+          <div class="items"></div>
+          <button class="btn ghost add">+ Voce</button>
+        </div>
+        <div class="panel" data-s="3S">
+          <div class="pill s3">3S — Splendere</div>
+          <button class="info big">i</button>
+          <div class="items"></div>
+          <button class="btn ghost add">+ Voce</button>
+        </div>
+        <div class="panel" data-s="4S">
+          <div class="pill s4">4S — Standardizzare</div>
+          <button class="info big">i</button>
+          <div class="items"></div>
+          <button class="btn ghost add">+ Voce</button>
+        </div>
+        <div class="panel" data-s="5S">
+          <div class="pill s5">5S — Sostenere</div>
+          <button class="info big">i</button>
+          <div class="items"></div>
+          <button class="btn ghost add">+ Voce</button>
         </div>
       </div>
-      <div class="item-row"><input class="resp" placeholder="Responsabile"><input class="due" type="date"><input class="note" placeholder="Note…"></div>
-      <div class="item-actions"><button class="del danger">Elimina voce</button></div>
     </div>
   </template>
-  <dialog id="infoDlg"><form method="dialog" class="modal"><button class="close" aria-label="Chiudi">✕</button><h3 id="infoTitle"></h3><p id="infoBody"></p></form></dialog>
-  <div class="build-badge" id="buildBadge">BUILD v1k-full</div>
+
+  <dialog id="infoDlg"><div class="modal"></div></dialog>
+  <div class="build-badge">BUILD v1k-full</div>
+
   <script src="app.v1k.js"></script>
-  <script>
-  document.addEventListener('click',e=>{
-    const b=e.target.closest('button.info.big');if(!b)return;
-    const dlg=document.getElementById('infoDlg');if(!dlg)return;
-    dlg.classList.remove('s1','s2','s3','s4','s5');
-    if(b.dataset.s)dlg.classList.add(b.dataset.s);
-    document.getElementById('infoTitle').textContent=b.dataset.title||'';
-    document.getElementById('infoBody').textContent=b.dataset.text||'';
-    dlg.showModal();
-  });
-  document.getElementById('btnCollapseAll')?.addEventListener('click',()=>{document.querySelectorAll('.panels').forEach(p=>p.classList.add('collapsed'));});
-  document.getElementById('btnExpandAll')?.addEventListener('click',()=>{document.querySelectorAll('.panels').forEach(p=>p.classList.remove('collapsed'));});
-  </script>
 </body>
 </html>

@@ -1,85 +1,63 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="it">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
-  <title>SKF 5S • CH 2 Rettifica</title>
-  <link rel="icon" href="assets/skf-192.png" />
-  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
-  <meta http-equiv="Pragma" content="no-cache" />
-  <meta http-equiv="Expires" content="0" />
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SKF 5S</title>
   <link rel="stylesheet" href="style.v1k.css">
+  <link rel="manifest" href="manifest.json">
 </head>
 <body>
   <header class="topbar">
-    <div class="brand"><img src="assets/skf-192.png" alt="SKF"><span>SKF 5S</span></div>
+    <div class="brand">
+      <img src="assets/skf-192.png" alt="SKF">
+      <span>SKF 5S</span>
+    </div>
     <a class="btn ghost" href="checklist.html">Vai alla checklist →</a>
   </header>
 
-  <main class="container narrow">
-    <section class="card hero-card">
+  <main class="container">
+    <div class="card hero-card">
       <img src="assets/5s-hero.png" alt="5S hero">
       <div>
-        <h1>CH 2 — Rettifica</h1>
-        <div class="cta">
-          <a class="btn primary" href="checklist.html">Vai alla checklist</a>
-          <a class="btn" href="#about">Cos'è 5S</a>
-        </div>
+        <h2>Cosa è 5S</h2>
+        <ul class="bullets">
+          <li><span class="pill s1">1S Selezionare</span> — Avere solo ciò che serve, eliminare il superfluo.</li>
+          <li><span class="pill s2">2S Sistemare</span> — Un posto per tutto e tutto al suo posto.</li>
+          <li><span class="pill s3">3S Splendere</span> — Pulire e rimuovere le cause dello sporco.</li>
+          <li><span class="pill s4">4S Standardizzare</span> — Regole e segnali visivi chiari.</li>
+          <li><span class="pill s5">5S Sostenere</span> — Disciplina, abitudine e miglioramento continuo.</li>
+        </ul>
       </div>
-    </section>
+    </div>
 
-    <section id="about" class="card">
-      <h2>Cosa è 5S</h2>
-      <ul class="bullets">
-        <li><span class="pill s1">1S Selezionare</span> — Eliminare il superfluo.</li>
-        <li><span class="pill s2">2S Sistemare</span> — Un posto per tutto.</li>
-        <li><span class="pill s3">3S Splendere</span> — Pulire e prevenire lo sporco.</li>
-        <li><span class="pill s4">4S Standardizzare</span> — Regole e segnali chiari.</li>
-        <li><span class="pill s5">5S Sostenere</span> — Abitudine e miglioramento continuo.</li>
-      </ul>
-    </section>
-
-    <section class="card">
-      <h2>Andamento CH 2</h2>
-      <canvas id="introChart" height="140"></canvas>
-    </section>
+    <div class="card">
+      <h3>Andamento CH 2</h3>
+      <canvas id="chart" height="120"></canvas>
+    </div>
   </main>
 
-  <div class="build-badge" id="buildBadge">BUILD v1k-full</div>
+  <div class="build-badge">BUILD v1k-full</div>
 
-  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <script>
-  (function(){
-    if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.getRegistrations().then(rs => rs.forEach(r => r.unregister()));
-    }
-    function loadState(){
-      try{
-        const v = localStorage.getItem('skf.5s.v1k');
-        if(v){ const s = JSON.parse(v); if(s && Array.isArray(s.areas)) return s; }
-      }catch(e){}
-      return {areas:[]};
-    }
-    const st = loadState();
-    const a = st.areas[0];
-    function kpi(area){
-      if(!area) return {score:0, late:0};
-      const secs=['Rettifica','Montaggio']; const Ss=['1S','2S','3S','4S','5S'];
-      let sum=0,tot=0,late=0,now=Date.now();
-      secs.forEach(sec=>Ss.forEach(S=>{
-        const arr=(((area.sectors||{})[sec]||{})[S]||[]);
-        arr.forEach(it=>{
-          const v=Math.max(0,Math.min(5,parseInt(it.val||0,10)||0));
-          sum+=v; tot+=5;
-          if(it.due){const t=Date.parse(it.due);if(!isNaN(t)&&t<now&&v<5) late++;}
-        });
-      }));
-      return {score:tot?Math.round((sum/tot)*100):0,late};
-    }
-    const {score,late}=kpi(a);
-    const ctx=document.getElementById('introChart').getContext('2d');
-    new Chart(ctx,{type:'bar',data:{labels:['Punteggio medio','Azioni in ritardo'],datasets:[{data:[score,late]}]},options:{plugins:{legend:{display:false}},scales:{y:{beginAtZero:true,max:100,grid:{display:false}},x:{grid:{display:false}}}}});
-  })();
+    const ctx = document.getElementById('chart').getContext('2d');
+    new Chart(ctx, {
+      type: 'bar',
+      data: {
+        labels: ['Punteggio medio', 'Azioni in ritardo'],
+        datasets: [{
+          data: [0, 0],
+          backgroundColor: ['#0b66ff','#e23232']
+        }]
+      },
+      options: {
+        plugins: { legend: { display: false } },
+        scales: {
+          y: { grid: { display:false }, beginAtZero:true, max:100 }
+        }
+      }
+    });
   </script>
 </body>
 </html>
