@@ -1,5 +1,5 @@
 /* ===========================================================
-   SKF 5S – v1k-CH24
+   SKF 5S – v1k-CH24 (update: ritardi e PIN reale)
    =========================================================== */
 
 const UI = {
@@ -21,16 +21,26 @@ const UI = {
 const COLORS = {
   s1: getCss('--s1'),
   s2: getCss('--s2'),
-  s3: getCss('--s3'), // fix: era nero, ora arancio giallo
+  s3: getCss('--s3'),
   s4: getCss('--s4'),
   s5: getCss('--s5'),
   late: getCss('--late'),
 };
 function getCss(v){ return getComputedStyle(document.documentElement).getPropertyValue(v).trim(); }
 
+/* ---------- PIN reale (modifica qui il tuo PIN) ---------- */
+const PIN = '2580'; // <--- imposta qui il tuo PIN
+function isUnlocked(){
+  return localStorage.getItem('skf5s_unlocked') === '1';
+}
+function setUnlocked(v){
+  if(v) localStorage.setItem('skf5s_unlocked','1'); else localStorage.removeItem('skf5s_unlocked');
+}
+
+/* ---------- Stato ---------- */
 const STATE = {
   chName: 'CH 24 — Rettifica',
-  locked: true,
+  get locked(){ return !isUnlocked(); },
   sections: {
     s1: { key:'1S', title:'Selezionare', info:'Eliminare il superfluo.', value:0, items:[makeItem()] },
     s2: { key:'2S', title:'Sistemare', info:'Un posto per tutto e tutto al suo posto.', value:0, items:[makeItem()] },
@@ -61,11 +71,11 @@ function showPage(id){
   else { renderChecklist(); }
 }
 
-/* ---------- Build chips & cards ---------- */
+/* ---------- Render checklist ---------- */
 function renderChecklist(){
   document.getElementById('chTitle').textContent = STATE.chName;
 
-  // Chips riassuntive cliccabili
+  // chips riassuntive
   UI.chipsRow.innerHTML = '';
   ['s1','s2','s3','s4','s5'].forEach(sid=>{
     const s = STATE.sections[sid];
@@ -74,7 +84,7 @@ function renderChecklist(){
     UI.chipsRow.appendChild(chip);
   });
 
-  // Cards
+  // cards
   UI.sList.innerHTML = '';
   Object.entries(STATE.sections).forEach(([sid,s])=>{
     UI.sList.appendChild(buildSectionCard(sid,s));
@@ -83,22 +93,19 @@ function renderChecklist(){
   updateGlobalKpis();
 }
 
-/* ---------- Card builder ---------- */
 function buildSectionCard(sid,s){
   const card = el('article','s-card',null,{id:`card-${sid}`});
 
-  // head
   const head = el('div','s-card__head');
   const color = el('div','s-color'); color.style.background = COLORS[sid];
   const title = el('div','s-title',`${s.key} — ${s.title}`);
   const tools = el('div','s-tools');
 
-  // badge Valore
   const badge = el('div','s-badge',`Valore: ${s.value}%`);
   badge.id = `badge-${sid}`;
   tools.appendChild(badge);
 
-  // info popover
+  // info (tematizzata)
   const infoWrap = el('div','info-pop '+sid);
   const infoBtn = el('button','icon-btn', 'i'); infoBtn.type='button';
   const pop = el('div','info-pop__box');
@@ -108,9 +115,11 @@ function buildSectionCard(sid,s){
   document.addEventListener('click',(e)=>{ if(!infoWrap.contains(e.target)) pop.classList.remove('show'); });
   tools.appendChild(infoWrap);
 
-  // add voice (PIN gestito altrove; qui abilitiamo sempre)
+  // add voice (richiede PIN se bloccato)
   const addBtn = el('button','icon-btn','+'); addBtn.type='button';
+  if(STATE.locked){ addBtn.disabled = true; addBtn.title = 'Richiede PIN'; }
   addBtn.addEventListener('click',()=>{
+    if(STATE.locked) return;
     s.items.push(makeItem());
     renderChecklist();
   });
@@ -119,7 +128,6 @@ function buildSectionCard(sid,s){
   head.append(color,title,tools);
   card.appendChild(head);
 
-  // body
   const body = el('div','s-body');
   const details = el('details'); details.open = true;
   const sum = el('summary',null,'Dettagli');
@@ -128,15 +136,12 @@ function buildSectionCard(sid,s){
   s.items.forEach((it,idx)=>{
     const row = el('div','row');
 
-    // Responsabile
     const resp = inputText('Responsabile / Operatore', it.resp);
     resp.addEventListener('input',e=>{ it.resp = e.target.value; saveAndRefresh(sid); });
 
-    // Note
     const note = el('textarea'); note.placeholder='Note...'; note.value = it.note;
     note.addEventListener('input',e=>{ it.note = e.target.value; saveAndRefresh(sid); });
 
-    // Score
     const scoreBox = el('div','row__score');
     [0,1,3,5].forEach(v=>{
       const b = el('button','score', String(v)); b.type='button';
@@ -150,16 +155,14 @@ function buildSectionCard(sid,s){
       scoreBox.appendChild(b);
     });
 
-    // Data
     const dateWrap = el('div','date');
     const datelabel = el('span',null,'Data');
     const date = el('input'); date.type='date'; date.value = it.date || isoToday();
     date.addEventListener('change',e=>{ it.date = e.target.value; saveAndRefresh(sid); });
     dateWrap.append(datelabel,date);
 
-    // Trash (protetto da PIN? opzionale — qui lasciamo il bottone disabilitato se locked)
     const del = el('button','icon-btn','🗑'); del.type='button';
-    del.disabled = STATE.locked;
+    if(STATE.locked){ del.disabled = true; del.title = 'Richiede PIN'; }
     del.addEventListener('click',()=>{
       if(STATE.locked) return;
       s.items.splice(idx,1);
@@ -167,14 +170,14 @@ function buildSectionCard(sid,s){
       saveAndRefresh(sid);
     });
 
-    // mount
     row.append(resp,note,scoreBox,dateWrap,del);
     details.appendChild(row);
   });
 
   card.appendChild(details);
-  // late style
-  if(s.items.some(it=>it.late)) card.classList.add('late'); else card.classList.remove('late');
+
+  // evidenza ritardo della sezione
+  card.classList.toggle('late', s.items.some(it=>it.late));
   return card;
 }
 
@@ -183,7 +186,6 @@ function inputText(placeholder,val){
   return i;
 }
 
-/* ---------- Helpers ---------- */
 function el(tag,cls,txt,attrs){
   const n = document.createElement(tag);
   if(cls) n.className = cls;
@@ -192,30 +194,30 @@ function el(tag,cls,txt,attrs){
   return n;
 }
 
-/* ---------- State / compute ---------- */
+/* ---------- Calcoli ---------- */
 function saveAndRefresh(sid){
   computeSectionValue(sid);
   updateGlobalKpis();
-  renderChecklist(); // re-render per aggiornare badge, late, chips
+  renderChecklist();
 }
 
 function computeSectionValue(sid){
   const s = STATE.sections[sid];
-  // valore = media semplice dei punteggi delle voci (in %) — RESTA come valore corrente della S
+
+  // valore % come media dei punteggi (0,1,3,5) riportata su 100
   const arr = s.items.map(i=>i.score);
   const val = arr.length ? Math.round((arr.reduce((a,b)=>a+b,0) / (5*arr.length))*100) : 0;
   s.value = val;
 
-  // ritardo: se data < oggi E punteggio < 100%
+  // RITARDO: ora è in ritardo se la data è PRECEDENTE a oggi (indipendentemente dal punteggio)
   const today = new Date(isoToday());
   s.items.forEach(it=>{
     const d = new Date(it.date || isoToday());
-    it.late = (d < today) && (it.score < 5);
+    it.late = (d < today); // ← questa è la nuova logica richiesta
   });
 }
 
 function updateGlobalKpis(){
-  // ricalcola tutte
   ['s1','s2','s3','s4','s5'].forEach(computeSectionValue);
 
   const values = ['s1','s2','s3','s4','s5'].map(k=>STATE.sections[k].value);
@@ -225,13 +227,11 @@ function updateGlobalKpis(){
   UI.avgKpi.textContent = `${avg}%`;
   UI.lateKpi.textContent = String(lateCount);
 
-  // aggiorna chips
   ['s1','s2','s3','s4','s5'].forEach(k=>{
     const chip = UI.chipsRow.querySelector(`.chip.${k}`);
     if(chip) chip.textContent = `${STATE.sections[k].key} ${STATE.sections[k].value}%`;
   });
 
-  // aggiorna badges e late style
   Object.entries(STATE.sections).forEach(([sid,s])=>{
     const b = document.getElementById(`badge-${sid}`);
     if(b) b.textContent = `Valore: ${s.value}%`;
@@ -239,7 +239,6 @@ function updateGlobalKpis(){
     if(card) card.classList.toggle('late', s.items.some(i=>i.late));
   });
 
-  // grafico home
   buildChart();
   updateLatePills();
 }
@@ -250,7 +249,7 @@ UI.toggleAll.addEventListener('click',()=>{
   all.forEach(d=> d.open = !someOpen);
 });
 
-/* ---------- Late pills (home) ---------- */
+/* ---------- Late pills home ---------- */
 function updateLatePills(){
   UI.latePills.innerHTML = '';
   Object.entries(STATE.sections).forEach(([sid,s])=>{
@@ -278,25 +277,23 @@ function buildChart(){
   const data = {
     labels: ['1S','2S','3S','4S','5S','Ritardi'],
     datasets: [{
-      data: [...vals, late? (late/5)*100 : 0], // ultima barra “Ritardi” scala 0–100
+      data: [...vals, late? (late/5)*100 : 0],
       backgroundColor: [...bars, COLORS.s2],
       borderRadius: 8,
     }]
   };
 
-  // plugin per etichette percentuali senza taglio
   const labelsPlugin = {
     id:'valueLabels',
-    afterDatasetsDraw(chart,args,pluginOptions){
-      const {ctx,chartArea,scales:{x,y}} = chart;
+    afterDatasetsDraw(chart){
+      const {ctx} = chart;
       ctx.save();
       ctx.font = '600 12px system-ui';
       ctx.textAlign='center';
       ctx.fillStyle = '#1f2937';
       chart.getDatasetMeta(0).data.forEach((bar,i)=>{
         const val = data.datasets[0].data[i];
-        const label = i<5 ? `${val}%` : String(Math.round((val/100)*5)); // ritardi numerico
-        const yPos = Math.min(bar.y, chartArea.top + 14); // clamp per non uscire
+        const label = i<5 ? `${val}%` : String(Math.round((val/100)*5));
         ctx.fillText(label, bar.x, bar.y - 6);
       });
       ctx.restore();
@@ -307,34 +304,27 @@ function buildChart(){
     responsive:true,
     maintainAspectRatio:false,
     layout:{padding:{top:30,bottom:20,left:8,right:8}},
-    scales:{
-      y:{beginAtZero:true,max:100,grid:{color:'#eef1f8'}},
-      x:{grid:{display:false}}
-    },
-    plugins:{
-      legend:{display:false},
-      tooltip:{enabled:true}
-    }
+    scales:{ y:{beginAtZero:true,max:100,grid:{color:'#eef1f8'}}, x:{grid:{display:false}} },
+    plugins:{ legend:{display:false}, tooltip:{enabled:true} }
   };
 
   if(STATE.chart){ STATE.chart.destroy(); }
   STATE.chart = new Chart(ctx,{type:'bar',data,options:opts,plugins:[labelsPlugin]});
 }
 
-/* ---------- PIN lock demo (semplificato) ---------- */
+/* ---------- PIN lock ---------- */
 function askPin(){
-  const p = prompt('Inserisci PIN per sbloccare (demo: 1234)');
-  if(p==='1234'){ STATE.locked=false; alert('Sbloccato'); renderChecklist(); }
-  else { alert('PIN errato'); }
+  const p = prompt('Inserisci PIN per sbloccare');
+  if(p===PIN){ setUnlocked(true); alert('Sbloccato'); renderChecklist(); }
+  else if(p!==null){ alert('PIN errato'); }
 }
 document.getElementById('lockBtn').addEventListener('click',askPin);
 document.getElementById('lockBtn2').addEventListener('click',askPin);
 
-/* ---------- Export (stub con PIN) ---------- */
+/* ---------- Export con PIN ---------- */
 UI.exportBtn.addEventListener('click', ()=>{
-  const p = prompt('PIN supervisore (demo: 1234)');
-  if(p!=='1234') return alert('PIN errato');
-  // genera JSON compatibile con app supervisore
+  const p = prompt('PIN supervisore');
+  if(p!==PIN) return alert('PIN errato');
   const payload = {
     channel: STATE.chName,
     updatedAt: new Date().toISOString(),
@@ -352,5 +342,5 @@ UI.exportBtn.addEventListener('click', ()=>{
 /* ---------- Boot ---------- */
 window.addEventListener('load',()=>{
   UI.chartTitle.textContent = `Andamento ${STATE.chName}`;
-  showPage('home'); // start on home
+  showPage('home');
 });
