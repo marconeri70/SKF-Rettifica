@@ -1,390 +1,356 @@
-/* SKF 5S – CH 24 Rettifica (BUILD v1k) */
+/* ===========================================================
+   SKF 5S – v1k-CH24
+   =========================================================== */
 
-const PIN = "2468"; // cambia qui il PIN per azioni protette
-
-// Colori ufficiali S
-const S_COLORS = {
-  "1S": "#7E57C2",
-  "2S": "#EF5350",
-  "3S": "#F6B73C",
-  "4S": "#2E7D32",
-  "5S": "#3F51B5"
+const UI = {
+  pageHome: document.getElementById('home'),
+  pageChecklist: document.getElementById('checklist'),
+  goChecklist: document.getElementById('goChecklist'),
+  backHome: document.getElementById('backHome'),
+  chipsRow: document.getElementById('chipsRow'),
+  sList: document.getElementById('sList'),
+  avgKpi: document.getElementById('avgKpi'),
+  lateKpi: document.getElementById('lateKpi'),
+  toggleAll: document.getElementById('toggleAll'),
+  kpiChartCanvas: document.getElementById('kpiChart'),
+  latePills: document.getElementById('latePills'),
+  exportBtn: document.getElementById('exportBtn'),
+  chartTitle: document.getElementById('chartTitle'),
 };
 
-// Stato
-const storeKey = "skf5s-ch24";
-const state = loadState() || seed();
+const COLORS = {
+  s1: getCss('--s1'),
+  s2: getCss('--s2'),
+  s3: getCss('--s3'), // fix: era nero, ora arancio giallo
+  s4: getCss('--s4'),
+  s5: getCss('--s5'),
+  late: getCss('--late'),
+};
+function getCss(v){ return getComputedStyle(document.documentElement).getPropertyValue(v).trim(); }
 
-function seed(){
-  return {
-    chName: "CH 24 — Rettifica",
-    sections: [
-      { key:"1S", name:"Selezionare", items:[blankItem()], color:S_COLORS["1S"] },
-      { key:"2S", name:"Sistemare",    items:[blankItem()], color:S_COLORS["2S"] },
-      { key:"3S", name:"Splendere",    items:[blankItem()], color:S_COLORS["3S"] },
-      { key:"4S", name:"Standardizzare", items:[blankItem()], color:S_COLORS["4S"] },
-      { key:"5S", name:"Sostenere",    items:[blankItem()], color:S_COLORS["5S"] },
-    ],
-    locked: true
-  };
-}
-function blankItem(){
-  return { title:"", notes:"", resp:"", score:0, date: todayStr() };
-}
-function todayStr(){
-  const d=new Date(); return d.toISOString().slice(0,10);
-}
-function saveState(){ localStorage.setItem(storeKey, JSON.stringify(state)); }
-function loadState(){ try{ return JSON.parse(localStorage.getItem(storeKey)); }catch{ return null; }}
+const STATE = {
+  chName: 'CH 24 — Rettifica',
+  locked: true,
+  sections: {
+    s1: { key:'1S', title:'Selezionare', info:'Eliminare il superfluo.', value:0, items:[makeItem()] },
+    s2: { key:'2S', title:'Sistemare', info:'Un posto per tutto e tutto al suo posto.', value:0, items:[makeItem()] },
+    s3: { key:'3S', title:'Splendere', info:'Pulire e prevenire lo sporco.', value:0, items:[makeItem()] },
+    s4: { key:'4S', title:'Standardizzare', info:'Regole e segnali chiari.', value:0, items:[makeItem()] },
+    s5: { key:'5S', title:'Sostenere', info:'Abitudine e miglioramento continuo.', value:0, items:[makeItem()] },
+  },
+  chart: null,
+};
 
-// Router
-window.addEventListener("hashchange", render);
-window.addEventListener("load", render);
-
-function render(){
-  const app = document.getElementById("app");
-  const nav = document.getElementById("topNav");
-  const route = location.hash.replace("#","") || "/";
-  if(route === "/" || route.startsWith("/home")){
-    nav.innerHTML = `<a class="btn ghost" href="#/checklist">Vai alla checklist →</a>`;
-    app.innerHTML = homeView();
-    buildHomeChart();
-    wireHome();
-  }else{
-    nav.innerHTML = "";
-    app.innerHTML = checklistView();
-    wireChecklist();
-    scrollIfTarget();
-  }
+function makeItem(){
+  return { title:'', resp:'', note:'', date:isoToday(), score:0, late:false };
+}
+function isoToday(){
+  const d = new Date();
+  d.setHours(0,0,0,0);
+  return d.toISOString().slice(0,10);
 }
 
-/* ---------- HOME ---------- */
-function homeView(){
-  const { chName } = state;
-  const sums = computeSummary();
+/* ---------- Routing ---------- */
+UI.goChecklist.addEventListener('click', ()=>showPage('checklist'));
+UI.backHome.addEventListener('click', ()=>showPage('home'));
 
-  const lateChips = sums.lateList.length
-    ? `<div class="chips" id="lateChips">
-        ${sums.lateList.map(s => 
-          `<button class="chip click s${s.key[0]}" data-goto="${s.key}">
-            ${s.key} in ritardo (${s.count})
-          </button>`).join("")}
-      </div>`
-    : `<div class="small">Nessuna sezione in ritardo.</div>`;
-
-  return `
-    <section class="card hero">
-      <img src="assets/5s-hero.png" alt="5S" />
-      <div>
-        <h2 style="margin:4px 0 10px">Cosa è 5S</h2>
-        <div class="legend">
-          <span class="l"><span class="dot" style="background:${S_COLORS["1S"]}"></span> <strong>1S Selezionare</strong> — Eliminare il superfluo.</span>
-          <span class="l"><span class="dot" style="background:${S_COLORS["2S"]}"></span> <strong>2S Sistemare</strong> — Un posto per tutto e tutto al suo posto.</span>
-          <span class="l"><span class="dot" style="background:${S_COLORS["3S"]}"></span> <strong>3S Splendere</strong> — Pulire e prevenire lo sporco.</span>
-          <span class="l"><span class="dot" style="background:${S_COLORS["4S"]}"></span> <strong>4S Standardizzare</strong> — Regole e segnali chiari.</span>
-          <span class="l"><span class="dot" style="background:${S_COLORS["5S"]}"></span> <strong>5S Sostenere</strong> — Abitudine e miglioramento continuo.</span>
-        </div>
-      </div>
-    </section>
-
-    <section class="card">
-      <h2 style="margin-top:0">Andamento ${chName}</h2>
-      <canvas id="bar"></canvas>
-      <div class="legend" style="margin-top:8px">
-        ${["1S","2S","3S","4S","5S"].map(k => 
-          `<span class="l"><span class="dot" style="background:${S_COLORS[k]}"></span>${k}: ${sums[k]}%</span>`
-        ).join("")}
-        <span class="l"><span class="dot" style="background:#e11d48"></span>Ritardi: ${sums.lateTotal}</span>
-      </div>
-      <hr class="sep"/>
-      <div><strong>Sezioni in ritardo</strong></div>
-      ${lateChips}
-      <div style="margin-top:12px">
-        <button class="btn ghost" id="exportBtn">Esporta dati per Supervisore (PIN)</button>
-      </div>
-    </section>
-  `;
+function showPage(id){
+  UI.pageHome.classList.toggle('page--active', id==='home');
+  UI.pageChecklist.classList.toggle('page--active', id==='checklist');
+  if(id==='home'){ buildChart(); updateLatePills(); }
+  else { renderChecklist(); }
 }
 
-function computeSummary(){
-  const r = { "1S":0,"2S":0,"3S":0,"4S":0,"5S":0, lateTotal:0, lateList:[] };
-  state.sections.forEach(sec=>{
-    const percent = sectionValue(sec); // valore attuale
-    r[sec.key] = percent;
-    const lateCnt = sec.items.filter(it => isLate(it)).length;
-    if(lateCnt>0){
-      r.lateTotal += lateCnt;
-      r.lateList.push({key:sec.key,count:lateCnt});
-    }
-  });
-  return r;
-}
-function sectionValue(sec){
-  if(!sec.items.length) return 0;
-  // “Valore”: media semplice dei punteggi (0/1/3/5) trasformata in %
-  const avg = sec.items.reduce((a,b)=>a+Number(b.score||0),0) / sec.items.length;
-  return Math.round((avg/5)*100);
-}
-function isLate(it){
-  return (it.score||0) < 5 && it.date && it.date < todayStr();
-}
+/* ---------- Build chips & cards ---------- */
+function renderChecklist(){
+  document.getElementById('chTitle').textContent = STATE.chName;
 
-function buildHomeChart(){
-  const ctx = document.getElementById("bar");
-  const sums = computeSummary();
-  const data = [sums["1S"],sums["2S"],sums["3S"],sums["4S"],sums["5S"], sums.lateTotal>0? (sums.lateTotal*5) : 0];
-  const labels = ["1S","2S","3S","4S","5S","Ritardi"];
-  const colors = [S_COLORS["1S"],S_COLORS["2S"],S_COLORS["3S"],S_COLORS["4S"],S_COLORS["5S"], "#ef4444"];
-
-  Chart.register(ChartDataLabels);
-  new Chart(ctx, {
-    type: 'bar',
-    data: { labels, datasets:[{ data, backgroundColor: colors, borderRadius:6 }]},
-    options:{
-      responsive:true,
-      plugins:{
-        legend:{ display:false },
-        datalabels:{
-          anchor:'end', align:'end', offset:-2, formatter:(v,ctx)=>{
-            if(ctx.dataIndex===5) return v>0 ? String(v) : "";
-            return `${v}%`;
-          },
-          font:{ weight:'800' }
-        },
-        tooltip:{enabled:false}
-      },
-      scales:{
-        x: { grid:{ display:false } },
-        y: { grid:{ color:'#f1f5f9' }, beginAtZero:true, max:100, ticks:{ stepSize:20 } }
-      }
-    }
-  });
-}
-
-function wireHome(){
-  // Vai alle schede in ritardo
-  const late = document.getElementById("lateChips");
-  if(late){
-    late.addEventListener("click", (e)=>{
-      const btn = e.target.closest("[data-goto]");
-      if(!btn) return;
-      const key = btn.dataset.goto;
-      location.hash = "#/checklist?goto="+encodeURIComponent(key);
-    });
-  }
-  // Export protetto
-  document.getElementById("exportBtn").addEventListener("click", ()=>{
-    askPin(()=> {
-      const blob = new Blob([JSON.stringify(state)], {type:"application/json"});
-      const a = document.createElement("a");
-      a.href = URL.createObjectURL(blob);
-      a.download = "skf-5s-ch24.json";
-      a.click();
-      URL.revokeObjectURL(a.href);
-    });
-  });
-}
-
-/* ---------- CHECKLIST ---------- */
-function checklistView(){
-  const { chName, locked } = state;
-  const sums = computeSummary();
-  const late = sums.lateList.map(l=>l.key);
-
-  const kpi = `
-    <div class="kpi-row">
-      <div class="kpi"><div class="k">Punteggio medio</div><div class="v">${Math.round((sums["1S"]+sums["2S"]+sums["3S"]+sums["4S"]+sums["5S"])/5)}%</div></div>
-      <div class="kpi"><div class="k">Azioni in ritardo</div><div class="v">${sums.lateTotal}</div></div>
-    </div>`;
-
-  const chips = `
-    <div class="chips" id="chips">
-      ${state.sections.map(s => 
-        `<button class="chip click s${s.key[0]}" data-goto="${s.key}">
-          ${s.key} ${sectionValue(s)}%
-        </button>`).join("")}
-      <button class="btn primary" id="toggleAll">Comprimi / Espandi</button>
-    </div>`;
-
-  const cards = state.sections.map(sec=>{
-    const val = sectionValue(sec);
-    const isLateSec = sec.items.some(isLate);
-    return `
-      <div class="cardS ${isLateSec?'late':''}" id="sec-${sec.key}">
-        <div class="head">
-          <div class="swatch sw${sec.key[0]}"></div>
-          <div class="title">${sec.key} — ${sec.name}</div>
-          <div class="h-actions">
-            <span class="tag val">Valore: ${val}%</span>
-            <button class="iconbtn info" title="Spiegazione" data-info="${sec.key}">i</button>
-            <button class="iconbtn add" title="Duplica voce" data-add="${sec.key}">+</button>
-          </div>
-        </div>
-
-        <details class="details" open>
-          <summary>Dettagli</summary>
-          ${sec.items.map((it,idx)=> itemControls(sec.key, idx, it)).join("")}
-        </details>
-      </div>
-    `;
-  }).join("");
-
-  return `
-    <div class="chips" style="justify-content:space-between;">
-      <a class="btn ghost" href="#/">← Indietro</a>
-      <h2 style="margin:0">${chName}</h2>
-      <button class="iconbtn lock" id="lockBtn" title="${locked?'Sblocco con PIN':'Blocca'}">🔒</button>
-    </div>
-
-    ${kpi}
-
-    <section class="card">
-      ${chips}
-    </section>
-
-    ${cards}
-  `;
-}
-
-function itemControls(key, idx, it){
-  const sClass = "s"+key[0];
-  return `
-    <div class="card" style="padding:12px;border:1px dashed var(--outline);border-radius:12px;margin-top:10px">
-      <div class="controls">
-        <input type="text" placeholder="Responsabile / Operatore" value="${escapeHtml(it.resp)}" data-bind="resp" data-key="${key}" data-idx="${idx}" ${state.locked?'disabled':''}/>
-        <textarea placeholder="Note..." data-bind="notes" data-key="${key}" data-idx="${idx}" ${state.locked?'disabled':''}>${escapeHtml(it.notes)}</textarea>
-        <div class="score">
-          ${[0,1,3,5].map(v =>
-            `<button class="${sClass} ${Number(it.score)===v?'active':''}" data-score="${v}" data-key="${key}" data-idx="${idx}" ${state.locked?'disabled':''}>${v}</button>`
-          ).join("")}
-        </div>
-        <div style="display:flex;gap:8px;align-items:center">
-          <input type="date" value="${it.date||todayStr()}" data-bind="date" data-key="${key}" data-idx="${idx}" ${state.locked?'disabled':''}/>
-          <button class="iconbtn del" title="Elimina voce" data-del="${key}" data-idx="${idx}" ${state.locked?'disabled':''}>🗑</button>
-        </div>
-      </div>
-    </div>
-  `;
-}
-
-function wireChecklist(){
-  // lock / unlock
-  document.getElementById("lockBtn").onclick = ()=>{
-    if(state.locked){
-      askPin(()=>{ state.locked=false; saveState(); render(); });
-    }else{
-      state.locked=true; saveState(); render();
-    }
-  };
-
-  // chips navigate
-  document.getElementById("chips").addEventListener("click",(e)=>{
-    const btn = e.target.closest("[data-goto]");
-    if(!btn) return;
-    const id = "sec-"+btn.dataset.goto;
-    document.getElementById(id)?.scrollIntoView({behavior:"smooth",block:"start"});
+  // Chips riassuntive cliccabili
+  UI.chipsRow.innerHTML = '';
+  ['s1','s2','s3','s4','s5'].forEach(sid=>{
+    const s = STATE.sections[sid];
+    const chip = el('button','chip '+sid,`${s.key} ${s.value}%`);
+    chip.addEventListener('click', ()=>document.getElementById(`card-${sid}`).scrollIntoView({behavior:'smooth',block:'start'}));
+    UI.chipsRow.appendChild(chip);
   });
 
-  // toggle all
-  document.getElementById("toggleAll").onclick = ()=>{
-    document.querySelectorAll(".details").forEach(d=> d.open = !d.open);
-  };
-
-  // info popup
-  document.querySelectorAll("[data-info]").forEach(btn=>{
-    btn.addEventListener("click", ()=>{
-      const key = btn.dataset.info;
-      const map = {
-        "1S":"Eliminare ciò che non serve.",
-        "2S":"Un posto per tutto e tutto al suo posto.",
-        "3S":"Pulire e prevenire lo sporco.",
-        "4S":"Regole e segnali visivi chiari.",
-        "5S":"Disciplina e miglioramento continuo."
-      };
-      alert(`${key} — ${map[key]}`);
-    });
+  // Cards
+  UI.sList.innerHTML = '';
+  Object.entries(STATE.sections).forEach(([sid,s])=>{
+    UI.sList.appendChild(buildSectionCard(sid,s));
   });
 
-  // add voice (PIN)
-  document.querySelectorAll("[data-add]").forEach(btn=>{
-    btn.addEventListener("click", ()=>{
-      askPin(()=>{
-        const key = btn.dataset.add;
-        const sec = state.sections.find(s=>s.key===key);
-        sec.items.push(blankItem());
-        saveState(); render();
+  updateGlobalKpis();
+}
+
+/* ---------- Card builder ---------- */
+function buildSectionCard(sid,s){
+  const card = el('article','s-card',null,{id:`card-${sid}`});
+
+  // head
+  const head = el('div','s-card__head');
+  const color = el('div','s-color'); color.style.background = COLORS[sid];
+  const title = el('div','s-title',`${s.key} — ${s.title}`);
+  const tools = el('div','s-tools');
+
+  // badge Valore
+  const badge = el('div','s-badge',`Valore: ${s.value}%`);
+  badge.id = `badge-${sid}`;
+  tools.appendChild(badge);
+
+  // info popover
+  const infoWrap = el('div','info-pop '+sid);
+  const infoBtn = el('button','icon-btn', 'i'); infoBtn.type='button';
+  const pop = el('div','info-pop__box');
+  pop.innerHTML = `<div class="info-pop__title">${s.key} — ${s.title}</div><div>${s.info}</div>`;
+  infoWrap.append(infoBtn,pop);
+  infoBtn.addEventListener('click', ()=>pop.classList.toggle('show'));
+  document.addEventListener('click',(e)=>{ if(!infoWrap.contains(e.target)) pop.classList.remove('show'); });
+  tools.appendChild(infoWrap);
+
+  // add voice (PIN gestito altrove; qui abilitiamo sempre)
+  const addBtn = el('button','icon-btn','+'); addBtn.type='button';
+  addBtn.addEventListener('click',()=>{
+    s.items.push(makeItem());
+    renderChecklist();
+  });
+  tools.appendChild(addBtn);
+
+  head.append(color,title,tools);
+  card.appendChild(head);
+
+  // body
+  const body = el('div','s-body');
+  const details = el('details'); details.open = true;
+  const sum = el('summary',null,'Dettagli');
+  details.appendChild(sum);
+
+  s.items.forEach((it,idx)=>{
+    const row = el('div','row');
+
+    // Responsabile
+    const resp = inputText('Responsabile / Operatore', it.resp);
+    resp.addEventListener('input',e=>{ it.resp = e.target.value; saveAndRefresh(sid); });
+
+    // Note
+    const note = el('textarea'); note.placeholder='Note...'; note.value = it.note;
+    note.addEventListener('input',e=>{ it.note = e.target.value; saveAndRefresh(sid); });
+
+    // Score
+    const scoreBox = el('div','row__score');
+    [0,1,3,5].forEach(v=>{
+      const b = el('button','score', String(v)); b.type='button';
+      if(it.score===v) b.classList.add('active');
+      b.addEventListener('click',()=>{
+        it.score = v;
+        scoreBox.querySelectorAll('.score').forEach(x=>x.classList.remove('active'));
+        b.classList.add('active');
+        saveAndRefresh(sid);
       });
+      scoreBox.appendChild(b);
     });
+
+    // Data
+    const dateWrap = el('div','date');
+    const datelabel = el('span',null,'Data');
+    const date = el('input'); date.type='date'; date.value = it.date || isoToday();
+    date.addEventListener('change',e=>{ it.date = e.target.value; saveAndRefresh(sid); });
+    dateWrap.append(datelabel,date);
+
+    // Trash (protetto da PIN? opzionale — qui lasciamo il bottone disabilitato se locked)
+    const del = el('button','icon-btn','🗑'); del.type='button';
+    del.disabled = STATE.locked;
+    del.addEventListener('click',()=>{
+      if(STATE.locked) return;
+      s.items.splice(idx,1);
+      if(s.items.length===0) s.items.push(makeItem());
+      saveAndRefresh(sid);
+    });
+
+    // mount
+    row.append(resp,note,scoreBox,dateWrap,del);
+    details.appendChild(row);
   });
 
-  // delete voice (PIN)
-  document.querySelectorAll("[data-del]").forEach(btn=>{
-    btn.addEventListener("click", ()=>{
-      askPin(()=>{
-        const key = btn.dataset.del;
-        const idx = Number(btn.dataset.idx);
-        const sec = state.sections.find(s=>s.key===key);
-        sec.items.splice(idx,1);
-        if(!sec.items.length) sec.items.push(blankItem());
-        saveState(); render();
+  card.appendChild(details);
+  // late style
+  if(s.items.some(it=>it.late)) card.classList.add('late'); else card.classList.remove('late');
+  return card;
+}
+
+function inputText(placeholder,val){
+  const i = el('input'); i.type='text'; i.placeholder = placeholder; i.value = val||'';
+  return i;
+}
+
+/* ---------- Helpers ---------- */
+function el(tag,cls,txt,attrs){
+  const n = document.createElement(tag);
+  if(cls) n.className = cls;
+  if(txt!=null) n.textContent = txt;
+  if(attrs) Object.entries(attrs).forEach(([k,v])=>n.setAttribute(k,v));
+  return n;
+}
+
+/* ---------- State / compute ---------- */
+function saveAndRefresh(sid){
+  computeSectionValue(sid);
+  updateGlobalKpis();
+  renderChecklist(); // re-render per aggiornare badge, late, chips
+}
+
+function computeSectionValue(sid){
+  const s = STATE.sections[sid];
+  // valore = media semplice dei punteggi delle voci (in %) — RESTA come valore corrente della S
+  const arr = s.items.map(i=>i.score);
+  const val = arr.length ? Math.round((arr.reduce((a,b)=>a+b,0) / (5*arr.length))*100) : 0;
+  s.value = val;
+
+  // ritardo: se data < oggi E punteggio < 100%
+  const today = new Date(isoToday());
+  s.items.forEach(it=>{
+    const d = new Date(it.date || isoToday());
+    it.late = (d < today) && (it.score < 5);
+  });
+}
+
+function updateGlobalKpis(){
+  // ricalcola tutte
+  ['s1','s2','s3','s4','s5'].forEach(computeSectionValue);
+
+  const values = ['s1','s2','s3','s4','s5'].map(k=>STATE.sections[k].value);
+  const avg = values.length? Math.round(values.reduce((a,b)=>a+b,0)/values.length):0;
+  const lateCount = Object.values(STATE.sections).reduce((n,s)=> n + s.items.filter(i=>i.late).length, 0);
+
+  UI.avgKpi.textContent = `${avg}%`;
+  UI.lateKpi.textContent = String(lateCount);
+
+  // aggiorna chips
+  ['s1','s2','s3','s4','s5'].forEach(k=>{
+    const chip = UI.chipsRow.querySelector(`.chip.${k}`);
+    if(chip) chip.textContent = `${STATE.sections[k].key} ${STATE.sections[k].value}%`;
+  });
+
+  // aggiorna badges e late style
+  Object.entries(STATE.sections).forEach(([sid,s])=>{
+    const b = document.getElementById(`badge-${sid}`);
+    if(b) b.textContent = `Valore: ${s.value}%`;
+    const card = document.getElementById(`card-${sid}`);
+    if(card) card.classList.toggle('late', s.items.some(i=>i.late));
+  });
+
+  // grafico home
+  buildChart();
+  updateLatePills();
+}
+
+UI.toggleAll.addEventListener('click',()=>{
+  const all = UI.sList.querySelectorAll('details');
+  const someOpen = Array.from(all).some(d=>d.open);
+  all.forEach(d=> d.open = !someOpen);
+});
+
+/* ---------- Late pills (home) ---------- */
+function updateLatePills(){
+  UI.latePills.innerHTML = '';
+  Object.entries(STATE.sections).forEach(([sid,s])=>{
+    const count = s.items.filter(i=>i.late).length;
+    if(count>0){
+      const pill = el('button',`pill ${sid}`,`${s.key} in ritardo (${count})`);
+      pill.addEventListener('click',()=>{
+        showPage('checklist');
+        document.getElementById(`card-${sid}`).scrollIntoView({behavior:'smooth',block:'start'});
       });
-    });
-  });
-
-  // bind inputs
-  document.querySelectorAll("[data-bind]").forEach(el=>{
-    el.addEventListener("input", ()=>{
-      const key = el.dataset.key, idx = Number(el.dataset.idx);
-      const sec = state.sections.find(s=>s.key===key);
-      sec.items[idx][el.dataset.bind] = el.value;
-      saveState();
-      // aggiorna solo header e KPI
-      rerenderHeaderBits();
-    });
-  });
-
-  // score buttons – non devono “bloccare” le altre schede
-  document.querySelectorAll("[data-score]").forEach(btn=>{
-    btn.addEventListener("click", ()=>{
-      const key = btn.dataset.key, idx = Number(btn.dataset.idx), val = Number(btn.dataset.score);
-      const sec = state.sections.find(s=>s.key===key);
-      sec.items[idx].score = val;
-      saveState();
-      // refresh stile dei pulsanti della riga
-      btn.parentElement.querySelectorAll("button").forEach(b=>b.classList.remove("active"));
-      btn.classList.add("active");
-      rerenderHeaderBits(); // aggiorna KPI/valori/ritardi
-      // ricolora card se in ritardo
-      const card = document.getElementById("sec-"+key);
-      if(sec.items.some(isLate)) card.classList.add("late"); else card.classList.remove("late");
-    });
+      UI.latePills.appendChild(pill);
+    }
   });
 }
 
-function rerenderHeaderBits(){
-  // Aggiorna chips e tag “Valore” senza ricaricare tutto
-  state.sections.forEach(sec=>{
-    const val = sectionValue(sec);
-    const chip = document.querySelector(`.chip[data-goto="${sec.key}"]`);
-    if(chip) chip.innerHTML = `${sec.key} ${val}%`;
-    const card = document.getElementById("sec-"+sec.key);
-    card?.querySelector(".tag.val").replaceChildren(document.createTextNode(`Valore: ${val}%`));
-  });
+/* ---------- Chart ---------- */
+function buildChart(){
+  if(!UI.kpiChartCanvas) return;
+  const ctx = UI.kpiChartCanvas.getContext('2d');
+
+  const vals = ['s1','s2','s3','s4','s5'].map(k=>STATE.sections[k].value);
+  const bars = [COLORS.s1, COLORS.s2, COLORS.s3, COLORS.s4, COLORS.s5];
+  const late = Object.values(STATE.sections).reduce((n,s)=> n + s.items.filter(i=>i.late).length, 0);
+
+  const data = {
+    labels: ['1S','2S','3S','4S','5S','Ritardi'],
+    datasets: [{
+      data: [...vals, late? (late/5)*100 : 0], // ultima barra “Ritardi” scala 0–100
+      backgroundColor: [...bars, COLORS.s2],
+      borderRadius: 8,
+    }]
+  };
+
+  // plugin per etichette percentuali senza taglio
+  const labelsPlugin = {
+    id:'valueLabels',
+    afterDatasetsDraw(chart,args,pluginOptions){
+      const {ctx,chartArea,scales:{x,y}} = chart;
+      ctx.save();
+      ctx.font = '600 12px system-ui';
+      ctx.textAlign='center';
+      ctx.fillStyle = '#1f2937';
+      chart.getDatasetMeta(0).data.forEach((bar,i)=>{
+        const val = data.datasets[0].data[i];
+        const label = i<5 ? `${val}%` : String(Math.round((val/100)*5)); // ritardi numerico
+        const yPos = Math.min(bar.y, chartArea.top + 14); // clamp per non uscire
+        ctx.fillText(label, bar.x, bar.y - 6);
+      });
+      ctx.restore();
+    }
+  };
+
+  const opts = {
+    responsive:true,
+    maintainAspectRatio:false,
+    layout:{padding:{top:30,bottom:20,left:8,right:8}},
+    scales:{
+      y:{beginAtZero:true,max:100,grid:{color:'#eef1f8'}},
+      x:{grid:{display:false}}
+    },
+    plugins:{
+      legend:{display:false},
+      tooltip:{enabled:true}
+    }
+  };
+
+  if(STATE.chart){ STATE.chart.destroy(); }
+  STATE.chart = new Chart(ctx,{type:'bar',data,options:opts,plugins:[labelsPlugin]});
 }
 
-function scrollIfTarget(){
-  const q = new URLSearchParams(location.hash.split("?")[1]||"");
-  const goto = q.get("goto");
-  if(goto){
-    const el = document.getElementById("sec-"+goto);
-    el?.scrollIntoView({behavior:"smooth",block:"start"});
-  }
+/* ---------- PIN lock demo (semplificato) ---------- */
+function askPin(){
+  const p = prompt('Inserisci PIN per sbloccare (demo: 1234)');
+  if(p==='1234'){ STATE.locked=false; alert('Sbloccato'); renderChecklist(); }
+  else { alert('PIN errato'); }
 }
+document.getElementById('lockBtn').addEventListener('click',askPin);
+document.getElementById('lockBtn2').addEventListener('click',askPin);
 
-/* -------- Utils -------- */
-function askPin(ok){
-  const p = prompt("Inserisci PIN");
-  if(p===PIN) ok();
-  else alert("PIN errato");
-}
-function escapeHtml(s=""){ return s.replace(/[&<>"']/g, m=>({ "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;" }[m])); }
+/* ---------- Export (stub con PIN) ---------- */
+UI.exportBtn.addEventListener('click', ()=>{
+  const p = prompt('PIN supervisore (demo: 1234)');
+  if(p!=='1234') return alert('PIN errato');
+  // genera JSON compatibile con app supervisore
+  const payload = {
+    channel: STATE.chName,
+    updatedAt: new Date().toISOString(),
+    sections: Object.fromEntries(Object.entries(STATE.sections).map(([k,s])=>[
+      s.key, { value:s.value, items:s.items }
+    ]))
+  };
+  const blob = new Blob([JSON.stringify(payload,null,2)],{type:'application/json'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = 'SKF-5S-CH24.json'; a.click();
+  URL.revokeObjectURL(url);
+});
+
+/* ---------- Boot ---------- */
+window.addEventListener('load',()=>{
+  UI.chartTitle.textContent = `Andamento ${STATE.chName}`;
+  showPage('home'); // start on home
+});
