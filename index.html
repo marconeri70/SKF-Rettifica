@@ -17,28 +17,46 @@
   </header>
 
   <main class="container">
-    <section class="card">
-      <h2>Cosa è 5S</h2>
-      <ul class="what5s">
-        <li><span class="pill s1">1S Selezionare</span> — Eliminare il superfluo.</li>
-        <li><span class="pill s2">2S Sistemare</span> — Un posto per tutto e tutto al suo posto.</li>
-        <li><span class="pill s3">3S Splendere</span> — Pulire e prevenire lo sporco.</li>
-        <li><span class="pill s4">4S Standardizzare</span> — Regole e segnali chiari.</li>
-        <li><span class="pill s5">5S Sostenere</span> — Abitudine e miglioramento continuo.</li>
-      </ul>
+    <!-- HERO 5S con immagine -->
+    <section class="card hero">
+      <div class="hero-img">
+        <img src="assets/5s-hero.png" alt="5S">
+      </div>
+      <div class="hero-text">
+        <h2>Cosa è 5S</h2>
+        <ul class="what5s">
+          <li><span class="pill s1">1S Selezionare</span> — Eliminare il superfluo.</li>
+          <li><span class="pill s2">2S Sistemare</span> — Un posto per tutto e tutto al suo posto.</li>
+          <li><span class="pill s3">3S Splendere</span> — Pulire e prevenire lo sporco.</li>
+          <li><span class="pill s4">4S Standardizzare</span> — Regole e segnali chiari.</li>
+          <li><span class="pill s5">5S Sostenere</span> — Abitudine e miglioramento continuo.</li>
+        </ul>
+      </div>
     </section>
 
+    <!-- Grafico + Ritardi multipli + Export Supervisore -->
     <section class="card">
       <h2>Andamento CH 24 — Rettifica</h2>
       <div id="chart" class="chart"></div>
       <div id="legend" class="legend"></div>
-      <div id="ctaLate" class="cta-late"></div>
+
+      <div class="cta-lists">
+        <h3 class="cta-title">Sezioni in ritardo</h3>
+        <div id="ctaLate" class="cta-late"></div>
+      </div>
+
+      <div class="export-row">
+        <button id="btnExport" class="btn primary emb">Esporta dati per Supervisore (PIN)</button>
+      </div>
     </section>
   </main>
 
   <footer class="foot">BUILD v1k-CH24</footer>
 
   <script src="app.v1k.js"></script>
-  <script>SKF5S.initHome(); if('serviceWorker' in navigator){navigator.serviceWorker.register('sw.js');}</script>
+  <script>
+    SKF5S.initHome();
+    if('serviceWorker' in navigator){ navigator.serviceWorker.register('sw.js'); }
+  </script>
 </body>
 </html>
