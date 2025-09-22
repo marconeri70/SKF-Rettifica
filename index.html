@@ -4,13 +4,20 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>SKF 5S</title>
-  <link rel="stylesheet" href="./style.css?v=2025-09-22" />
+  <link rel="stylesheet" href="./style.css?v=2025-09-22b" />
 </head>
 <body>
   <header class="topbar">
     <div class="brand">
-      <img src="./assets/skf-logo.png" alt="SKF" class="logo" onerror="this.style.display='none'">
-      <span>SKF <b>5S</b></span>
+      <!-- Cambia il src qui se il tuo file logo ha un nome diverso -->
+      <img src="./assets/skf-logo.png" alt="SKF" class="logo">
+      <span class="brand-multi">
+        <b class="c-s1">S</b>
+        <b class="c-s2">K</b>
+        <b class="c-s3">F</b>
+        <b class="c-s4">5</b>
+        <b class="c-s5">S</b>
+      </span>
     </div>
     <nav id="navActions"></nav>
   </header>
@@ -30,7 +37,7 @@
     </form>
   </dialog>
 
-  <!-- Tooltip / Popup semplice -->
+  <!-- Tooltip / Popup -->
   <dialog id="infoModal">
     <div class="info-card">
       <h3 id="infoTitle">Info</h3>
@@ -39,6 +46,6 @@
     </div>
   </dialog>
 
-  <script src="./app.js?v=2025-09-22" defer></script>
+  <script src="./app.js?v=2025-09-22b" defer></script>
 </body>
 </html>
