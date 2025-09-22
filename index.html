@@ -1,26 +1,24 @@
-
 <!doctype html>
 <html lang="it">
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width,initial-scale=1">
-  <title>SKF 5S — CH 24</title>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>SKF 5S</title>
   <link rel="manifest" href="manifest.json">
   <link rel="stylesheet" href="style.v1k.css">
-  <meta name="theme-color" content="#0d47a1">
 </head>
-<body class="page--home">
+<body class="page-home">
   <header class="appbar">
-    <div class="brand">
-      <img src="assets/skf-192.png" alt="SKF" class="brand__logo">
-      <div class="brand__title"><span>SKF</span><span>5S</span></div>
+    <div class="container appbar-row">
+      <img class="logo" src="assets/skf-192.png" alt="SKF">
+      <h1 class="brand">SKF 5S</h1>
+      <a class="btn ghost" href="checklist.html">Vai alla checklist →</a>
     </div>
-    <a class="cta" href="checklist.html">Vai alla checklist →</a>
   </header>
 
   <main class="container">
     <section class="card">
-      <h2 class="h2">Cosa è 5S</h2>
+      <h2>Cosa è 5S</h2>
       <ul class="what5s">
         <li><span class="pill s1">1S Selezionare</span> — Eliminare il superfluo.</li>
         <li><span class="pill s2">2S Sistemare</span> — Un posto per tutto e tutto al suo posto.</li>
@@ -31,22 +29,16 @@
     </section>
 
     <section class="card">
-      <h2 class="h2" id="title-andamento">Andamento CH 24 — Rettifica</h2>
+      <h2>Andamento CH 24 — Rettifica</h2>
       <div id="chart" class="chart"></div>
-      <div id="lateCta" class="late-cta" hidden>
-        <a id="lateLink" href="checklist.html">Vai alla S in ritardo</a>
-      </div>
+      <div id="legend" class="legend"></div>
+      <div id="ctaLate" class="cta-late"></div>
     </section>
   </main>
 
-  <footer class="footer"><small>BUILD v1k-CH24</small></footer>
+  <footer class="foot">BUILD v1k-CH24</footer>
 
   <script src="app.v1k.js"></script>
-  <script>
-    SKF5S.initHome();
-    if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.register('sw.js');
-    }
-  </script>
+  <script>SKF5S.initHome(); if('serviceWorker' in navigator){navigator.serviceWorker.register('sw.js');}</script>
 </body>
 </html>
