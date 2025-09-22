@@ -1,37 +1,25 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="it">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
-  <title>Checklist 5S • CH 24</title>
-  <link rel="icon" href="assets/skf-192.png" />
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SKF 5S - Checklist</title>
   <link rel="stylesheet" href="style.v1k.css">
+  <script src="app.v1k.js" defer></script>
 </head>
 <body>
-  <header class="topbar">
-    <div class="brand"><img src="assets/skf-192.png" alt="SKF"><span>SKF 5S</span></div>
-    <div class="tools">
-      <a class="btn ghost" href="./">← Indietro</a>
-      <button id="btnLock" class="btn ghost">🔒</button>
-    </div>
+  <header>
+    <a href="index.html" class="btn">← Indietro</a>
+    <h1>SKF 5S - CH 24</h1>
+    <button id="lockBtn">🔒</button>
   </header>
-
-  <main class="container narrow">
-    <section class="dashboard card">
-      <div class="kpis">
-        <div class="kpi"><div>Punteggio medio</div><div id="kpiScore">0%</div></div>
-        <div class="kpi"><div>Azioni in ritardo</div><div id="kpiLate">0</div></div>
-      </div>
+  <main id="checklistContainer">
+    <section id="scoreBoard">
+      <div class="card">Punteggio medio <span id="avgScore">0%</span></div>
+      <div class="card">Azioni in ritardo <span id="delayed">0</span></div>
     </section>
-
-    <section class="card">
-      <div id="areas"></div>
-    </section>
+    <section id="sSections"></section>
   </main>
-
-  <dialog id="infoDlg"><div class="modal"></div></dialog>
-  <div class="build-badge">BUILD v1m-CH24</div>
-
-  <script defer src="app.v1m.js"></script>
+  <footer>BUILD v1k-CH24</footer>
 </body>
 </html>

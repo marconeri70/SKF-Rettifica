@@ -1,70 +1,37 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="it">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
-  <title>SKF 5S • CH 24 Rettifica</title>
-  <link rel="icon" href="assets/skf-192.png" />
-  <link rel="stylesheet" href="style.v1m.css">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SKF 5S</title>
+  <link rel="stylesheet" href="style.v1k.css">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="app.v1k.js" defer></script>
 </head>
 <body>
-  <header class="topbar">
-    <div class="brand"><img src="assets/skf-192.png" alt="SKF"><span>SKF 5S</span></div>
-    <div class="tools"><a class="btn ghost" href="checklist.html">Vai alla checklist →</a></div>
+  <header>
+    <img src="assets/skf-logo.png" alt="SKF Logo" class="logo">
+    <h1>SKF 5S</h1>
+    <a href="checklist.html" class="btn">Vai alla checklist →</a>
   </header>
-
-  <main class="container narrow">
-    <section class="card hero-card">
-      <img src="assets/5s-hero.png" alt="5S">
-      <h1>CH 24 — Rettifica</h1>
-    </section>
-
-    <section class="card">
-      <h2>Cosa è 5S</h2>
-      <ul class="bullets">
-        <li><span class="pill s1">1S Selezionare</span> — Eliminare il superfluo.</li>
-        <li><span class="pill s2">2S Sistemare</span> — Un posto per tutto.</li>
-        <li><span class="pill s3">3S Splendere</span> — Pulire e prevenire lo sporco.</li>
-        <li><span class="pill s4">4S Standardizzare</span> — Regole e segnali chiari.</li>
-        <li><span class="pill s5">5S Sostenere</span> — Abitudine e miglioramento continuo.</li>
+  <main>
+    <section class="intro">
+      <img src="assets/5S.png" alt="5S Diagram" class="diagram">
+      <h2>CH 24 — Rettifica</h2>
+      <h3>Cosa è 5S</h3>
+      <ul>
+        <li><span class="s1">1S Selezionare</span> — Eliminare il superfluo.</li>
+        <li><span class="s2">2S Sistemare</span> — Un posto per tutto.</li>
+        <li><span class="s3">3S Splendere</span> — Pulire e prevenire lo sporco.</li>
+        <li><span class="s4">4S Standardizzare</span> — Regole e segnali chiari.</li>
+        <li><span class="s5">5S Sostenere</span> — Abitudine e miglioramento continuo.</li>
       </ul>
     </section>
-
-    <section class="card">
-      <h2>Andamento CH 24</h2>
-      <canvas id="introChart" height="200"></canvas>
+    <section class="chart-section">
+      <h3>Andamento CH 24</h3>
+      <canvas id="mainChart"></canvas>
     </section>
   </main>
-
-  <div class="build-badge">BUILD v1m-CH24</div>
-
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-  <script>
-  (function(){
-    const KEY='skf.5s.v1k';
-    function load(){ try{ return JSON.parse(localStorage.getItem(KEY))||{areas:[]}; }catch(e){return{areas:[]}} }
-    function makeSector(){return{'1S':[],'2S':[],'3S':[],'4S':[],'5S':[]};}
-    function normalize(st){ if(!st.areas.length) st.areas.push({line:"CH 24",activeSector:"Rettifica",sectors:{Rettifica:makeSector()}}); return st; }
-    const st=normalize(load()), a=st.areas[0], sec=a.sectors.Rettifica;
-    const now=Date.now(); let late=0, byS={'1S':0,'2S':0,'3S':0,'4S':0,'5S':0};
-    Object.keys(sec).forEach(S=>{
-      const arr=sec[S]; if(!arr.length){byS[S]=0;return;}
-      let sum=0;
-      arr.forEach(it=>{
-        const v=parseInt(it.val||0,10)||0; sum+=v;
-        if(it.due && Date.parse(it.due)<now && v<5) late++;
-      });
-      byS[S]=Math.round((sum/(arr.length*5))*100);
-    });
-    const ctx=document.getElementById('introChart').getContext('2d');
-    new Chart(ctx,{
-      type:'bar',
-      data:{labels:['1S','2S','3S','4S','5S','Azioni in ritardo'],
-        datasets:[{data:[byS['1S'],byS['2S'],byS['3S'],byS['4S'],byS['5S'],late],
-        backgroundColor:['#8e44ad','#e74c3c','#f39c12','#27ae60','#2980b9','#c0392b']}]},
-      options:{plugins:{legend:{display:false}},scales:{y:{beginAtZero:true,max:100,grid:{display:false}},x:{grid:{display:false}}}}
-    });
-  })();
-  </script>
+  <footer>BUILD v1k-CH24</footer>
 </body>
 </html>
