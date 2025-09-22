@@ -2,8 +2,11 @@
 const SKF5S = (()=>{
 
   // --- constants
-  const COLORS = { '1S':'#7E57C2','2S':'#EF5350','3S':'#F4B400','4S':'#2ECC71','5S':'#1E88E5', LATE:'#EF5350' };
+  const COLORS = { '1S':'#7E57C2','2S':'#EF5350','3S':'F4B400','4S':'#2ECC71','5S':'#1E88E5', LATE:'#EF5350' };
   const KEY = 'skf5s:CH24:v1k';
+  const CH  = 'CH24';
+  const AREA= 'Rettifica';
+  const VERSION='v1k';
 
   // --- data helpers
   const defaultState = ()=>({
@@ -13,7 +16,7 @@ const SKF5S = (()=>{
       {id:'2S',name:'Sistemare',  color:COLORS['2S'],items:[{resp:'',notes:'',date:'',score:0}]},
       {id:'3S',name:'Splendere',  color:COLORS['3S'],items:[{resp:'',notes:'',date:'',score:0}]},
       {id:'4S',name:'Standardizzare',color:COLORS['4S'],items:[{resp:'',notes:'',date:'',score:0}]},
-      {id:'5S',name:'Sostenere',  color:COLORS['5S'],items:[{resp:'',notes:'',date:'',score:0}]},
+      {id:'5S',name:'Sostenere',  color:COLORS['5S'],items:[{resp:'',notes:'',date:'',score:0}]}
     ]
   });
   const load = ()=>{ try{ return JSON.parse(localStorage.getItem(KEY)) || defaultState(); }catch{ return defaultState(); } };
@@ -37,15 +40,21 @@ const SKF5S = (()=>{
     return true;
   };
 
-  // --- HOME (SVG chart to avoid overlap)
+  // --- UTILS
+  const cssVar  = v => getComputedStyle(document.documentElement).getPropertyValue(v);
+  const colorVarFor = id => ({'1S':'--s1','2S':'--s2','3S':'--s3','4S':'--s4','5S':'--s5'}[id]||'--s5');
+  const todayISO = ()=> new Date().toISOString();
+
+  // --- HOME (SVG bar chart + Ritardi multipli + Export)
   function initHome(){
     const state = load();
     const perS = state.s.map(x=>({id:x.id, name:x.name, color:x.color, p:pct(x), late:x.items.filter(isLateItem).length}));
     const lateAll = lateCount(state);
 
-    // draw chart (SVG, with padded labels)
+    // draw chart (SVG, con label non sovrapposte)
     const wrap = document.getElementById('chart');
-    wrap.innerHTML = '';
+    const legend = document.getElementById('legend');
+    wrap.innerHTML = ''; legend.innerHTML = '';
     const W = wrap.clientWidth || 640, H = wrap.clientHeight || 280;
     const PAD = {t:16, r:16, b:60, l:28};
     const n = 6; // 5S + Ritardi
@@ -55,9 +64,8 @@ const SKF5S = (()=>{
     svg.setAttribute('viewBox', `0 0 ${W} ${H}`); svg.setAttribute('width','100%'); svg.setAttribute('height','100%');
     wrap.appendChild(svg);
 
-    const data = [...perS.map(s=>({label:s.id, val:s.p, color:s.color, isLate:false})), {label:'Ritardi', val:lateAll, color:COLORS.LATE, isLate:true}];
+    const data = [...perS.map(s=>({label:s.id, val:s.p, color:s.color, isLate:false})), {label:'Ritardi', val:lateAll, color:cssVar('--late-border')||'#EF5350', isLate:true}];
 
-    // light grid only at 0/50/100 to keep clean
     [0,50,100].forEach(y=>{
       const gy = PAD.t + (H-PAD.t-PAD.b)*(1-y/100);
       const line=document.createElementNS(svgNS,'line');
@@ -95,30 +103,77 @@ const SKF5S = (()=>{
     });
 
     // legend
-    const legend = document.getElementById('legend'); legend.innerHTML='';
     perS.forEach(s=>{
       const el = document.createElement('div');
       el.innerHTML = `<span class="dot" style="background:${s.color}"></span> ${s.id}: <b>${s.p}%</b>`;
       legend.appendChild(el);
     });
     const l = document.createElement('div');
-    l.innerHTML = `<span class="dot" style="background:${COLORS.LATE}"></span> Ritardi: <b>${lateAll}</b>`;
+    l.innerHTML = `<span class="dot" style="background:#EF5350"></span> Ritardi: <b>${lateAll}</b>`;
     legend.appendChild(l);
 
-    // CTA: “Vai alla S in ritardo: <S>”
-    const worst = perS.reduce((a,b)=> (b.late>a.late?b:a), {late:0});
-    const cta = document.getElementById('ctaLate');
-    cta.innerHTML = '';
-    if(worst.late>0){
+    // CTA MULTIPLE: “1S in ritardo”, “3S in ritardo”, ecc.
+    const ctaWrap = document.getElementById('ctaLate');
+    ctaWrap.innerHTML = '';
+    perS.filter(s=>s.late>0).forEach(s=>{
       const a = document.createElement('a');
-      a.className='btn primary';
-      a.href = `checklist.html#${worst.id}`;
-      a.textContent = `Vai alla S in ritardo: ${worst.id}`;
-      cta.appendChild(a);
+      a.className='btn';
+      a.href = `checklist.html#${s.id}`;
+      a.textContent = `${s.id} in ritardo (${s.late})`;
+      ctaWrap.appendChild(a);
+    });
+
+    // EXPORT JSON per Supervisore (PIN)
+    const btnExport = document.getElementById('btnExport');
+    if(btnExport){
+      btnExport.onclick = ()=>{
+        if(!askPIN('PIN per esportare')) return;
+        const payload = buildSupervisorPayload(state);
+        const name = `skf5s_${CH}_${AREA}_${new Date().toISOString().slice(0,10)}.json`;
+        downloadJSON(payload, name);
+      };
     }
   }
 
-  // --- CHECKLIST
+  // Payload compatibile “Supervisore”
+  function buildSupervisorPayload(state){
+    const per = state.s.map(s=>({ id:s.id, name:s.name, pct: pct(s), late: s.items.filter(isLateItem).length }));
+    return {
+      app: "skf5s",
+      version: VERSION,
+      ch: CH,
+      area: AREA,
+      updatedAt: todayISO(),
+      kpis: {
+        avg: Math.round(per.reduce((a,b)=>a+b.pct,0)/per.length) || 0,
+        late: lateCount(state),
+        perS: per
+      },
+      data: state.s.map(s=>({
+        id: s.id,
+        name: s.name,
+        items: s.items.map(it=>({
+          resp: it.resp||"",
+          notes: it.notes||"",
+          date: it.date||"",
+          score: Number(it.score||0)
+        }))
+      }))
+    };
+  }
+
+  function downloadJSON(obj, filename){
+    const blob = new Blob([JSON.stringify(obj, null, 2)], {type:'application/json'});
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    URL.revokeObjectURL(a.href);
+    a.remove();
+  }
+
+  // --- CHECKLIST (apertura S da hash)
   function initChecklist(){
     const state = load();
     const chips = document.getElementById('chips');
@@ -142,9 +197,20 @@ const SKF5S = (()=>{
         c.style.background = sez.color;
         c.textContent = `${sez.id} ${pct(sez)}%`;
         if(sez.items.some(isLateItem)) c.style.boxShadow = '0 0 0 3px var(--late-border) inset';
-        c.onclick = ()=> document.getElementById(sez.id).scrollIntoView({behavior:'smooth', block:'start'});
+        c.onclick = ()=> openSection(sez.id, true);
         chips.appendChild(c);
       });
+    }
+
+    function openSection(id, scroll){
+      const sec = document.getElementById(id);
+      if(!sec) return;
+      const toggle = sec.querySelector('.details-toggle');
+      const body   = sec.querySelector('.details');
+      // forza apertura
+      body.style.display = 'block';
+      if(toggle && toggle.firstChild) toggle.firstChild.textContent = '▼';
+      if(scroll) sec.scrollIntoView({behavior:'smooth', block:'start'});
     }
 
     function makeSection(sez){
@@ -188,7 +254,7 @@ const SKF5S = (()=>{
         save(state); renderAll();
       };
 
-      // details toggle row + body
+      // details toggle + body
       const toggle = document.createElement('div');
       toggle.className = 'details-toggle';
       toggle.innerHTML = `<span>▼</span><span>Dettagli</span>`;
@@ -208,8 +274,8 @@ const SKF5S = (()=>{
       const locked = state.locked;
       if(!sez.items.length) sez.items.push({resp:'',notes:'',date:'',score:0});
       sez.items.forEach((it, idx)=>{
-        const row1 = document.createElement('div'); row1.className = 'row';
-        row1.innerHTML = `
+        const row = document.createElement('div'); row.className = 'row';
+        row.innerHTML = `
           <div class="full">
             <label>Responsabile / Operatore</label>
             <input type="text" placeholder="Inserisci il nome..." value="${it.resp||''}" ${locked?'disabled':''}>
@@ -229,28 +295,29 @@ const SKF5S = (()=>{
             </div>
           </div>
         `;
-        // wire events (scoped so non si blocca niente)
-        const [inpResp, taNotes, inpDate] = row1.querySelectorAll('input[type=text], textarea, input[type=date]');
-        inpResp.oninput = e=>{ it.resp = e.target.value; save(state); };
-        taNotes.oninput = e=>{ it.notes = e.target.value; save(state); };
-        inpDate.onchange = e=>{ it.date = e.target.value; save(state); renderAll(); };
 
-        row1.querySelectorAll('button[data-score]').forEach(btn=>{
+        // events
+        const [inpResp, taNotes, inpDate] = row.querySelectorAll('input[type=text], textarea, input[type=date]');
+        inpResp.oninput = e=>{ it.resp=e.target.value; save(state); };
+        taNotes.oninput = e=>{ it.notes=e.target.value; save(state); };
+        inpDate.onchange= e=>{ it.date=e.target.value; save(state); renderAll(); };
+
+        row.querySelectorAll('button[data-score]').forEach(btn=>{
           btn.onclick = ()=>{
             it.score = Number(btn.dataset.score);
-            row1.querySelectorAll('button[data-score]').forEach(b=>b.classList.remove('active'));
+            row.querySelectorAll('button[data-score]').forEach(b=>b.classList.remove('active'));
             btn.classList.add('active');
             save(state); renderAll();
           };
         });
-        row1.querySelector('.del').onclick = ()=>{
+        row.querySelector('.del').onclick = ()=>{
           if(!askPIN('PIN per eliminare la voce')) return;
           sez.items.splice(idx,1);
           if(!sez.items.length) sez.items.push({resp:'',notes:'',date:'',score:0});
           save(state); renderAll();
         };
 
-        body.appendChild(row1);
+        body.appendChild(row);
       });
 
       return card;
@@ -262,32 +329,21 @@ const SKF5S = (()=>{
 
       // sections
       sections.innerHTML = '';
-      state.s.forEach(sez=>{
-        sections.appendChild(makeSection(sez));
-      });
+      state.s.forEach(sez=> sections.appendChild(makeSection(sez)));
 
-      // deep-link per “Vai alla S in ritardo: X”
+      // deep-link (apre davvero la S)
       if(location.hash){
-        const id = location.hash.slice(1);
-        const t = document.getElementById(id);
-        if(t) t.scrollIntoView({behavior:'smooth', block:'start'});
+        openSection(location.hash.slice(1), true);
       }
 
-      // apply lock UI
       applyLockUI();
     }
 
-    function applyLockUI(){
-      lockBtn.textContent = state.locked ? '🔓' : '🔒';
-      // (inputs e bottoni già disabilitati se locked al render)
-    }
-
-    // toggle all (azzurro, funziona sempre: chiude se aperte, apre se chiuse)
+    // toggle all (azzurro, chiude/apre sempre)
     let allOpen = true;
-    toggleAll.onclick = ()=>{
-      const toggles = document.querySelectorAll('.details-toggle');
+    document.getElementById('toggleAll').onclick = ()=>{
       allOpen = !allOpen;
-      toggles.forEach(tg=>{
+      document.querySelectorAll('.details-toggle').forEach(tg=>{
         const body = tg.nextElementSibling;
         body.style.display = allOpen ? 'block' : 'none';
         tg.firstChild.textContent = allOpen ? '▼' : '▶';
@@ -295,12 +351,14 @@ const SKF5S = (()=>{
     };
 
     // lock with PIN
-    lockBtn.onclick = ()=>{
-      if(!askPIN(state.locked ? 'PIN per sbloccare' : 'PIN per bloccare')) return;
-      state.locked = !state.locked; save(state); applyLockUI();
+    function applyLockUI(){
+      document.getElementById('lockBtn').textContent = state.locked ? '🔓' : '🔒';
+    }
+    document.getElementById('lockBtn').onclick = ()=>{
+      if(!askPIN(state.locked?'PIN per sbloccare':'PIN per bloccare')) return;
+      state.locked = !state.locked; save(state); applyLockUI(); renderAll();
     };
 
-    // first paint
     renderAll();
   }
 
