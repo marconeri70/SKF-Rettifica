@@ -13,7 +13,7 @@ STATE.chName = 'CH 24 — Rettifica';
 
 /* ======= PIN : richiesto per ogni azione protetta ======= */
 const PIN = {
-  CODE: '2468', // <-- imposta qui
+  CODE: '6170', // <-- imposta qui
   _resolver:null,
   ask(){ return new Promise(res=>{ this._resolver=res; pinModal.showModal(); pinInput.value=''; pinInput.focus(); }); },
   close(ok){ pinModal.close(); this._resolver?.(ok); this._resolver=null; }
