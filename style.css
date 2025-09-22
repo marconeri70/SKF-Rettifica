@@ -93,18 +93,4 @@ textarea{min-height:72px;resize:vertical}
   .hero{grid-template-columns:90px 1fr}
   .kpi__value{font-size:1.6rem}
 
-  /* Rosso del cestino */
-.btn-danger {
-  background: #fee2e2;
-  color: #b91c1c;
-  border: 1px solid #fecaca;
-}
-.btn-danger:hover { background:#fecaca; }
-
-/* Evidenza ritardo (card) – già presente, confermo: */
-.s-card.late { border: 2px solid var(--late); background: #fff7f7; }
-
-/* Badge e pill restano come prima, qui nulla da cambiare */
-
-}
-
+ 
