@@ -2,7 +2,7 @@ const CACHE = 'skf5s-v1k-ch24';
 const ASSETS = [
   './',
   './index.html',
-  './style.css',
+  './style.v1k.css',
   './app.v1k.js',
   './manifest.json',
   './assets/skf-192.png',
