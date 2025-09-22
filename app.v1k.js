@@ -1,371 +1,390 @@
-/* ===========================================================
-   SKF 5S – BUILD v1k-CH24
-   =========================================================== */
+/* SKF 5S – CH 24 Rettifica (BUILD v1k) */
 
-const CH_ID = '24';                 // canale
-const STORAGE_KEY = `skf5s-ch${CH_ID}`;
-const PIN = '2468';                  // <-- PIN per azioni protette
+const PIN = "2468"; // cambia qui il PIN per azioni protette
 
-const COLORS = {
-  '1S': '#7c4dff',
-  '2S': '#ef5350',
-  '3S': '#f9a825', // ambra
-  '4S': '#43a047',
-  '5S': '#1e88e5',
-  late: '#e11d48'
+// Colori ufficiali S
+const S_COLORS = {
+  "1S": "#7E57C2",
+  "2S": "#EF5350",
+  "3S": "#F6B73C",
+  "4S": "#2E7D32",
+  "5S": "#3F51B5"
 };
 
-const SECTION_TEXT = {
-  '1S': 'Selezionare',
-  '2S': 'Sistemare',
-  '3S': 'Splendere',
-  '4S': 'Standardizzare',
-  '5S': 'Sostenere'
-};
-
-// stato app --------------------------------------------------
-const state = loadState() ?? seed();
+// Stato
+const storeKey = "skf5s-ch24";
+const state = loadState() || seed();
 
 function seed(){
   return {
-    locked: true,
+    chName: "CH 24 — Rettifica",
     sections: [
-      mkSection('1S'), mkSection('2S'), mkSection('3S'), mkSection('4S'), mkSection('5S')
-    ]
+      { key:"1S", name:"Selezionare", items:[blankItem()], color:S_COLORS["1S"] },
+      { key:"2S", name:"Sistemare",    items:[blankItem()], color:S_COLORS["2S"] },
+      { key:"3S", name:"Splendere",    items:[blankItem()], color:S_COLORS["3S"] },
+      { key:"4S", name:"Standardizzare", items:[blankItem()], color:S_COLORS["4S"] },
+      { key:"5S", name:"Sostenere",    items:[blankItem()], color:S_COLORS["5S"] },
+    ],
+    locked: true
   };
 }
-function mkSection(code){
-  return {
-    code, name: SECTION_TEXT[code],
-    value: 0, // 0/1/3/5 -> percent calc sotto
-    items: [
-      { title: '', owner: '', notes: '', date: todayISO() }
-    ]
-  };
+function blankItem(){
+  return { title:"", notes:"", resp:"", score:0, date: todayStr() };
 }
-function todayISO(){
-  const d = new Date(); d.setHours(0,0,0,0);
-  return d.toISOString().slice(0,10);
+function todayStr(){
+  const d=new Date(); return d.toISOString().slice(0,10);
 }
-function saveState(){ localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); }
-function loadState(){ try{ return JSON.parse(localStorage.getItem(STORAGE_KEY)); }catch{ return null;} }
+function saveState(){ localStorage.setItem(storeKey, JSON.stringify(state)); }
+function loadState(){ try{ return JSON.parse(localStorage.getItem(storeKey)); }catch{ return null; }}
 
-// routing ----------------------------------------------------
-const pageHome = qs('#page-home');
-const pageChecklist = qs('#page-checklist');
-qs('#btnToChecklist').addEventListener('click', ()=> show('checklist'));
-qs('#btnBack').addEventListener('click', ()=> show('home'));
-function show(which){
-  if(which==='checklist'){ pageHome.classList.remove('active'); pageChecklist.classList.add('active'); renderChecklist(); }
-  else { pageChecklist.classList.remove('active'); pageHome.classList.add('active'); renderHome(); }
-  window.scrollTo({top:0, behavior:'instant'});
+// Router
+window.addEventListener("hashchange", render);
+window.addEventListener("load", render);
+
+function render(){
+  const app = document.getElementById("app");
+  const nav = document.getElementById("topNav");
+  const route = location.hash.replace("#","") || "/";
+  if(route === "/" || route.startsWith("/home")){
+    nav.innerHTML = `<a class="btn ghost" href="#/checklist">Vai alla checklist →</a>`;
+    app.innerHTML = homeView();
+    buildHomeChart();
+    wireHome();
+  }else{
+    nav.innerHTML = "";
+    app.innerHTML = checklistView();
+    wireChecklist();
+    scrollIfTarget();
+  }
 }
 
-// HOME render -----------------------------------------------
-let chart;
-function renderHome(){
-  // titolo
-  qs('#titleAndamento').textContent = `Andamento CH ${CH_ID} — Rettifica`;
+/* ---------- HOME ---------- */
+function homeView(){
+  const { chName } = state;
+  const sums = computeSummary();
 
-  // data per grafico
-  const vals = state.sections.map(s => toPercent(s.value));
-  const labels = state.sections.map(s => s.code);
-  const colors = state.sections.map(s => COLORS[s.code]);
+  const lateChips = sums.lateList.length
+    ? `<div class="chips" id="lateChips">
+        ${sums.lateList.map(s => 
+          `<button class="chip click s${s.key[0]}" data-goto="${s.key}">
+            ${s.key} in ritardo (${s.count})
+          </button>`).join("")}
+      </div>`
+    : `<div class="small">Nessuna sezione in ritardo.</div>`;
 
-  // ritardi
-  const late = countLate();
+  return `
+    <section class="card hero">
+      <img src="assets/5s-hero.png" alt="5S" />
+      <div>
+        <h2 style="margin:4px 0 10px">Cosa è 5S</h2>
+        <div class="legend">
+          <span class="l"><span class="dot" style="background:${S_COLORS["1S"]}"></span> <strong>1S Selezionare</strong> — Eliminare il superfluo.</span>
+          <span class="l"><span class="dot" style="background:${S_COLORS["2S"]}"></span> <strong>2S Sistemare</strong> — Un posto per tutto e tutto al suo posto.</span>
+          <span class="l"><span class="dot" style="background:${S_COLORS["3S"]}"></span> <strong>3S Splendere</strong> — Pulire e prevenire lo sporco.</span>
+          <span class="l"><span class="dot" style="background:${S_COLORS["4S"]}"></span> <strong>4S Standardizzare</strong> — Regole e segnali chiari.</span>
+          <span class="l"><span class="dot" style="background:${S_COLORS["5S"]}"></span> <strong>5S Sostenere</strong> — Abitudine e miglioramento continuo.</span>
+        </div>
+      </div>
+    </section>
 
-  // chart
-  const ctx = qs('#chart5s').getContext('2d');
-  if(chart){ chart.destroy(); }
+    <section class="card">
+      <h2 style="margin-top:0">Andamento ${chName}</h2>
+      <canvas id="bar"></canvas>
+      <div class="legend" style="margin-top:8px">
+        ${["1S","2S","3S","4S","5S"].map(k => 
+          `<span class="l"><span class="dot" style="background:${S_COLORS[k]}"></span>${k}: ${sums[k]}%</span>`
+        ).join("")}
+        <span class="l"><span class="dot" style="background:#e11d48"></span>Ritardi: ${sums.lateTotal}</span>
+      </div>
+      <hr class="sep"/>
+      <div><strong>Sezioni in ritardo</strong></div>
+      ${lateChips}
+      <div style="margin-top:12px">
+        <button class="btn ghost" id="exportBtn">Esporta dati per Supervisore (PIN)</button>
+      </div>
+    </section>
+  `;
+}
 
-  chart = new Chart(ctx, {
+function computeSummary(){
+  const r = { "1S":0,"2S":0,"3S":0,"4S":0,"5S":0, lateTotal:0, lateList:[] };
+  state.sections.forEach(sec=>{
+    const percent = sectionValue(sec); // valore attuale
+    r[sec.key] = percent;
+    const lateCnt = sec.items.filter(it => isLate(it)).length;
+    if(lateCnt>0){
+      r.lateTotal += lateCnt;
+      r.lateList.push({key:sec.key,count:lateCnt});
+    }
+  });
+  return r;
+}
+function sectionValue(sec){
+  if(!sec.items.length) return 0;
+  // “Valore”: media semplice dei punteggi (0/1/3/5) trasformata in %
+  const avg = sec.items.reduce((a,b)=>a+Number(b.score||0),0) / sec.items.length;
+  return Math.round((avg/5)*100);
+}
+function isLate(it){
+  return (it.score||0) < 5 && it.date && it.date < todayStr();
+}
+
+function buildHomeChart(){
+  const ctx = document.getElementById("bar");
+  const sums = computeSummary();
+  const data = [sums["1S"],sums["2S"],sums["3S"],sums["4S"],sums["5S"], sums.lateTotal>0? (sums.lateTotal*5) : 0];
+  const labels = ["1S","2S","3S","4S","5S","Ritardi"];
+  const colors = [S_COLORS["1S"],S_COLORS["2S"],S_COLORS["3S"],S_COLORS["4S"],S_COLORS["5S"], "#ef4444"];
+
+  Chart.register(ChartDataLabels);
+  new Chart(ctx, {
     type: 'bar',
-    data: {
-      labels: [...labels, 'Ritardi'],
-      datasets: [{
-        data: [...vals, late>0? (Math.min(100, late*20)) : 0], // “altezza” visiva ritardi
-        backgroundColor: [...colors, COLORS.late],
-        borderRadius: 8,
-        maxBarThickness: 48
-      }]
-    },
-    options: {
-      responsive: true,
-      maintainAspectRatio: false,
-      scales: {
-        y: { beginAtZero:true, grid:{display:false}, ticks:{ callback:v=>v+'%'} },
-        x: { grid:{display:false} }
+    data: { labels, datasets:[{ data, backgroundColor: colors, borderRadius:6 }]},
+    options:{
+      responsive:true,
+      plugins:{
+        legend:{ display:false },
+        datalabels:{
+          anchor:'end', align:'end', offset:-2, formatter:(v,ctx)=>{
+            if(ctx.dataIndex===5) return v>0 ? String(v) : "";
+            return `${v}%`;
+          },
+          font:{ weight:'800' }
+        },
+        tooltip:{enabled:false}
       },
-      plugins: {
-        legend: { display:false },
-        tooltip: { enabled:true },
-        // Etichette percentuali sopra le barre
-        afterDatasetsDraw(chart, args, pluginOptions){
-          const {ctx, data} = chart;
-          ctx.save();
-          ctx.font = '700 12px system-ui';
-          ctx.fillStyle = '#111';
-          chart.getDatasetMeta(0).data.forEach((bar, i)=>{
-            const val = data.datasets[0].data[i];
-            const label = data.labels[i];
-            const text = (label==='Ritardi') ? String(late) : `${val}%`;
-            const cx = bar.x; const cy = bar.y - 8;
-            ctx.textAlign = 'center';
-            ctx.fillText(text, cx, cy);
-          });
-          ctx.restore();
-        }
+      scales:{
+        x: { grid:{ display:false } },
+        y: { grid:{ color:'#f1f5f9' }, beginAtZero:true, max:100, ticks:{ stepSize:20 } }
       }
     }
   });
+}
 
-  // legenda colorata ordinata
-  const legend = qs('#chartLegend');
-  legend.innerHTML = state.sections.map(s =>
-    `<span class="dot"><span class="box" style="background:${COLORS[s.code]}"></span>${s.code}: ${toPercent(s.value)}%</span>`
-  ).join('') + `<span class="dot"><span class="box" style="background:${COLORS.late}"></span>Ritardi: ${late}</span>`;
-
-  // bottoni “in ritardo – Vai”
-  const lateDiv = qs('#lateButtons');
-  const lateSections = collectLateSections();
-  if(lateSections.length===0){
-    lateDiv.innerHTML = '';
-  }else{
-    lateDiv.innerHTML = lateSections.map(code =>
-      `<button class="late-btn ${code.toLowerCase()}" data-goto="${code}" style="color:${COLORS[code]}">${code} in ritardo — Vai</button>`
-    ).join('');
-    lateDiv.querySelectorAll('button').forEach(b=>{
-      b.addEventListener('click', ()=>{
-        show('checklist');
-        // scroll alla sezione corretta
-        const anchor = qs(\`.s-card[data-code="\${b.dataset.goto}"]\`);
-        if(anchor) anchor.scrollIntoView({behavior:'smooth', block:'start'});
-      });
+function wireHome(){
+  // Vai alle schede in ritardo
+  const late = document.getElementById("lateChips");
+  if(late){
+    late.addEventListener("click", (e)=>{
+      const btn = e.target.closest("[data-goto]");
+      if(!btn) return;
+      const key = btn.dataset.goto;
+      location.hash = "#/checklist?goto="+encodeURIComponent(key);
     });
   }
-}
-
-// CHECKLIST render ------------------------------------------
-qs('#btnLock').addEventListener('click', ()=>{
-  // toggle lock visuale, ma le azioni protette chiedono comunque PIN
-  state.locked = !state.locked; saveState();
-  qs('#btnLock').textContent = state.locked ? '🔒' : '🔓';
-});
-
-qs('#btnToggleAll').addEventListener('click', ()=>{
-  const openAny = [...qsa('.s-card .s-details')].some(d => !d.hidden);
-  qsa('.s-card .s-details').forEach(d => d.hidden = openAny); // se ce n'è aperta, chiudi tutto; altrimenti apri tutto
-});
-
-function renderChecklist(){
-  // badge 1S..5S con percenti
-  const chips = qs('#chipsRow');
-  chips.innerHTML = state.sections.map(s =>
-    `<button class="badge ${s.code.toLowerCase()}" style="background:${COLORS[s.code]}" data-goto="${s.code}">
-      ${s.code} ${toPercent(s.value)}%
-    </button>`).join('');
-  chips.querySelectorAll('button').forEach(b=>{
-    b.addEventListener('click', ()=>{
-      const el = qs(\`.s-card[data-code="\${b.dataset.goto}"]\`);
-      if(el) el.scrollIntoView({behavior:'smooth', block:'start'});
+  // Export protetto
+  document.getElementById("exportBtn").addEventListener("click", ()=>{
+    askPin(()=> {
+      const blob = new Blob([JSON.stringify(state)], {type:"application/json"});
+      const a = document.createElement("a");
+      a.href = URL.createObjectURL(blob);
+      a.download = "skf-5s-ch24.json";
+      a.click();
+      URL.revokeObjectURL(a.href);
     });
-  });
-
-  // schede
-  const wrap = qs('#sections');
-  wrap.innerHTML = '';
-  state.sections.forEach((s, idx)=>{
-    wrap.insertAdjacentHTML('beforeend', sectionTemplate(s));
-  });
-
-  // wire up interazioni
-  qsa('.s-card').forEach(card=>{
-    const code = card.dataset.code;
-    const s = state.sections.find(x => x.code===code);
-
-    // apri/chiudi dettagli
-    const detailBtn = card.querySelector('.toggle-details');
-    const details = card.querySelector('.s-details');
-    detailBtn.addEventListener('click', ()=>{
-      details.hidden = !details.hidden;
-    });
-
-    // info popup
-    card.querySelector('.btn-info').addEventListener('click', ()=>{
-      alert(`${code} — ${SECTION_TEXT[code]}\n\n` + explain(code));
-    });
-
-    // aggiungi voce (PIN)
-    card.querySelector('.btn-plus').addEventListener('click', ()=>{
-      if(!checkPIN()) return;
-      s.items.push({ title:'', owner:'', notes:'', date: todayISO() });
-      saveState(); renderChecklist(); // re-render section
-    });
-
-    // inputs binding + score pills
-    const title = card.querySelector('.inp-title');
-    const owner = card.querySelector('.inp-owner');
-    const notes = card.querySelector('.inp-notes');
-    const date  = card.querySelector('.inp-date');
-
-    // bind first item (semplificazione)
-    const it = s.items[0];
-
-    title.value = it.title; owner.value = it.owner; notes.value = it.notes; date.value = it.date;
-    title.addEventListener('input', e=>{ it.title=e.target.value; saveState(); });
-    owner.addEventListener('input', e=>{ it.owner=e.target.value; saveState(); });
-    notes.addEventListener('input', e=>{ it.notes=e.target.value; saveState(); });
-    date.addEventListener('change', e=>{ it.date=e.target.value; saveState(); renderChecklist(); });
-
-    // pills
-    card.querySelectorAll('.pill').forEach(p=>{
-      p.addEventListener('click', ()=>{
-        s.value = Number(p.dataset.v);
-        saveState();
-        renderChecklist();
-      });
-    });
-
-    // delete voce (PIN)
-    card.querySelector('.btn-trash').addEventListener('click', ()=>{
-      if(!checkPIN()) return;
-      s.items.splice(0,1);
-      if(s.items.length===0) s.items.push({title:'',owner:'',notes:'',date:todayISO()});
-      saveState(); renderChecklist();
-    });
-  });
-
-  // KPI, evidenze ritardo, lock icon
-  qs('#btnLock').textContent = state.locked ? '🔒' : '🔓';
-  const late = countLate();
-  qs('#lateCount').textContent = String(late);
-  qs('#avgScore').textContent = `${average()}%`;
-
-  // bordo rosso sulle schede in ritardo
-  qsa('.s-card').forEach(card=>{
-    const code = card.dataset.code;
-    if(isSectionLate(code)) card.classList.add('late'); else card.classList.remove('late');
   });
 }
 
-function sectionTemplate(s){
-  const percent = toPercent(s.value);
-  const late = isSectionLate(s.code);
-  const swatchStyle = `background:${COLORS[s.code]}`;
+/* ---------- CHECKLIST ---------- */
+function checklistView(){
+  const { chName, locked } = state;
+  const sums = computeSummary();
+  const late = sums.lateList.map(l=>l.key);
 
-  // pills active
-  const p = (v)=> s.value===v ? 'pill active' : 'pill';
+  const kpi = `
+    <div class="kpi-row">
+      <div class="kpi"><div class="k">Punteggio medio</div><div class="v">${Math.round((sums["1S"]+sums["2S"]+sums["3S"]+sums["4S"]+sums["5S"])/5)}%</div></div>
+      <div class="kpi"><div class="k">Azioni in ritardo</div><div class="v">${sums.lateTotal}</div></div>
+    </div>`;
+
+  const chips = `
+    <div class="chips" id="chips">
+      ${state.sections.map(s => 
+        `<button class="chip click s${s.key[0]}" data-goto="${s.key}">
+          ${s.key} ${sectionValue(s)}%
+        </button>`).join("")}
+      <button class="btn primary" id="toggleAll">Comprimi / Espandi</button>
+    </div>`;
+
+  const cards = state.sections.map(sec=>{
+    const val = sectionValue(sec);
+    const isLateSec = sec.items.some(isLate);
+    return `
+      <div class="cardS ${isLateSec?'late':''}" id="sec-${sec.key}">
+        <div class="head">
+          <div class="swatch sw${sec.key[0]}"></div>
+          <div class="title">${sec.key} — ${sec.name}</div>
+          <div class="h-actions">
+            <span class="tag val">Valore: ${val}%</span>
+            <button class="iconbtn info" title="Spiegazione" data-info="${sec.key}">i</button>
+            <button class="iconbtn add" title="Duplica voce" data-add="${sec.key}">+</button>
+          </div>
+        </div>
+
+        <details class="details" open>
+          <summary>Dettagli</summary>
+          ${sec.items.map((it,idx)=> itemControls(sec.key, idx, it)).join("")}
+        </details>
+      </div>
+    `;
+  }).join("");
 
   return `
-  <article class="s-card ${late?'late':''}" data-code="${s.code}">
-    <div class="s-head">
-      <div class="s-title">
-        <span class="s-swatch" style="${swatchStyle}"></span>
-        <span>${s.code} — ${s.name}</span>
-      </div>
-      <div class="s-actions">
-        <span class="s-val">Valore: <b>${percent}%</b></span>
-        <button class="icon-btn info btn-info" title="Info">i</button>
-        <button class="icon-btn plus btn-plus" title="Aggiungi">+</button>
-      </div>
+    <div class="chips" style="justify-content:space-between;">
+      <a class="btn ghost" href="#/">← Indietro</a>
+      <h2 style="margin:0">${chName}</h2>
+      <button class="iconbtn lock" id="lockBtn" title="${locked?'Sblocco con PIN':'Blocca'}">🔒</button>
     </div>
 
-    <button class="toggle-details" style="margin:.5rem 0 0; background:none; border:none; color:#6b7280; cursor:pointer">▼ Dettagli</button>
+    ${kpi}
 
-    <div class="s-details" ${late?'':'hidden'}>
-      <div class="row"><input class="inp-owner" placeholder="Responsabile / Operatore" /></div>
-      <div class="row"><textarea class="inp-notes" placeholder="Note..."></textarea></div>
-      <div class="grid3">
+    <section class="card">
+      ${chips}
+    </section>
+
+    ${cards}
+  `;
+}
+
+function itemControls(key, idx, it){
+  const sClass = "s"+key[0];
+  return `
+    <div class="card" style="padding:12px;border:1px dashed var(--outline);border-radius:12px;margin-top:10px">
+      <div class="controls">
+        <input type="text" placeholder="Responsabile / Operatore" value="${escapeHtml(it.resp)}" data-bind="resp" data-key="${key}" data-idx="${idx}" ${state.locked?'disabled':''}/>
+        <textarea placeholder="Note..." data-bind="notes" data-key="${key}" data-idx="${idx}" ${state.locked?'disabled':''}>${escapeHtml(it.notes)}</textarea>
         <div class="score">
-          <button class="${p(0)}" data-v="0">0</button>
-          <button class="${p(1)}" data-v="1">1</button>
-          <button class="${p(3)}" data-v="3">3</button>
-          <button class="${p(5)}" data-v="5">5</button>
+          ${[0,1,3,5].map(v =>
+            `<button class="${sClass} ${Number(it.score)===v?'active':''}" data-score="${v}" data-key="${key}" data-idx="${idx}" ${state.locked?'disabled':''}>${v}</button>`
+          ).join("")}
         </div>
-        <div class="datebox">
-          <label style="color:var(--muted);font-weight:700">Data</label>
-          <input type="date" class="inp-date" />
-        </div>
-        <div style="text-align:right">
-          <button class="icon-btn trash btn-trash" title="Elimina (PIN)">🗑</button>
+        <div style="display:flex;gap:8px;align-items:center">
+          <input type="date" value="${it.date||todayStr()}" data-bind="date" data-key="${key}" data-idx="${idx}" ${state.locked?'disabled':''}/>
+          <button class="iconbtn del" title="Elimina voce" data-del="${key}" data-idx="${idx}" ${state.locked?'disabled':''}>🗑</button>
         </div>
       </div>
-      <div class="row"><input class="inp-title" placeholder="Titolo voce…" /></div>
     </div>
-  </article>`;
+  `;
 }
 
-function explain(code){
-  switch(code){
-    case '1S': return 'Avere solo ciò che serve, eliminare il superfluo.';
-    case '2S': return 'Un posto per tutto e tutto al suo posto.';
-    case '3S': return 'Pulire e prevenire lo sporco.';
-    case '4S': return 'Regole e segnali chiari.';
-    case '5S': return 'Abitudine e miglioramento continuo.';
-  }
-  return '';
-}
-
-// Helpers business ------------------------------------------
-function toPercent(score){
-  // mappa 0/1/3/5 a 0/20/60/100
-  if(score===5) return 100;
-  if(score===3) return 60;
-  if(score===1) return 20;
-  return 0;
-}
-function average(){
-  const arr = state.sections.map(s=>toPercent(s.value));
-  if(arr.length===0) return 0;
-  return Math.round(arr.reduce((a,b)=>a+b,0)/arr.length);
-}
-function isLateDate(iso){
-  const t = new Date(iso); t.setHours(0,0,0,0);
-  const now = new Date(); now.setHours(0,0,0,0);
-  return t < now;
-}
-function isSectionLate(code){
-  const s = state.sections.find(x=>x.code===code);
-  const it = s.items[0];
-  // consideriamo in “ritardo” se la data è nel passato e il valore < 5
-  return isLateDate(it.date) && s.value < 5;
-}
-function collectLateSections(){
-  return state.sections.filter(s=>isSectionLate(s.code)).map(s=>s.code);
-}
-function countLate(){ return collectLateSections().length; }
-
-// PIN gate
-function checkPIN(){
-  const p = prompt('Inserisci PIN');
-  return p===PIN;
-}
-
-// EXPORT (per Supervisore)
-qs('#btnExport').addEventListener('click', ()=>{
-  if(!checkPIN()) return;
-  const payload = {
-    channel: CH_ID,
-    updatedAt: new Date().toISOString(),
-    sections: state.sections.map(s=>({
-      code: s.code, name: s.name, value: s.value, percent: toPercent(s.value),
-      item: s.items[0]
-    }))
+function wireChecklist(){
+  // lock / unlock
+  document.getElementById("lockBtn").onclick = ()=>{
+    if(state.locked){
+      askPin(()=>{ state.locked=false; saveState(); render(); });
+    }else{
+      state.locked=true; saveState(); render();
+    }
   };
-  const blob = new Blob([JSON.stringify(payload,null,2)], {type:'application/json'});
-  const a = document.createElement('a');
-  a.href = URL.createObjectURL(blob);
-  a.download = `skf5s_ch${CH_ID}.json`;
-  a.click();
-  URL.revokeObjectURL(a.href);
-});
 
-// utils DOM
-function qs(sel, el=document){ return el.querySelector(sel); }
-function qsa(sel, el=document){ return [...el.querySelectorAll(sel)]; }
+  // chips navigate
+  document.getElementById("chips").addEventListener("click",(e)=>{
+    const btn = e.target.closest("[data-goto]");
+    if(!btn) return;
+    const id = "sec-"+btn.dataset.goto;
+    document.getElementById(id)?.scrollIntoView({behavior:"smooth",block:"start"});
+  });
 
-// bootstrap
-document.addEventListener('DOMContentLoaded', ()=>{
-  renderHome();
-});
+  // toggle all
+  document.getElementById("toggleAll").onclick = ()=>{
+    document.querySelectorAll(".details").forEach(d=> d.open = !d.open);
+  };
+
+  // info popup
+  document.querySelectorAll("[data-info]").forEach(btn=>{
+    btn.addEventListener("click", ()=>{
+      const key = btn.dataset.info;
+      const map = {
+        "1S":"Eliminare ciò che non serve.",
+        "2S":"Un posto per tutto e tutto al suo posto.",
+        "3S":"Pulire e prevenire lo sporco.",
+        "4S":"Regole e segnali visivi chiari.",
+        "5S":"Disciplina e miglioramento continuo."
+      };
+      alert(`${key} — ${map[key]}`);
+    });
+  });
+
+  // add voice (PIN)
+  document.querySelectorAll("[data-add]").forEach(btn=>{
+    btn.addEventListener("click", ()=>{
+      askPin(()=>{
+        const key = btn.dataset.add;
+        const sec = state.sections.find(s=>s.key===key);
+        sec.items.push(blankItem());
+        saveState(); render();
+      });
+    });
+  });
+
+  // delete voice (PIN)
+  document.querySelectorAll("[data-del]").forEach(btn=>{
+    btn.addEventListener("click", ()=>{
+      askPin(()=>{
+        const key = btn.dataset.del;
+        const idx = Number(btn.dataset.idx);
+        const sec = state.sections.find(s=>s.key===key);
+        sec.items.splice(idx,1);
+        if(!sec.items.length) sec.items.push(blankItem());
+        saveState(); render();
+      });
+    });
+  });
+
+  // bind inputs
+  document.querySelectorAll("[data-bind]").forEach(el=>{
+    el.addEventListener("input", ()=>{
+      const key = el.dataset.key, idx = Number(el.dataset.idx);
+      const sec = state.sections.find(s=>s.key===key);
+      sec.items[idx][el.dataset.bind] = el.value;
+      saveState();
+      // aggiorna solo header e KPI
+      rerenderHeaderBits();
+    });
+  });
+
+  // score buttons – non devono “bloccare” le altre schede
+  document.querySelectorAll("[data-score]").forEach(btn=>{
+    btn.addEventListener("click", ()=>{
+      const key = btn.dataset.key, idx = Number(btn.dataset.idx), val = Number(btn.dataset.score);
+      const sec = state.sections.find(s=>s.key===key);
+      sec.items[idx].score = val;
+      saveState();
+      // refresh stile dei pulsanti della riga
+      btn.parentElement.querySelectorAll("button").forEach(b=>b.classList.remove("active"));
+      btn.classList.add("active");
+      rerenderHeaderBits(); // aggiorna KPI/valori/ritardi
+      // ricolora card se in ritardo
+      const card = document.getElementById("sec-"+key);
+      if(sec.items.some(isLate)) card.classList.add("late"); else card.classList.remove("late");
+    });
+  });
+}
+
+function rerenderHeaderBits(){
+  // Aggiorna chips e tag “Valore” senza ricaricare tutto
+  state.sections.forEach(sec=>{
+    const val = sectionValue(sec);
+    const chip = document.querySelector(`.chip[data-goto="${sec.key}"]`);
+    if(chip) chip.innerHTML = `${sec.key} ${val}%`;
+    const card = document.getElementById("sec-"+sec.key);
+    card?.querySelector(".tag.val").replaceChildren(document.createTextNode(`Valore: ${val}%`));
+  });
+}
+
+function scrollIfTarget(){
+  const q = new URLSearchParams(location.hash.split("?")[1]||"");
+  const goto = q.get("goto");
+  if(goto){
+    const el = document.getElementById("sec-"+goto);
+    el?.scrollIntoView({behavior:"smooth",block:"start"});
+  }
+}
+
+/* -------- Utils -------- */
+function askPin(ok){
+  const p = prompt("Inserisci PIN");
+  if(p===PIN) ok();
+  else alert("PIN errato");
+}
+function escapeHtml(s=""){ return s.replace(/[&<>"']/g, m=>({ "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;" }[m])); }
