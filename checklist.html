@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
-  <title>Checklist 5S • CH 2 Rettifica</title>
+  <title>Checklist 5S • CH 24 Rettifica</title>
   <link rel="icon" href="assets/skf-192.png" />
   <link rel="stylesheet" href="style.v1k.css">
 </head>
@@ -15,6 +15,7 @@
       <button id="btnLock" class="btn ghost" title="Sblocca con PIN">🔒</button>
     </div>
   </header>
+
   <main class="container narrow">
     <section class="dashboard card">
       <div class="kpis">
@@ -22,17 +23,20 @@
         <div class="kpi"><div class="kpi-title">Azioni in ritardo</div><div id="kpiLate" class="kpi-value">0</div></div>
       </div>
     </section>
+
+    <!-- Contenitore generato da JS -->
     <section class="card">
       <div id="areas"></div>
     </section>
   </main>
 
+  <!-- Template dell'area -->
   <template id="tplArea">
     <article class="area">
       <header class="area-hd">
         <div class="score">
           <span class="score-pill s1"><b>1S</b> <span class="score-1S">0%</span></span>
-          <span class="score-pill s2"><b>2S</b> <span class="score-2S">0%</span></span>
+        <span class="score-pill s2"><b>2S</b> <span class="score-2S">0%</span></span>
           <span class="score-pill s3"><b>3S</b> <span class="score-3S">0%</span></span>
           <span class="score-pill s4"><b>4S</b> <span class="score-4S">0%</span></span>
           <span class="score-pill s5"><b>5S</b> <span class="score-5S">0%</span></span>
@@ -43,6 +47,7 @@
           <button class="btn ghost collapse">Comprimi / Espandi</button>
         </div>
       </header>
+
       <div class="panels">
         <section class="panel" data-s="1S">
           <h4 class="pill s1">1S — Selezionare</h4><button class="info big">i</button>
@@ -69,8 +74,8 @@
   </template>
 
   <dialog id="infoDlg"><div class="modal"></div></dialog>
-  <div class="build-badge">BUILD v1m</div>
+  <div class="build-badge">BUILD v1k-CH24</div>
 
-  <script src="app.v1m.js"></script>
+  <script defer src="app.v1k.js"></script>
 </body>
 </html>
