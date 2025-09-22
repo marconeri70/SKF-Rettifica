@@ -1,6 +1,8 @@
 /* ===========================================================
-   SKF 5S – v1k-CH24 (update: ritardi e PIN reale)
+   SKF 5S – v1k-CH24 (fix ritardi + PIN per ogni azione)
    =========================================================== */
+
+const PIN_CODE = '1234'; // <- cambia qui il PIN
 
 const UI = {
   pageHome: document.getElementById('home'),
@@ -16,31 +18,22 @@ const UI = {
   latePills: document.getElementById('latePills'),
   exportBtn: document.getElementById('exportBtn'),
   chartTitle: document.getElementById('chartTitle'),
+  lockBtnTop: document.getElementById('lockBtn'),
+  lockBtnChk: document.getElementById('lockBtn2'),
 };
 
 const COLORS = {
-  s1: getCss('--s1'),
-  s2: getCss('--s2'),
-  s3: getCss('--s3'),
-  s4: getCss('--s4'),
-  s5: getCss('--s5'),
-  late: getCss('--late'),
+  s1: css('--s1'),
+  s2: css('--s2'),
+  s3: css('--s3'),
+  s4: css('--s4'),
+  s5: css('--s5'),
+  late: css('--late'),
 };
-function getCss(v){ return getComputedStyle(document.documentElement).getPropertyValue(v).trim(); }
+function css(v){ return getComputedStyle(document.documentElement).getPropertyValue(v).trim(); }
 
-/* ---------- PIN reale (modifica qui il tuo PIN) ---------- */
-const PIN = '2580'; // <--- imposta qui il tuo PIN
-function isUnlocked(){
-  return localStorage.getItem('skf5s_unlocked') === '1';
-}
-function setUnlocked(v){
-  if(v) localStorage.setItem('skf5s_unlocked','1'); else localStorage.removeItem('skf5s_unlocked');
-}
-
-/* ---------- Stato ---------- */
 const STATE = {
   chName: 'CH 24 — Rettifica',
-  get locked(){ return !isUnlocked(); },
   sections: {
     s1: { key:'1S', title:'Selezionare', info:'Eliminare il superfluo.', value:0, items:[makeItem()] },
     s2: { key:'2S', title:'Sistemare', info:'Un posto per tutto e tutto al suo posto.', value:0, items:[makeItem()] },
@@ -52,12 +45,18 @@ const STATE = {
 };
 
 function makeItem(){
-  return { title:'', resp:'', note:'', date:isoToday(), score:0, late:false };
+  return { title:'', resp:'', note:'', date:todayISO(), score:0, late:false };
 }
-function isoToday(){
-  const d = new Date();
-  d.setHours(0,0,0,0);
-  return d.toISOString().slice(0,10);
+function todayISO(){
+  const d = new Date(); d.setHours(0,0,0,0);
+  return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+}
+function toLocalDate(yyyy_mm_dd){
+  // parsing senza timezone (evita sfasamenti)
+  const [y,m,d] = (yyyy_mm_dd || todayISO()).split('-').map(Number);
+  const dt = new Date(y, m-1, d);
+  dt.setHours(0,0,0,0);
+  return dt;
 }
 
 /* ---------- Routing ---------- */
@@ -71,11 +70,11 @@ function showPage(id){
   else { renderChecklist(); }
 }
 
-/* ---------- Render checklist ---------- */
+/* ---------- Rendering ---------- */
 function renderChecklist(){
   document.getElementById('chTitle').textContent = STATE.chName;
 
-  // chips riassuntive
+  // Chips
   UI.chipsRow.innerHTML = '';
   ['s1','s2','s3','s4','s5'].forEach(sid=>{
     const s = STATE.sections[sid];
@@ -84,7 +83,7 @@ function renderChecklist(){
     UI.chipsRow.appendChild(chip);
   });
 
-  // cards
+  // Cards
   UI.sList.innerHTML = '';
   Object.entries(STATE.sections).forEach(([sid,s])=>{
     UI.sList.appendChild(buildSectionCard(sid,s));
@@ -94,40 +93,41 @@ function renderChecklist(){
 }
 
 function buildSectionCard(sid,s){
-  const card = el('article','s-card',null,{id:`card-${sid}`});
+  const card = el('article','s-card',{id:`card-${sid}`});
 
+  // head
   const head = el('div','s-card__head');
   const color = el('div','s-color'); color.style.background = COLORS[sid];
-  const title = el('div','s-title',`${s.key} — ${s.title}`);
+  const title = el('div','s-title',null); title.textContent = `${s.key} — ${s.title}`;
   const tools = el('div','s-tools');
 
-  const badge = el('div','s-badge',`Valore: ${s.value}%`);
-  badge.id = `badge-${sid}`;
+  // Valore %
+  const badge = el('div','s-badge',null); badge.id=`badge-${sid}`; badge.textContent = `Valore: ${s.value}%`;
   tools.appendChild(badge);
 
   // info (tematizzata)
   const infoWrap = el('div','info-pop '+sid);
-  const infoBtn = el('button','icon-btn', 'i'); infoBtn.type='button';
+  const infoBtn = el('button','icon-btn','i'); infoBtn.type='button';
   const pop = el('div','info-pop__box');
   pop.innerHTML = `<div class="info-pop__title">${s.key} — ${s.title}</div><div>${s.info}</div>`;
   infoWrap.append(infoBtn,pop);
   infoBtn.addEventListener('click', ()=>pop.classList.toggle('show'));
-  document.addEventListener('click',(e)=>{ if(!infoWrap.contains(e.target)) pop.classList.remove('show'); });
+  document.addEventListener('click',e=>{ if(!infoWrap.contains(e.target)) pop.classList.remove('show'); });
   tools.appendChild(infoWrap);
 
-  // add voice (richiede PIN se bloccato)
+  // add (+) → PIN ogni volta
   const addBtn = el('button','icon-btn','+'); addBtn.type='button';
-  if(STATE.locked){ addBtn.disabled = true; addBtn.title = 'Richiede PIN'; }
-  addBtn.addEventListener('click',()=>{
-    if(STATE.locked) return;
+  addBtn.addEventListener('click',async ()=>{
+    if(!(await requirePin())) return;
     s.items.push(makeItem());
-    renderChecklist();
+    saveAndRefresh(sid);
   });
   tools.appendChild(addBtn);
 
   head.append(color,title,tools);
   card.appendChild(head);
 
+  // body
   const body = el('div','s-body');
   const details = el('details'); details.open = true;
   const sum = el('summary',null,'Dettagli');
@@ -137,17 +137,17 @@ function buildSectionCard(sid,s){
     const row = el('div','row');
 
     const resp = inputText('Responsabile / Operatore', it.resp);
-    resp.addEventListener('input',e=>{ it.resp = e.target.value; saveAndRefresh(sid); });
+    resp.addEventListener('input',e=>{ it.resp=e.target.value; saveAndRefresh(sid); });
 
-    const note = el('textarea'); note.placeholder='Note...'; note.value = it.note;
-    note.addEventListener('input',e=>{ it.note = e.target.value; saveAndRefresh(sid); });
+    const note = el('textarea'); note.placeholder='Note...'; note.value=it.note;
+    note.addEventListener('input',e=>{ it.note=e.target.value; saveAndRefresh(sid); });
 
     const scoreBox = el('div','row__score');
     [0,1,3,5].forEach(v=>{
-      const b = el('button','score', String(v)); b.type='button';
+      const b = el('button','score',String(v)); b.type='button';
       if(it.score===v) b.classList.add('active');
       b.addEventListener('click',()=>{
-        it.score = v;
+        it.score=v;
         scoreBox.querySelectorAll('.score').forEach(x=>x.classList.remove('active'));
         b.classList.add('active');
         saveAndRefresh(sid);
@@ -156,15 +156,15 @@ function buildSectionCard(sid,s){
     });
 
     const dateWrap = el('div','date');
-    const datelabel = el('span',null,'Data');
-    const date = el('input'); date.type='date'; date.value = it.date || isoToday();
+    const lbl = el('span',null,'Data');
+    const date = el('input'); date.type='date'; date.value = it.date || todayISO();
     date.addEventListener('change',e=>{ it.date = e.target.value; saveAndRefresh(sid); });
-    dateWrap.append(datelabel,date);
+    dateWrap.append(lbl,date);
 
-    const del = el('button','icon-btn','🗑'); del.type='button';
-    if(STATE.locked){ del.disabled = true; del.title = 'Richiede PIN'; }
-    del.addEventListener('click',()=>{
-      if(STATE.locked) return;
+    // delete → PIN ogni volta
+    const del = el('button','icon-btn btn-danger','🗑'); del.type='button';
+    del.addEventListener('click', async ()=>{
+      if(!(await requirePin())) return;
       s.items.splice(idx,1);
       if(s.items.length===0) s.items.push(makeItem());
       saveAndRefresh(sid);
@@ -175,45 +175,39 @@ function buildSectionCard(sid,s){
   });
 
   card.appendChild(details);
-
-  // evidenza ritardo della sezione
+  // late style
   card.classList.toggle('late', s.items.some(it=>it.late));
   return card;
 }
 
-function inputText(placeholder,val){
-  const i = el('input'); i.type='text'; i.placeholder = placeholder; i.value = val||'';
-  return i;
-}
-
-function el(tag,cls,txt,attrs){
-  const n = document.createElement(tag);
-  if(cls) n.className = cls;
-  if(txt!=null) n.textContent = txt;
-  if(attrs) Object.entries(attrs).forEach(([k,v])=>n.setAttribute(k,v));
+function inputText(ph,val){ const i=el('input'); i.type='text'; i.placeholder=ph; i.value=val||''; return i; }
+function el(tag,cls,txtOrAttrs){
+  const n=document.createElement(tag);
+  if(cls) n.className=cls;
+  if(typeof txtOrAttrs==='string'){ n.textContent=txtOrAttrs; }
+  else if(typeof txtOrAttrs==='object' && txtOrAttrs){ Object.entries(txtOrAttrs).forEach(([k,v])=>n.setAttribute(k,v)); }
   return n;
 }
 
-/* ---------- Calcoli ---------- */
+/* ---------- Compute ---------- */
 function saveAndRefresh(sid){
   computeSectionValue(sid);
   updateGlobalKpis();
-  renderChecklist();
+  renderChecklist(); // re-render per badge/chips/stile ritardo
 }
 
+/* Regola RITARDO:
+   - in ritardo se Data < oggi (confronto locale) */
 function computeSectionValue(sid){
   const s = STATE.sections[sid];
-
-  // valore % come media dei punteggi (0,1,3,5) riportata su 100
-  const arr = s.items.map(i=>i.score);
-  const val = arr.length ? Math.round((arr.reduce((a,b)=>a+b,0) / (5*arr.length))*100) : 0;
+  const scores = s.items.map(i=>i.score);
+  const val = scores.length ? Math.round((scores.reduce((a,b)=>a+b,0) / (5*scores.length))*100) : 0;
   s.value = val;
 
-  // RITARDO: ora è in ritardo se la data è PRECEDENTE a oggi (indipendentemente dal punteggio)
-  const today = new Date(isoToday());
+  const today = toLocalDate(todayISO());
   s.items.forEach(it=>{
-    const d = new Date(it.date || isoToday());
-    it.late = (d < today); // ← questa è la nuova logica richiesta
+    const d = toLocalDate(it.date || todayISO());
+    it.late = (d < today); // solo data antecedente
   });
 }
 
@@ -227,12 +221,10 @@ function updateGlobalKpis(){
   UI.avgKpi.textContent = `${avg}%`;
   UI.lateKpi.textContent = String(lateCount);
 
-  ['s1','s2','s3','s4','s5'].forEach(k=>{
-    const chip = UI.chipsRow.querySelector(`.chip.${k}`);
-    if(chip) chip.textContent = `${STATE.sections[k].key} ${STATE.sections[k].value}%`;
-  });
-
+  // chips + badge + stile ritardo
   Object.entries(STATE.sections).forEach(([sid,s])=>{
+    const chip = UI.chipsRow.querySelector(`.chip.${sid}`);
+    if(chip) chip.textContent = `${s.key} ${s.value}%`;
     const b = document.getElementById(`badge-${sid}`);
     if(b) b.textContent = `Valore: ${s.value}%`;
     const card = document.getElementById(`card-${sid}`);
@@ -243,19 +235,22 @@ function updateGlobalKpis(){
   updateLatePills();
 }
 
+/* ---------- Toggle details ---------- */
 UI.toggleAll.addEventListener('click',()=>{
   const all = UI.sList.querySelectorAll('details');
   const someOpen = Array.from(all).some(d=>d.open);
   all.forEach(d=> d.open = !someOpen);
 });
 
-/* ---------- Late pills home ---------- */
+/* ---------- Late pills ---------- */
 function updateLatePills(){
   UI.latePills.innerHTML = '';
   Object.entries(STATE.sections).forEach(([sid,s])=>{
     const count = s.items.filter(i=>i.late).length;
     if(count>0){
-      const pill = el('button',`pill ${sid}`,`${s.key} in ritardo (${count})`);
+      const pill = document.createElement('button');
+      pill.className = `pill ${sid}`;
+      pill.textContent = `${s.key} in ritardo (${count})`;
       pill.addEventListener('click',()=>{
         showPage('checklist');
         document.getElementById(`card-${sid}`).scrollIntoView({behavior:'smooth',block:'start'});
@@ -292,9 +287,9 @@ function buildChart(){
       ctx.textAlign='center';
       ctx.fillStyle = '#1f2937';
       chart.getDatasetMeta(0).data.forEach((bar,i)=>{
-        const val = data.datasets[0].data[i];
-        const label = i<5 ? `${val}%` : String(Math.round((val/100)*5));
-        ctx.fillText(label, bar.x, bar.y - 6);
+        const raw = data.datasets[0].data[i];
+        const text = i<5 ? `${raw}%` : String(Math.round((raw/100)*5));
+        ctx.fillText(text, bar.x, bar.y - 6);
       });
       ctx.restore();
     }
@@ -303,32 +298,36 @@ function buildChart(){
   const opts = {
     responsive:true,
     maintainAspectRatio:false,
-    layout:{padding:{top:30,bottom:20,left:8,right:8}},
-    scales:{ y:{beginAtZero:true,max:100,grid:{color:'#eef1f8'}}, x:{grid:{display:false}} },
+    layout:{padding:{top:30,bottom:24,left:8,right:8}},
+    scales:{
+      y:{beginAtZero:true,max:100,grid:{color:'#eef1f8'}},
+      x:{grid:{display:false}}
+    },
     plugins:{ legend:{display:false}, tooltip:{enabled:true} }
   };
 
-  if(STATE.chart){ STATE.chart.destroy(); }
+  if(STATE.chart) STATE.chart.destroy();
   STATE.chart = new Chart(ctx,{type:'bar',data,options:opts,plugins:[labelsPlugin]});
 }
 
-/* ---------- PIN lock ---------- */
-function askPin(){
-  const p = prompt('Inserisci PIN per sbloccare');
-  if(p===PIN){ setUnlocked(true); alert('Sbloccato'); renderChecklist(); }
-  else if(p!==null){ alert('PIN errato'); }
+/* ---------- PIN per azione ---------- */
+async function requirePin(){
+  const p = prompt('Inserisci PIN');
+  if(p===null) return false;
+  if(p===PIN_CODE) return true;
+  alert('PIN errato');
+  return false;
 }
-document.getElementById('lockBtn').addEventListener('click',askPin);
-document.getElementById('lockBtn2').addEventListener('click',askPin);
+UI.lockBtnTop.addEventListener('click', requirePin); // mostra solo il prompt (voluto)
+UI.lockBtnChk.addEventListener('click', requirePin);
 
-/* ---------- Export con PIN ---------- */
-UI.exportBtn.addEventListener('click', ()=>{
-  const p = prompt('PIN supervisore');
-  if(p!==PIN) return alert('PIN errato');
+/* ---------- Export (protetto da PIN) ---------- */
+UI.exportBtn.addEventListener('click', async ()=>{
+  if(!(await requirePin())) return;
   const payload = {
     channel: STATE.chName,
     updatedAt: new Date().toISOString(),
-    sections: Object.fromEntries(Object.entries(STATE.sections).map(([k,s])=>[
+    sections: Object.fromEntries(Object.entries(STATE.sections).map(([sid,s])=>[
       s.key, { value:s.value, items:s.items }
     ]))
   };
