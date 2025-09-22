@@ -8,7 +8,7 @@ let state = { areas: [] };
 try{ const raw = localStorage.getItem(KEY); if(raw){ const p=JSON.parse(raw); if(p && Array.isArray(p.areas)) state=p; } }catch(e){}
 
 const CFG  = { areaName:'CH 2', fixedSector:'Rettifica' };
-let role   = 'worker'; // 'supervisor' se vuoi poi aggiungere un PIN
+let role   = 'worker'; // diventa 'supervisor' con PIN
 
 function makeSectorSet(){ return {'1S':[], '2S':[], '3S':[], '4S':[], '5S':[]}; }
 function makeArea(line){ return { line, activeSector:'Rettifica', sectors:{ Rettifica: makeSectorSet(), Montaggio: makeSectorSet() } }; }
@@ -61,11 +61,8 @@ function render(){
   const node = tpl.content.cloneNode(true);
 
   // percentuali top
-  $$('.score-pill', node).forEach(p=>{
-    const c = p.classList.contains('s1')?'1S':p.classList.contains('s2')?'2S':p.classList.contains('s3')?'3S':p.classList.contains('s4')?'4S':'5S';
-    const el = $('.score-'+c, node);
-    if(el) el.textContent = pct(kpis.byS[c]||0);
-  });
+  const map = {'1S':'.score-1S','2S':'.score-2S','3S':'.score-3S','4S':'.score-4S','5S':'.score-5S'};
+  Object.entries(map).forEach(([S,sel])=>{ const el = $(sel,node); if(el) el.textContent = pct(kpis.byS[S]||0); });
   $('.score-val', node).textContent = pct(kpis.score);
   $('.doms', node).textContent      = kpis.domS;
 
@@ -131,19 +128,51 @@ function render(){
   $('#kpiScore').textContent = pct(kpis.score);
   $('#kpiLate').textContent  = kpis.late;
 
-  // comprimi per area
+  // comprimi per area (delegato)
   elAreas.addEventListener('click', e=>{
     const b = e.target.closest('.collapse'); if(!b) return;
     const panels = b.closest('.area').querySelector('.panels');
     panels.classList.toggle('collapsed');
   });
+
+  // popup info (delegato)
+  document.addEventListener('click', e=>{
+    const btn = e.target.closest('button.info.big'); if(!btn) return;
+    const panel = btn.closest('.panel');
+    const title = panel.querySelector('.pill')?.textContent || 'Info';
+    const map = {
+      '1S':'Eliminare ciò che non serve.',
+      '2S':'Un posto per tutto e tutto al suo posto.',
+      '3S':'Pulire è ispezionare; prevenire lo sporco.',
+      '4S':'Regole e segnali visivi chiari.',
+      '5S':'Abitudine e miglioramento continuo.'
+    };
+    const S = panel.dataset.s || '';
+    const msg = map[S] || '';
+    const dlg = $('#infoDlg');
+    dlg.querySelector('.modal').innerHTML = `<h3>${title}</h3><p>${msg}</p><form method="dialog" style="margin-top:12px;text-align:right"><button class="btn">Chiudi</button></form>`;
+    dlg.showModal();
+  });
+}
+
+// Lock con PIN per attivare cancellazioni/modifiche testo
+function setupLock(){
+  const btn = $('#btnLock');
+  if(!btn) return;
+  const setUi = ()=>{ btn.textContent = role==='supervisor'?'🔓':'🔒'; document.body.classList.toggle('edit-unlocked', role==='supervisor'); }
+  setUi();
+  btn.addEventListener('click', ()=>{
+    if(role==='supervisor'){ role='worker'; setUi(); return; }
+    const pin = prompt('Inserisci PIN supervisore'); 
+    if(pin==='2468'){ role='supervisor'; setUi(); } else { alert('PIN errato'); }
+  });
 }
 
 window.addEventListener('load', ()=>{
-  // (se avevi SW in passato) evita cache testarde
   if ('serviceWorker' in navigator) {
     navigator.serviceWorker.getRegistrations().then(rs => rs.forEach(r => r.unregister()));
   }
   normalizeState();
+  setupLock();
   render();
 });
