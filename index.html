@@ -1,85 +1,44 @@
 <!doctype html>
 <html lang="it">
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>SKF 5S</title>
-  <link rel="manifest" href="manifest.json">
-  <link rel="icon" href="assets/skf-192.png">
-  <link rel="apple-touch-icon" href="assets/skf-192.png">
-  <link rel="stylesheet" href="style.css">
-  <!-- Chart.js -->
-  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+  <link rel="stylesheet" href="./style.css?v=2025-09-22" />
 </head>
 <body>
   <header class="topbar">
     <div class="brand">
-      <img src="assets/skf-192.png" alt="SKF" class="brand__logo">
-      <div class="brand__name"><span>SKF</span>&nbsp;<span>5S</span></div>
+      <img src="./assets/logo-szf.png" alt="SKF" class="logo" onerror="this.style.display='none'">
+      <span>SKF <b>5S</b></span>
     </div>
-    <nav class="topbar__nav">
-      <a id="goChecklist" class="link">Vai alla checklist →</a>
-      <button id="lockBtn" class="lock" aria-label="PIN lock" title="PIN">🔒</button>
-    </nav>
+    <nav id="navActions"></nav>
   </header>
 
-  <!-- HOME -->
-  <main id="home" class="page page--active">
-    <section class="card hero">
-      <img src="assets/5s-hero.png" alt="5S hero" class="hero__img">
-      <div class="hero__txt">
-        <h2>Cosa è 5S</h2>
-        <ul class="five-bullets">
-          <li><span class="tag s1">1S Selezionare</span> — Eliminare il superfluo.</li>
-          <li><span class="tag s2">2S Sistemare</span> — Un posto per tutto e tutto al suo posto.</li>
-          <li><span class="tag s3">3S Splendere</span> — Pulire e prevenire lo sporco.</li>
-          <li><span class="tag s4">4S Standardizzare</span> — Regole e segnali chiari.</li>
-          <li><span class="tag s5">5S Sostenere</span> — Abitudine e miglioramento continuo.</li>
-        </ul>
-      </div>
-    </section>
+  <main id="app" class="container"></main>
 
-    <section class="card">
-      <h3 id="chartTitle">Andamento CH 24 — Rettifica</h3>
-      <div class="chart-wrap">
-        <canvas id="kpiChart" height="220"></canvas>
-      </div>
-      <div id="latePills" class="late-pills"></div>
-      <div class="actions">
-        <button id="exportBtn" class="btn btn--secondary">Esporta dati per Supervisore (PIN)</button>
-      </div>
-    </section>
-  </main>
+  <!-- Modale PIN -->
+  <dialog id="pinModal">
+    <form method="dialog" class="pin-card" id="pinForm">
+      <h3>Sblocca azione</h3>
+      <p>Inserisci il PIN per procedere.</p>
+      <input type="password" id="pinInput" inputmode="numeric" maxlength="8" placeholder="PIN" required />
+      <menu>
+        <button type="submit" class="btn primary">Conferma</button>
+        <button type="button" class="btn" onclick="PIN.close(false)">Annulla</button>
+      </menu>
+    </form>
+  </dialog>
 
-  <!-- CHECKLIST -->
-  <main id="checklist" class="page">
-    <header class="subbar">
-      <button id="backHome" class="link">← Indietro</button>
-      <h1 id="chTitle">CH 24 — Rettifica</h1>
-      <button id="lockBtn2" class="lock" aria-label="PIN lock" title="PIN">🔒</button>
-    </header>
-
-    <section class="kpi-row">
-      <div class="kpi"><div class="kpi__label">Punteggio medio</div><div id="avgKpi" class="kpi__value">0%</div></div>
-      <div class="kpi"><div class="kpi__label">Azioni in ritardo</div><div id="lateKpi" class="kpi__value">0</div></div>
-    </section>
-
-    <section class="summary-chips" id="chipsRow">
-      <!-- chips cliccabili 1S..5S -->
-    </section>
-
-    <div class="actions actions--sticky">
-      <button id="toggleAll" class="btn btn--primary">Comprimi / Espandi</button>
+  <!-- Tooltip / Popup semplice -->
+  <dialog id="infoModal">
+    <div class="info-card">
+      <h3 id="infoTitle">Info</h3>
+      <p id="infoText"></p>
+      <button class="btn primary" onclick="document.getElementById('infoModal').close()">Chiudi</button>
     </div>
+  </dialog>
 
-    <section id="sList" class="s-list">
-      <!-- Cards 1S..5S create by JS -->
-    </section>
-  </main>
-
-  <footer class="build">BUILD v1k-CH24</footer>
-
-  <script src="app.js"></script>
-  <script src="sw.js" defer></script>
+  <script src="./app.js?v=2025-09-22" defer></script>
 </body>
 </html>
