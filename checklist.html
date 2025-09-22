@@ -1,48 +1,52 @@
-
 <!doctype html>
 <html lang="it">
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <title>SKF 5S — Checklist CH 24</title>
   <link rel="stylesheet" href="style.v1k.css">
-  <meta name="theme-color" content="#0d47a1">
   <script>window.__PIN__="2424";</script>
 </head>
-<body class="page--chk">
+<body class="page-checklist">
   <header class="appbar">
-    <a class="back" href="index.html">← Indietro</a>
-    <h1 class="appbar__title">CH 24 — Rettifica</h1>
-    <button id="btnLock" class="lock" title="Blocca/sblocca">🔒</button>
+    <div class="container appbar-row">
+      <a class="btn ghost" href="index.html">← Indietro</a>
+      <h1 class="brand center">CH 24 — Rettifica</h1>
+      <button id="lockBtn" class="btn ghost" title="Blocca/sblocca">🔒</button>
+    </div>
   </header>
 
   <main class="container">
     <section class="kpis">
-      <div class="kpi"><div class="kpi__label">Punteggio medio</div><div id="kAvg" class="kpi__value">0%</div></div>
-      <div class="kpi"><div class="kpi__label">Azioni in ritardo</div><div id="kLate" class="kpi__value">0</div></div>
+      <div class="kpi card">
+        <div class="kpi-label">Punteggio medio</div>
+        <div id="kAvg" class="kpi-value">0%</div>
+      </div>
+      <div class="kpi card">
+        <div class="kpi-label">Azioni in ritardo</div>
+        <div id="kLate" class="kpi-value">0</div>
+      </div>
     </section>
 
     <section class="card">
-      <div class="summary" id="summaryRow">
-        <!-- chips 1S..5S in tempo reale -->
-      </div>
-      <div class="toolbar">
-        <button id="btnToggle" class="btn">Comprimi / Espandi</button>
-      </div>
-      <div id="sections"></div>
+      <div id="chips" class="chips"></div>
+      <button id="toggleAll" class="btn primary emb">Comprimi / Espandi</button>
     </section>
+
+    <section id="sections"></section>
   </main>
 
-  <footer class="footer"><small>BUILD v1k-CH24</small></footer>
+  <footer class="foot">BUILD v1k-CH24</footer>
 
-  <dialog id="dlgInfo"><div id="dlgInfoBody"></div><button id="dlgClose" class="btn">Chiudi</button></dialog>
+  <dialog id="dlgInfo" class="info-dialog">
+    <div class="info-head">
+      <span id="dlgTitle"></span>
+      <button id="dlgClose" class="icon-btn">✕</button>
+    </div>
+    <p id="dlgBody" class="info-body"></p>
+  </dialog>
 
   <script src="app.v1k.js"></script>
-  <script>
-    SKF5S.initChecklist('CH24');
-    if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.register('sw.js');
-    }
-  </script>
+  <script>SKF5S.initChecklist(); if('serviceWorker' in navigator){navigator.serviceWorker.register('sw.js');}</script>
 </body>
 </html>
