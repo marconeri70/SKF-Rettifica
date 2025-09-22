@@ -40,7 +40,7 @@ html,body{margin:0;padding:0;background:var(--bg);color:var(--ink);font:16px/1.4
 /* Hero */
 .hero{display:grid;grid-template-columns:minmax(140px, 26vw) 1fr;gap:22px;align-items:center}
 .hero img{
-  width:clamp(160px, 28vw, 320px);
+  width:clamp(180px, 48vw, 340px);
   height:auto;
   justify-self:center;
 }
