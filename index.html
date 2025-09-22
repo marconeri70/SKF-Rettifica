@@ -1,62 +1,103 @@
 <!doctype html>
 <html lang="it">
 <head>
-  <meta charset="utf-8"/>
-  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>SKF 5S</title>
-  <link rel="manifest" href="manifest.json">
-  <link rel="stylesheet" href="style.v1k.css">
+  <link rel="manifest" href="manifest.json" />
+  <link rel="icon" href="assets/skf-192.png" sizes="192x192" />
+  <link rel="apple-touch-icon" href="assets/skf-192.png" />
+  <meta name="theme-color" content="#0b5fff" />
+  <link rel="stylesheet" href="style.css" />
+  <!-- Chart.js -->
+  <script defer src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
 </head>
-<body class="page-home">
+<body>
   <header class="appbar">
-    <div class="container appbar-row">
-      <img class="logo" src="assets/skf-192.png" alt="SKF">
-      <h1 class="brand">SKF 5S</h1>
-      <a class="btn ghost" href="checklist.html">Vai alla checklist →</a>
+    <div class="brand">
+      <img src="assets/skf-192.png" alt="SKF" />
+      <span>SKF 5S</span>
     </div>
+    <nav id="topActions">
+      <button id="btnToChecklist" class="link-btn" data-route="checklist">
+        Vai alla checklist →
+      </button>
+    </nav>
   </header>
 
-  <main class="container">
-    <!-- HERO 5S con immagine -->
+  <!-- HOME -->
+  <main id="page-home" class="page active" aria-labelledby="h1Home">
     <section class="card hero">
-      <div class="hero-img">
-        <img src="assets/5s-hero.png" alt="5S">
+      <div class="hero-media">
+        <img src="assets/5s-hero.png" alt="Diagramma 5S" />
       </div>
       <div class="hero-text">
-        <h2>Cosa è 5S</h2>
+        <h2 id="h1Home">Cosa è 5S</h2>
         <ul class="what5s">
-          <li><span class="pill s1">1S Selezionare</span> — Eliminare il superfluo.</li>
-          <li><span class="pill s2">2S Sistemare</span> — Un posto per tutto e tutto al suo posto.</li>
-          <li><span class="pill s3">3S Splendere</span> — Pulire e prevenire lo sporco.</li>
-          <li><span class="pill s4">4S Standardizzare</span> — Regole e segnali chiari.</li>
-          <li><span class="pill s5">5S Sostenere</span> — Abitudine e miglioramento continuo.</li>
+          <li><span class="chip s1">1S Selezionare</span> — Eliminare il superfluo.</li>
+          <li><span class="chip s2">2S Sistemare</span> — Un posto per tutto e tutto al suo posto.</li>
+          <li><span class="chip s3">3S Splendere</span> — Pulire e prevenire lo sporco.</li>
+          <li><span class="chip s4">4S Standardizzare</span> — Regole e segnali chiari.</li>
+          <li><span class="chip s5">5S Sostenere</span> — Abitudine e miglioramento continuo.</li>
         </ul>
       </div>
     </section>
 
-    <!-- Grafico + Ritardi multipli + Export Supervisore -->
     <section class="card">
-      <h2>Andamento CH 24 — Rettifica</h2>
-      <div id="chart" class="chart"></div>
-      <div id="legend" class="legend"></div>
-
-      <div class="cta-lists">
-        <h3 class="cta-title">Sezioni in ritardo</h3>
-        <div id="ctaLate" class="cta-late"></div>
+      <h3 id="titleAndamento">Andamento CH 24 — Rettifica</h3>
+      <div class="chart-wrap">
+        <canvas id="chart5s" height="160"></canvas>
       </div>
+      <div id="chartLegend" class="legend-row"></div>
+
+      <div id="lateButtons" class="late-row"></div>
 
       <div class="export-row">
-        <button id="btnExport" class="btn primary emb">Esporta dati per Supervisore (PIN)</button>
+        <button id="btnExport" class="btn pin">Esporta dati per Supervisore (PIN)</button>
       </div>
     </section>
   </main>
 
-  <footer class="foot">BUILD v1k-CH24</footer>
+  <!-- CHECKLIST -->
+  <main id="page-checklist" class="page" aria-labelledby="h1Checklist">
+    <header class="subbar">
+      <button id="btnBack" class="back">← Indietro</button>
+      <h2 id="h1Checklist">CH 24 — Rettifica</h2>
+      <button id="btnLock" class="lock" title="Sblocca/Blocca">🔒</button>
+    </header>
 
-  <script src="app.v1k.js"></script>
+    <section class="summary">
+      <div class="kpi">
+        <div class="kpi-title">Punteggio medio</div>
+        <div class="kpi-val" id="avgScore">0%</div>
+      </div>
+      <div class="kpi">
+        <div class="kpi-title">Azioni in ritardo</div>
+        <div class="kpi-val" id="lateCount">0</div>
+      </div>
+    </section>
+
+    <section class="chips-row" id="chipsRow">
+      <!-- riempito da JS con 1S…5S -->
+    </section>
+
+    <div class="toolbar">
+      <button id="btnToggleAll" class="btn primary">Comprimi / Espandi</button>
+    </div>
+
+    <section id="sections" class="sections">
+      <!-- schede 1S..5S generate da JS -->
+    </section>
+  </main>
+
+  <footer class="build">BUILD v1k-CH24</footer>
+
+  <script defer src="app.v1k.js"></script>
   <script>
-    SKF5S.initHome();
-    if('serviceWorker' in navigator){ navigator.serviceWorker.register('sw.js'); }
+    // PWA (facoltativo)
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('sw.js').catch(()=>{});
+    }
   </script>
 </body>
 </html>
