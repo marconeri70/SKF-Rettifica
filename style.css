@@ -38,8 +38,12 @@ html,body{margin:0;padding:0;background:var(--bg);color:var(--ink);font:16px/1.4
 .btn.small{padding:6px 9px;font-size:13px;border-radius:8px}
 
 /* Hero */
-.hero{display:grid;grid-template-columns:160px 1fr;gap:22px;align-items:center}
-.hero img{width:160px;height:auto;justify-self:center}
+.hero{display:grid;grid-template-columns:minmax(140px, 26vw) 1fr;gap:22px;align-items:center}
+.hero img{
+  width:clamp(140px, 22vw, 260px);
+  height:auto;
+  justify-self:center;
+}
 .h3{font-size:20px;margin:0 0 10px 0}
 .h2{font-size:26px;margin:0 0 14px 0}
 
@@ -77,7 +81,8 @@ textarea{min-height:80px;resize:vertical}
 .i-btn{border-radius:10px;border:1px solid var(--ring);width:36px;height:36px;display:grid;place-items:center;font-weight:900}
 .plus{font-size:20px}
 
-.pin-card, .info-card{padding:16px;min-width:280px}
+.pin-card, .info-card{padding:16px;min-width:280px;background:#fff;border-radius:12px;border:1px solid var(--ring);box-shadow:var(--shadow)}
+.info-card{border-top:6px solid var(--blue)} /* diventerà del colore della S via JS */
 dialog::backdrop{background:rgba(2,6,23,.35)}
 
 /* Mobile */
@@ -85,4 +90,3 @@ dialog::backdrop{background:rgba(2,6,23,.35)}
   .kpis{grid-template-columns:1fr}
   .hero{grid-template-columns:1fr}
 }
-
