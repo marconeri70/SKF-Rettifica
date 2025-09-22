@@ -1,90 +1,76 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="it">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>SKF 5S – CH2 Rettifica</title>
-  <link rel="stylesheet" href="style.v1k.css">
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+  <title>Checklist 5S • CH 2 Rettifica</title>
+  <link rel="icon" href="assets/skf-192.png" />
+  <link rel="stylesheet" href="style.v1m.css">
 </head>
 <body>
   <header class="topbar">
-    <div class="brand">
-      <img src="assets/skf-192.png" alt="SKF">
-      <span>SKF 5S</span>
+    <div class="brand"><img src="assets/skf-192.png" alt="SKF"><span>SKF 5S</span></div>
+    <div class="tools">
+      <a class="btn ghost" href="./">← Indietro</a>
+      <button id="btnLock" class="btn ghost" title="Sblocca con PIN">🔒</button>
     </div>
-    <a class="btn ghost" href="index.html">← Indietro</a>
   </header>
-
   <main class="container narrow">
-    <div class="card">
+    <section class="dashboard card">
       <div class="kpis">
-        <div class="kpi">
-          <div class="kpi-title">Punteggio medio</div>
-          <div class="kpi-value" id="kpiScore">0%</div>
-        </div>
-        <div class="kpi">
-          <div class="kpi-title">Azioni in ritardo</div>
-          <div class="kpi-value" id="kpiLate">0</div>
-        </div>
+        <div class="kpi"><div class="kpi-title">Punteggio medio</div><div id="kpiScore" class="kpi-value">0%</div></div>
+        <div class="kpi"><div class="kpi-title">Azioni in ritardo</div><div id="kpiLate" class="kpi-value">0</div></div>
       </div>
-    </div>
-
-    <div id="areas"></div>
+    </section>
+    <section class="card">
+      <div id="areas"></div>
+    </section>
   </main>
 
   <template id="tplArea">
-    <div class="area card">
-      <div class="score">
-        <div class="score-pill s1">1S <b class="score-1S">0%</b></div>
-        <div class="score-pill s2">2S <b class="score-2S">0%</b></div>
-        <div class="score-pill s3">3S <b class="score-3S">0%</b></div>
-        <div class="score-pill s4">4S <b class="score-4S">0%</b></div>
-        <div class="score-pill s5">5S <b class="score-5S">0%</b></div>
-      </div>
-      <div class="sum">
-        <span>Punteggio: <b class="score-val">0%</b></span>
-        <span>Predominante: <b class="doms">—</b></span>
-      </div>
-      <button class="btn ghost collapse">Comprimi / Espandi</button>
-
+    <article class="area">
+      <header class="area-hd">
+        <div class="score">
+          <span class="score-pill s1"><b>1S</b> <span class="score-1S">0%</span></span>
+          <span class="score-pill s2"><b>2S</b> <span class="score-2S">0%</span></span>
+          <span class="score-pill s3"><b>3S</b> <span class="score-3S">0%</span></span>
+          <span class="score-pill s4"><b>4S</b> <span class="score-4S">0%</span></span>
+          <span class="score-pill s5"><b>5S</b> <span class="score-5S">0%</span></span>
+        </div>
+        <div class="sum">
+          <span class="badge">Punteggio: <b class="score-val">0%</b></span>
+          <span class="badge">Predominante: <b class="doms">—</b></span>
+          <button class="btn ghost collapse">Comprimi / Espandi</button>
+        </div>
+      </header>
       <div class="panels">
-        <div class="panel" data-s="1S">
-          <div class="pill s1">1S — Selezionare</div>
-          <button class="info big">i</button>
-          <div class="items"></div>
-          <button class="btn ghost add">+ Voce</button>
-        </div>
-        <div class="panel" data-s="2S">
-          <div class="pill s2">2S — Sistemare</div>
-          <button class="info big">i</button>
-          <div class="items"></div>
-          <button class="btn ghost add">+ Voce</button>
-        </div>
-        <div class="panel" data-s="3S">
-          <div class="pill s3">3S — Splendere</div>
-          <button class="info big">i</button>
-          <div class="items"></div>
-          <button class="btn ghost add">+ Voce</button>
-        </div>
-        <div class="panel" data-s="4S">
-          <div class="pill s4">4S — Standardizzare</div>
-          <button class="info big">i</button>
-          <div class="items"></div>
-          <button class="btn ghost add">+ Voce</button>
-        </div>
-        <div class="panel" data-s="5S">
-          <div class="pill s5">5S — Sostenere</div>
-          <button class="info big">i</button>
-          <div class="items"></div>
-          <button class="btn ghost add">+ Voce</button>
-        </div>
+        <section class="panel" data-s="1S">
+          <h4 class="pill s1">1S — Selezionare</h4><button class="info big">i</button>
+          <div class="items"></div><button class="btn add">+ Voce</button>
+        </section>
+        <section class="panel" data-s="2S">
+          <h4 class="pill s2">2S — Sistemare</h4><button class="info big">i</button>
+          <div class="items"></div><button class="btn add">+ Voce</button>
+        </section>
+        <section class="panel" data-s="3S">
+          <h4 class="pill s3">3S — Splendere</h4><button class="info big">i</button>
+          <div class="items"></div><button class="btn add">+ Voce</button>
+        </section>
+        <section class="panel" data-s="4S">
+          <h4 class="pill s4">4S — Standardizzare</h4><button class="info big">i</button>
+          <div class="items"></div><button class="btn add">+ Voce</button>
+        </section>
+        <section class="panel" data-s="5S">
+          <h4 class="pill s5">5S — Sostenere</h4><button class="info big">i</button>
+          <div class="items"></div><button class="btn add">+ Voce</button>
+        </section>
       </div>
-    </div>
+    </article>
   </template>
 
   <dialog id="infoDlg"><div class="modal"></div></dialog>
-  <div class="build-badge">BUILD v1k-full</div>
+  <div class="build-badge">BUILD v1m</div>
 
-  <script src="app.v1k.js"></script>
+  <script src="app.v1m.js"></script>
 </body>
 </html>
