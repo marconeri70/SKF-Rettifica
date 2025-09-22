@@ -1,37 +1,48 @@
 <!DOCTYPE html>
 <html lang="it">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>SKF 5S</title>
-  <link rel="stylesheet" href="style.v1k.css">
+  <link rel="stylesheet" href="style.v1k.css" />
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-  <script src="app.v1k.js" defer></script>
+  <script defer src="app.v1k.js"></script>
 </head>
-<body>
-  <header>
-    <img src="assets/skf-logo.png" alt="SKF Logo" class="logo">
-    <h1>SKF 5S</h1>
-    <a href="checklist.html" class="btn">Vai alla checklist →</a>
+<body class="page-home">
+  <header class="appbar">
+    <div class="brand">
+      <img src="assets/skf-192.png" class="logo" alt="SKF" />
+      <div class="title">
+        <span class="t1">SKF</span><span class="t2">5S</span>
+      </div>
+    </div>
+    <a class="btn ghost" href="checklist.html">Vai alla checklist →</a>
   </header>
-  <main>
-    <section class="intro">
-      <img src="assets/5S.png" alt="5S Diagram" class="diagram">
-      <h2>CH 24 — Rettifica</h2>
-      <h3>Cosa è 5S</h3>
-      <ul>
-        <li><span class="s1">1S Selezionare</span> — Eliminare il superfluo.</li>
-        <li><span class="s2">2S Sistemare</span> — Un posto per tutto.</li>
-        <li><span class="s3">3S Splendere</span> — Pulire e prevenire lo sporco.</li>
-        <li><span class="s4">4S Standardizzare</span> — Regole e segnali chiari.</li>
-        <li><span class="s5">5S Sostenere</span> — Abitudine e miglioramento continuo.</li>
-      </ul>
+
+  <main class="container">
+    <section class="hero card">
+      <div class="hero-img">
+        <img src="assets/5s-hero.png" alt="5S hero">
+      </div>
+      <div class="hero-text">
+        <h2>CH 24 — Rettifica</h2>
+        <h3>Cosa è 5S</h3>
+        <ul class="s-list">
+          <li><span class="pill s1">1S Selezionare</span> — Eliminare il superfluo.</li>
+          <li><span class="pill s2">2S Sistemare</span> — Un posto per tutto e tutto al suo posto.</li>
+          <li><span class="pill s3">3S Splendere</span> — Pulire e prevenire lo sporco.</li>
+          <li><span class="pill s4">4S Standardizzare</span> — Regole e segnali chiari.</li>
+          <li><span class="pill s5">5S Sostenere</span> — Abitudine e miglioramento continuo.</li>
+        </ul>
+      </div>
     </section>
-    <section class="chart-section">
+
+    <section class="card">
       <h3>Andamento CH 24</h3>
-      <canvas id="mainChart"></canvas>
+      <canvas id="mainChart" height="180"></canvas>
     </section>
   </main>
-  <footer>BUILD v1k-CH24</footer>
+
+  <footer class="foot">BUILD v1k-CH24</footer>
 </body>
 </html>

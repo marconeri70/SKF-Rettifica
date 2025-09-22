@@ -1,25 +1,45 @@
 <!DOCTYPE html>
 <html lang="it">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>SKF 5S - Checklist</title>
-  <link rel="stylesheet" href="style.v1k.css">
-  <script src="app.v1k.js" defer></script>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>SKF 5S — Checklist CH 24</title>
+  <link rel="stylesheet" href="style.v1k.css" />
+  <script defer src="app.v1k.js"></script>
 </head>
-<body>
-  <header>
-    <a href="index.html" class="btn">← Indietro</a>
-    <h1>SKF 5S - CH 24</h1>
-    <button id="lockBtn">🔒</button>
+<body class="page-checklist">
+  <header class="appbar">
+    <a class="btn ghost" href="index.html">← Indietro</a>
+    <div class="title only">CH 24 — Rettifica</div>
+    <button id="lockBtn" class="icon-btn" aria-pressed="false" title="Blocca / sblocca">
+      🔒
+    </button>
   </header>
-  <main id="checklistContainer">
-    <section id="scoreBoard">
-      <div class="card">Punteggio medio <span id="avgScore">0%</span></div>
-      <div class="card">Azioni in ritardo <span id="delayed">0</span></div>
+
+  <main class="container">
+    <section class="kpis">
+      <div class="kpi card">
+        <div class="kpi-label">Punteggio medio</div>
+        <div class="kpi-value" id="avgScore">0%</div>
+      </div>
+      <div class="kpi card">
+        <div class="kpi-label">Azioni in ritardo</div>
+        <div class="kpi-value" id="delayedCount">0</div>
+      </div>
     </section>
-    <section id="sSections"></section>
+
+    <section class="card controls">
+      <button id="toggleAll" class="btn">Comprimi / Espandi</button>
+    </section>
+
+    <section id="sSections" class="s-sections"></section>
   </main>
-  <footer>BUILD v1k-CH24</footer>
+
+  <footer class="foot">BUILD v1k-CH24</footer>
+
+  <dialog id="infoDialog" class="info-dialog">
+    <div class="info-head"><span id="infoTitle"></span><button id="infoClose" class="icon-btn">✕</button></div>
+    <p id="infoBody"></p>
+  </dialog>
 </body>
 </html>
