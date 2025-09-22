@@ -1,366 +1,371 @@
-/* ===== SKF 5S v1k (CH24) ===== */
-const SKF5S = (()=>{
+/* ===========================================================
+   SKF 5S – BUILD v1k-CH24
+   =========================================================== */
 
-  // --- constants
-  const COLORS = { '1S':'#7E57C2','2S':'#EF5350','3S':'F4B400','4S':'#2ECC71','5S':'#1E88E5', LATE:'#EF5350' };
-  const KEY = 'skf5s:CH24:v1k';
-  const CH  = 'CH24';
-  const AREA= 'Rettifica';
-  const VERSION='v1k';
+const CH_ID = '24';                 // canale
+const STORAGE_KEY = `skf5s-ch${CH_ID}`;
+const PIN = '2468';                  // <-- PIN per azioni protette
 
-  // --- data helpers
-  const defaultState = ()=>({
-    locked:false,
-    s:[
-      {id:'1S',name:'Selezionare',color:COLORS['1S'],items:[{resp:'',notes:'',date:'',score:0}]},
-      {id:'2S',name:'Sistemare',  color:COLORS['2S'],items:[{resp:'',notes:'',date:'',score:0}]},
-      {id:'3S',name:'Splendere',  color:COLORS['3S'],items:[{resp:'',notes:'',date:'',score:0}]},
-      {id:'4S',name:'Standardizzare',color:COLORS['4S'],items:[{resp:'',notes:'',date:'',score:0}]},
-      {id:'5S',name:'Sostenere',  color:COLORS['5S'],items:[{resp:'',notes:'',date:'',score:0}]}
+const COLORS = {
+  '1S': '#7c4dff',
+  '2S': '#ef5350',
+  '3S': '#f9a825', // ambra
+  '4S': '#43a047',
+  '5S': '#1e88e5',
+  late: '#e11d48'
+};
+
+const SECTION_TEXT = {
+  '1S': 'Selezionare',
+  '2S': 'Sistemare',
+  '3S': 'Splendere',
+  '4S': 'Standardizzare',
+  '5S': 'Sostenere'
+};
+
+// stato app --------------------------------------------------
+const state = loadState() ?? seed();
+
+function seed(){
+  return {
+    locked: true,
+    sections: [
+      mkSection('1S'), mkSection('2S'), mkSection('3S'), mkSection('4S'), mkSection('5S')
     ]
-  });
-  const load = ()=>{ try{ return JSON.parse(localStorage.getItem(KEY)) || defaultState(); }catch{ return defaultState(); } };
-  const save = s => localStorage.setItem(KEY, JSON.stringify(s));
-
-  // --- calc
-  const pct = s => {
-    if(!s.items.length) return 0;
-    const sum = s.items.reduce((a,b)=>a + Number(b.score||0), 0);
-    return Math.round((sum/(s.items.length*5))*100) || 0;
   };
-  const isLateItem = it => it.date && new Date(it.date) < new Date() && Number(it.score||0) < 5;
-  const lateCount = state => state.s.reduce((acc,sez)=> acc + sez.items.filter(isLateItem).length, 0);
-
-  // --- PIN
-  const askPIN = (msg='Inserisci PIN') => {
-    const pin = window.__PIN__ || '2424';
-    const v = prompt(msg);
-    if(v===null) return false;
-    if(v!==pin){ alert('PIN errato'); return false; }
-    return true;
+}
+function mkSection(code){
+  return {
+    code, name: SECTION_TEXT[code],
+    value: 0, // 0/1/3/5 -> percent calc sotto
+    items: [
+      { title: '', owner: '', notes: '', date: todayISO() }
+    ]
   };
+}
+function todayISO(){
+  const d = new Date(); d.setHours(0,0,0,0);
+  return d.toISOString().slice(0,10);
+}
+function saveState(){ localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); }
+function loadState(){ try{ return JSON.parse(localStorage.getItem(STORAGE_KEY)); }catch{ return null;} }
 
-  // --- UTILS
-  const cssVar  = v => getComputedStyle(document.documentElement).getPropertyValue(v);
-  const colorVarFor = id => ({'1S':'--s1','2S':'--s2','3S':'--s3','4S':'--s4','5S':'--s5'}[id]||'--s5');
-  const todayISO = ()=> new Date().toISOString();
+// routing ----------------------------------------------------
+const pageHome = qs('#page-home');
+const pageChecklist = qs('#page-checklist');
+qs('#btnToChecklist').addEventListener('click', ()=> show('checklist'));
+qs('#btnBack').addEventListener('click', ()=> show('home'));
+function show(which){
+  if(which==='checklist'){ pageHome.classList.remove('active'); pageChecklist.classList.add('active'); renderChecklist(); }
+  else { pageChecklist.classList.remove('active'); pageHome.classList.add('active'); renderHome(); }
+  window.scrollTo({top:0, behavior:'instant'});
+}
 
-  // --- HOME (SVG bar chart + Ritardi multipli + Export)
-  function initHome(){
-    const state = load();
-    const perS = state.s.map(x=>({id:x.id, name:x.name, color:x.color, p:pct(x), late:x.items.filter(isLateItem).length}));
-    const lateAll = lateCount(state);
+// HOME render -----------------------------------------------
+let chart;
+function renderHome(){
+  // titolo
+  qs('#titleAndamento').textContent = `Andamento CH ${CH_ID} — Rettifica`;
 
-    // draw chart (SVG, con label non sovrapposte)
-    const wrap = document.getElementById('chart');
-    const legend = document.getElementById('legend');
-    wrap.innerHTML = ''; legend.innerHTML = '';
-    const W = wrap.clientWidth || 640, H = wrap.clientHeight || 280;
-    const PAD = {t:16, r:16, b:60, l:28};
-    const n = 6; // 5S + Ritardi
-    const bw = (W-PAD.l-PAD.r)/n * 0.58, gap = (W-PAD.l-PAD.r)/n * 0.42;
-    const svgNS='http://www.w3.org/2000/svg';
-    const svg=document.createElementNS(svgNS,'svg');
-    svg.setAttribute('viewBox', `0 0 ${W} ${H}`); svg.setAttribute('width','100%'); svg.setAttribute('height','100%');
-    wrap.appendChild(svg);
+  // data per grafico
+  const vals = state.sections.map(s => toPercent(s.value));
+  const labels = state.sections.map(s => s.code);
+  const colors = state.sections.map(s => COLORS[s.code]);
 
-    const data = [...perS.map(s=>({label:s.id, val:s.p, color:s.color, isLate:false})), {label:'Ritardi', val:lateAll, color:cssVar('--late-border')||'#EF5350', isLate:true}];
+  // ritardi
+  const late = countLate();
 
-    [0,50,100].forEach(y=>{
-      const gy = PAD.t + (H-PAD.t-PAD.b)*(1-y/100);
-      const line=document.createElementNS(svgNS,'line');
-      line.setAttribute('x1', PAD.l); line.setAttribute('x2', W-PAD.r);
-      line.setAttribute('y1', gy);    line.setAttribute('y2', gy);
-      line.setAttribute('stroke', '#eef2f7'); svg.appendChild(line);
-      const t=document.createElementNS(svgNS,'text');
-      t.setAttribute('x', PAD.l-4); t.setAttribute('y', gy+4); t.setAttribute('text-anchor','end');
-      t.setAttribute('fill', '#7b8796'); t.setAttribute('font-size','11'); t.textContent = y;
-      svg.appendChild(t);
-    });
+  // chart
+  const ctx = qs('#chart5s').getContext('2d');
+  if(chart){ chart.destroy(); }
 
-    data.forEach((d,i)=>{
-      const x = PAD.l + i*((W-PAD.l-PAD.r)/n) + gap/2;
-      const maxH = (H-PAD.t-PAD.b);
-      const h = Math.min(maxH, maxH*(Math.max(0, d.val)/100));
-      const y = PAD.t + (maxH - h);
-
-      const rect = document.createElementNS(svgNS,'rect');
-      rect.setAttribute('x', x); rect.setAttribute('y', y);
-      rect.setAttribute('width', bw); rect.setAttribute('height', h);
-      rect.setAttribute('rx', 6); rect.setAttribute('fill', d.color);
-      svg.appendChild(rect);
-
-      const label = document.createElementNS(svgNS,'text');
-      label.setAttribute('x', x + bw/2); label.setAttribute('y', Math.max(PAD.t+12, y-6));
-      label.setAttribute('text-anchor','middle'); label.setAttribute('fill','#2a3446'); label.setAttribute('font-weight','800');
-      label.textContent = d.isLate ? d.val : (Math.round(d.val)+'%');
-      svg.appendChild(label);
-
-      const name = document.createElementNS(svgNS,'text');
-      name.setAttribute('x', x + bw/2); name.setAttribute('y', H-PAD.b+18);
-      name.setAttribute('text-anchor','middle'); name.setAttribute('fill','#49566a'); name.setAttribute('font-size','12');
-      name.textContent = d.label; svg.appendChild(name);
-    });
-
-    // legend
-    perS.forEach(s=>{
-      const el = document.createElement('div');
-      el.innerHTML = `<span class="dot" style="background:${s.color}"></span> ${s.id}: <b>${s.p}%</b>`;
-      legend.appendChild(el);
-    });
-    const l = document.createElement('div');
-    l.innerHTML = `<span class="dot" style="background:#EF5350"></span> Ritardi: <b>${lateAll}</b>`;
-    legend.appendChild(l);
-
-    // CTA MULTIPLE: “1S in ritardo”, “3S in ritardo”, ecc.
-    const ctaWrap = document.getElementById('ctaLate');
-    ctaWrap.innerHTML = '';
-    perS.filter(s=>s.late>0).forEach(s=>{
-      const a = document.createElement('a');
-      a.className='btn';
-      a.href = `checklist.html#${s.id}`;
-      a.textContent = `${s.id} in ritardo (${s.late})`;
-      ctaWrap.appendChild(a);
-    });
-
-    // EXPORT JSON per Supervisore (PIN)
-    const btnExport = document.getElementById('btnExport');
-    if(btnExport){
-      btnExport.onclick = ()=>{
-        if(!askPIN('PIN per esportare')) return;
-        const payload = buildSupervisorPayload(state);
-        const name = `skf5s_${CH}_${AREA}_${new Date().toISOString().slice(0,10)}.json`;
-        downloadJSON(payload, name);
-      };
-    }
-  }
-
-  // Payload compatibile “Supervisore”
-  function buildSupervisorPayload(state){
-    const per = state.s.map(s=>({ id:s.id, name:s.name, pct: pct(s), late: s.items.filter(isLateItem).length }));
-    return {
-      app: "skf5s",
-      version: VERSION,
-      ch: CH,
-      area: AREA,
-      updatedAt: todayISO(),
-      kpis: {
-        avg: Math.round(per.reduce((a,b)=>a+b.pct,0)/per.length) || 0,
-        late: lateCount(state),
-        perS: per
+  chart = new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels: [...labels, 'Ritardi'],
+      datasets: [{
+        data: [...vals, late>0? (Math.min(100, late*20)) : 0], // “altezza” visiva ritardi
+        backgroundColor: [...colors, COLORS.late],
+        borderRadius: 8,
+        maxBarThickness: 48
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      scales: {
+        y: { beginAtZero:true, grid:{display:false}, ticks:{ callback:v=>v+'%'} },
+        x: { grid:{display:false} }
       },
-      data: state.s.map(s=>({
-        id: s.id,
-        name: s.name,
-        items: s.items.map(it=>({
-          resp: it.resp||"",
-          notes: it.notes||"",
-          date: it.date||"",
-          score: Number(it.score||0)
-        }))
-      }))
-    };
-  }
-
-  function downloadJSON(obj, filename){
-    const blob = new Blob([JSON.stringify(obj, null, 2)], {type:'application/json'});
-    const a = document.createElement('a');
-    a.href = URL.createObjectURL(blob);
-    a.download = filename;
-    document.body.appendChild(a);
-    a.click();
-    URL.revokeObjectURL(a.href);
-    a.remove();
-  }
-
-  // --- CHECKLIST (apertura S da hash)
-  function initChecklist(){
-    const state = load();
-    const chips = document.getElementById('chips');
-    const sections = document.getElementById('sections');
-    const kAvg = document.getElementById('kAvg');
-    const kLate = document.getElementById('kLate');
-    const lockBtn = document.getElementById('lockBtn');
-    const toggleAll = document.getElementById('toggleAll');
-
-    function updateKPIs(){
-      const avg = Math.round(state.s.reduce((a,b)=> a + pct(b), 0)/state.s.length) || 0;
-      kAvg.textContent = avg + '%';
-      kLate.textContent = lateCount(state);
-    }
-
-    function renderChips(){
-      chips.innerHTML = '';
-      state.s.forEach(sez=>{
-        const c = document.createElement('div');
-        c.className = 'chip';
-        c.style.background = sez.color;
-        c.textContent = `${sez.id} ${pct(sez)}%`;
-        if(sez.items.some(isLateItem)) c.style.boxShadow = '0 0 0 3px var(--late-border) inset';
-        c.onclick = ()=> openSection(sez.id, true);
-        chips.appendChild(c);
-      });
-    }
-
-    function openSection(id, scroll){
-      const sec = document.getElementById(id);
-      if(!sec) return;
-      const toggle = sec.querySelector('.details-toggle');
-      const body   = sec.querySelector('.details');
-      // forza apertura
-      body.style.display = 'block';
-      if(toggle && toggle.firstChild) toggle.firstChild.textContent = '▼';
-      if(scroll) sec.scrollIntoView({behavior:'smooth', block:'start'});
-    }
-
-    function makeSection(sez){
-      const card = document.createElement('article');
-      card.className = 's-card';
-      card.id = sez.id;
-      if(sez.items.some(isLateItem)) card.classList.add('late');
-
-      // header
-      const head = document.createElement('div');
-      head.className = 's-head';
-      head.innerHTML = `
-        <div class="s-title" style="color:${sez.color}">${sez.id} — ${sez.name}</div>
-        <div class="s-avg">Media: ${pct(sez)}%</div>
-        <button class="icon-btn info" title="Info">i</button>
-        <button class="icon-btn add" title="Aggiungi (+PIN)">＋</button>
-      `;
-      card.appendChild(head);
-
-      // info dialog
-      head.querySelector('.info').onclick = ()=>{
-        const dlg = document.getElementById('dlgInfo');
-        document.getElementById('dlgTitle').innerHTML = `<span class="pill" style="background:${sez.color}">${sez.id} — ${sez.name}</span>`;
-        const map = {
-          '1S':'Eliminare il superfluo.',
-          '2S':'Un posto per tutto e tutto al suo posto.',
-          '3S':'Pulire e prevenire lo sporco.',
-          '4S':'Regole e segnali chiari.',
-          '5S':'Abitudine e miglioramento continuo.'
-        };
-        document.getElementById('dlgBody').textContent = map[sez.id] || '';
-        dlg.showModal();
-        document.getElementById('dlgClose').onclick = ()=> dlg.close();
-      };
-
-      // add with PIN (duplica ultima voce)
-      head.querySelector('.add').onclick = ()=>{
-        if(!askPIN('PIN per aggiungere una voce')) return;
-        const last = sez.items[sez.items.length-1] || {resp:'',notes:'',date:'',score:0};
-        sez.items.push({...last});
-        save(state); renderAll();
-      };
-
-      // details toggle + body
-      const toggle = document.createElement('div');
-      toggle.className = 'details-toggle';
-      toggle.innerHTML = `<span>▼</span><span>Dettagli</span>`;
-      let open = true;
-      toggle.onclick = ()=>{
-        open = !open;
-        toggle.firstChild.textContent = open ? '▼' : '▶';
-        body.style.display = open ? 'block' : 'none';
-      };
-      card.appendChild(toggle);
-
-      const body = document.createElement('div');
-      body.className = 'details';
-      card.appendChild(body);
-
-      // items
-      const locked = state.locked;
-      if(!sez.items.length) sez.items.push({resp:'',notes:'',date:'',score:0});
-      sez.items.forEach((it, idx)=>{
-        const row = document.createElement('div'); row.className = 'row';
-        row.innerHTML = `
-          <div class="full">
-            <label>Responsabile / Operatore</label>
-            <input type="text" placeholder="Inserisci il nome..." value="${it.resp||''}" ${locked?'disabled':''}>
-          </div>
-          <div class="full">
-            <label>Note</label>
-            <textarea placeholder="Note..." ${locked?'disabled':''}>${it.notes||''}</textarea>
-          </div>
-          <div class="full">
-            <label>Data</label>
-            <input type="date" value="${it.date||''}" ${locked?'disabled':''}>
-          </div>
-          <div class="full">
-            <div class="score">
-              ${[0,1,3,5].map(v=>`<button class="${Number(it.score||0)===v?'active':''}" ${locked?'disabled':''} data-score="${v}">${v}</button>`).join('')}
-              <button class="icon-btn del" ${locked?'disabled':''} title="Elimina (+PIN)">🗑</button>
-            </div>
-          </div>
-        `;
-
-        // events
-        const [inpResp, taNotes, inpDate] = row.querySelectorAll('input[type=text], textarea, input[type=date]');
-        inpResp.oninput = e=>{ it.resp=e.target.value; save(state); };
-        taNotes.oninput = e=>{ it.notes=e.target.value; save(state); };
-        inpDate.onchange= e=>{ it.date=e.target.value; save(state); renderAll(); };
-
-        row.querySelectorAll('button[data-score]').forEach(btn=>{
-          btn.onclick = ()=>{
-            it.score = Number(btn.dataset.score);
-            row.querySelectorAll('button[data-score]').forEach(b=>b.classList.remove('active'));
-            btn.classList.add('active');
-            save(state); renderAll();
-          };
-        });
-        row.querySelector('.del').onclick = ()=>{
-          if(!askPIN('PIN per eliminare la voce')) return;
-          sez.items.splice(idx,1);
-          if(!sez.items.length) sez.items.push({resp:'',notes:'',date:'',score:0});
-          save(state); renderAll();
-        };
-
-        body.appendChild(row);
-      });
-
-      return card;
-    }
-
-    function renderAll(){
-      // KPIs + chips
-      updateKPIs(); renderChips();
-
-      // sections
-      sections.innerHTML = '';
-      state.s.forEach(sez=> sections.appendChild(makeSection(sez)));
-
-      // deep-link (apre davvero la S)
-      if(location.hash){
-        openSection(location.hash.slice(1), true);
+      plugins: {
+        legend: { display:false },
+        tooltip: { enabled:true },
+        // Etichette percentuali sopra le barre
+        afterDatasetsDraw(chart, args, pluginOptions){
+          const {ctx, data} = chart;
+          ctx.save();
+          ctx.font = '700 12px system-ui';
+          ctx.fillStyle = '#111';
+          chart.getDatasetMeta(0).data.forEach((bar, i)=>{
+            const val = data.datasets[0].data[i];
+            const label = data.labels[i];
+            const text = (label==='Ritardi') ? String(late) : `${val}%`;
+            const cx = bar.x; const cy = bar.y - 8;
+            ctx.textAlign = 'center';
+            ctx.fillText(text, cx, cy);
+          });
+          ctx.restore();
+        }
       }
-
-      applyLockUI();
     }
+  });
 
-    // toggle all (azzurro, chiude/apre sempre)
-    let allOpen = true;
-    document.getElementById('toggleAll').onclick = ()=>{
-      allOpen = !allOpen;
-      document.querySelectorAll('.details-toggle').forEach(tg=>{
-        const body = tg.nextElementSibling;
-        body.style.display = allOpen ? 'block' : 'none';
-        tg.firstChild.textContent = allOpen ? '▼' : '▶';
+  // legenda colorata ordinata
+  const legend = qs('#chartLegend');
+  legend.innerHTML = state.sections.map(s =>
+    `<span class="dot"><span class="box" style="background:${COLORS[s.code]}"></span>${s.code}: ${toPercent(s.value)}%</span>`
+  ).join('') + `<span class="dot"><span class="box" style="background:${COLORS.late}"></span>Ritardi: ${late}</span>`;
+
+  // bottoni “in ritardo – Vai”
+  const lateDiv = qs('#lateButtons');
+  const lateSections = collectLateSections();
+  if(lateSections.length===0){
+    lateDiv.innerHTML = '';
+  }else{
+    lateDiv.innerHTML = lateSections.map(code =>
+      `<button class="late-btn ${code.toLowerCase()}" data-goto="${code}" style="color:${COLORS[code]}">${code} in ritardo — Vai</button>`
+    ).join('');
+    lateDiv.querySelectorAll('button').forEach(b=>{
+      b.addEventListener('click', ()=>{
+        show('checklist');
+        // scroll alla sezione corretta
+        const anchor = qs(\`.s-card[data-code="\${b.dataset.goto}"]\`);
+        if(anchor) anchor.scrollIntoView({behavior:'smooth', block:'start'});
       });
-    };
-
-    // lock with PIN
-    function applyLockUI(){
-      document.getElementById('lockBtn').textContent = state.locked ? '🔓' : '🔒';
-    }
-    document.getElementById('lockBtn').onclick = ()=>{
-      if(!askPIN(state.locked?'PIN per sbloccare':'PIN per bloccare')) return;
-      state.locked = !state.locked; save(state); applyLockUI(); renderAll();
-    };
-
-    renderAll();
+    });
   }
+}
 
-  return { initHome, initChecklist };
-})();
+// CHECKLIST render ------------------------------------------
+qs('#btnLock').addEventListener('click', ()=>{
+  // toggle lock visuale, ma le azioni protette chiedono comunque PIN
+  state.locked = !state.locked; saveState();
+  qs('#btnLock').textContent = state.locked ? '🔒' : '🔓';
+});
+
+qs('#btnToggleAll').addEventListener('click', ()=>{
+  const openAny = [...qsa('.s-card .s-details')].some(d => !d.hidden);
+  qsa('.s-card .s-details').forEach(d => d.hidden = openAny); // se ce n'è aperta, chiudi tutto; altrimenti apri tutto
+});
+
+function renderChecklist(){
+  // badge 1S..5S con percenti
+  const chips = qs('#chipsRow');
+  chips.innerHTML = state.sections.map(s =>
+    `<button class="badge ${s.code.toLowerCase()}" style="background:${COLORS[s.code]}" data-goto="${s.code}">
+      ${s.code} ${toPercent(s.value)}%
+    </button>`).join('');
+  chips.querySelectorAll('button').forEach(b=>{
+    b.addEventListener('click', ()=>{
+      const el = qs(\`.s-card[data-code="\${b.dataset.goto}"]\`);
+      if(el) el.scrollIntoView({behavior:'smooth', block:'start'});
+    });
+  });
+
+  // schede
+  const wrap = qs('#sections');
+  wrap.innerHTML = '';
+  state.sections.forEach((s, idx)=>{
+    wrap.insertAdjacentHTML('beforeend', sectionTemplate(s));
+  });
+
+  // wire up interazioni
+  qsa('.s-card').forEach(card=>{
+    const code = card.dataset.code;
+    const s = state.sections.find(x => x.code===code);
+
+    // apri/chiudi dettagli
+    const detailBtn = card.querySelector('.toggle-details');
+    const details = card.querySelector('.s-details');
+    detailBtn.addEventListener('click', ()=>{
+      details.hidden = !details.hidden;
+    });
+
+    // info popup
+    card.querySelector('.btn-info').addEventListener('click', ()=>{
+      alert(`${code} — ${SECTION_TEXT[code]}\n\n` + explain(code));
+    });
+
+    // aggiungi voce (PIN)
+    card.querySelector('.btn-plus').addEventListener('click', ()=>{
+      if(!checkPIN()) return;
+      s.items.push({ title:'', owner:'', notes:'', date: todayISO() });
+      saveState(); renderChecklist(); // re-render section
+    });
+
+    // inputs binding + score pills
+    const title = card.querySelector('.inp-title');
+    const owner = card.querySelector('.inp-owner');
+    const notes = card.querySelector('.inp-notes');
+    const date  = card.querySelector('.inp-date');
+
+    // bind first item (semplificazione)
+    const it = s.items[0];
+
+    title.value = it.title; owner.value = it.owner; notes.value = it.notes; date.value = it.date;
+    title.addEventListener('input', e=>{ it.title=e.target.value; saveState(); });
+    owner.addEventListener('input', e=>{ it.owner=e.target.value; saveState(); });
+    notes.addEventListener('input', e=>{ it.notes=e.target.value; saveState(); });
+    date.addEventListener('change', e=>{ it.date=e.target.value; saveState(); renderChecklist(); });
+
+    // pills
+    card.querySelectorAll('.pill').forEach(p=>{
+      p.addEventListener('click', ()=>{
+        s.value = Number(p.dataset.v);
+        saveState();
+        renderChecklist();
+      });
+    });
+
+    // delete voce (PIN)
+    card.querySelector('.btn-trash').addEventListener('click', ()=>{
+      if(!checkPIN()) return;
+      s.items.splice(0,1);
+      if(s.items.length===0) s.items.push({title:'',owner:'',notes:'',date:todayISO()});
+      saveState(); renderChecklist();
+    });
+  });
+
+  // KPI, evidenze ritardo, lock icon
+  qs('#btnLock').textContent = state.locked ? '🔒' : '🔓';
+  const late = countLate();
+  qs('#lateCount').textContent = String(late);
+  qs('#avgScore').textContent = `${average()}%`;
+
+  // bordo rosso sulle schede in ritardo
+  qsa('.s-card').forEach(card=>{
+    const code = card.dataset.code;
+    if(isSectionLate(code)) card.classList.add('late'); else card.classList.remove('late');
+  });
+}
+
+function sectionTemplate(s){
+  const percent = toPercent(s.value);
+  const late = isSectionLate(s.code);
+  const swatchStyle = `background:${COLORS[s.code]}`;
+
+  // pills active
+  const p = (v)=> s.value===v ? 'pill active' : 'pill';
+
+  return `
+  <article class="s-card ${late?'late':''}" data-code="${s.code}">
+    <div class="s-head">
+      <div class="s-title">
+        <span class="s-swatch" style="${swatchStyle}"></span>
+        <span>${s.code} — ${s.name}</span>
+      </div>
+      <div class="s-actions">
+        <span class="s-val">Valore: <b>${percent}%</b></span>
+        <button class="icon-btn info btn-info" title="Info">i</button>
+        <button class="icon-btn plus btn-plus" title="Aggiungi">+</button>
+      </div>
+    </div>
+
+    <button class="toggle-details" style="margin:.5rem 0 0; background:none; border:none; color:#6b7280; cursor:pointer">▼ Dettagli</button>
+
+    <div class="s-details" ${late?'':'hidden'}>
+      <div class="row"><input class="inp-owner" placeholder="Responsabile / Operatore" /></div>
+      <div class="row"><textarea class="inp-notes" placeholder="Note..."></textarea></div>
+      <div class="grid3">
+        <div class="score">
+          <button class="${p(0)}" data-v="0">0</button>
+          <button class="${p(1)}" data-v="1">1</button>
+          <button class="${p(3)}" data-v="3">3</button>
+          <button class="${p(5)}" data-v="5">5</button>
+        </div>
+        <div class="datebox">
+          <label style="color:var(--muted);font-weight:700">Data</label>
+          <input type="date" class="inp-date" />
+        </div>
+        <div style="text-align:right">
+          <button class="icon-btn trash btn-trash" title="Elimina (PIN)">🗑</button>
+        </div>
+      </div>
+      <div class="row"><input class="inp-title" placeholder="Titolo voce…" /></div>
+    </div>
+  </article>`;
+}
+
+function explain(code){
+  switch(code){
+    case '1S': return 'Avere solo ciò che serve, eliminare il superfluo.';
+    case '2S': return 'Un posto per tutto e tutto al suo posto.';
+    case '3S': return 'Pulire e prevenire lo sporco.';
+    case '4S': return 'Regole e segnali chiari.';
+    case '5S': return 'Abitudine e miglioramento continuo.';
+  }
+  return '';
+}
+
+// Helpers business ------------------------------------------
+function toPercent(score){
+  // mappa 0/1/3/5 a 0/20/60/100
+  if(score===5) return 100;
+  if(score===3) return 60;
+  if(score===1) return 20;
+  return 0;
+}
+function average(){
+  const arr = state.sections.map(s=>toPercent(s.value));
+  if(arr.length===0) return 0;
+  return Math.round(arr.reduce((a,b)=>a+b,0)/arr.length);
+}
+function isLateDate(iso){
+  const t = new Date(iso); t.setHours(0,0,0,0);
+  const now = new Date(); now.setHours(0,0,0,0);
+  return t < now;
+}
+function isSectionLate(code){
+  const s = state.sections.find(x=>x.code===code);
+  const it = s.items[0];
+  // consideriamo in “ritardo” se la data è nel passato e il valore < 5
+  return isLateDate(it.date) && s.value < 5;
+}
+function collectLateSections(){
+  return state.sections.filter(s=>isSectionLate(s.code)).map(s=>s.code);
+}
+function countLate(){ return collectLateSections().length; }
+
+// PIN gate
+function checkPIN(){
+  const p = prompt('Inserisci PIN');
+  return p===PIN;
+}
+
+// EXPORT (per Supervisore)
+qs('#btnExport').addEventListener('click', ()=>{
+  if(!checkPIN()) return;
+  const payload = {
+    channel: CH_ID,
+    updatedAt: new Date().toISOString(),
+    sections: state.sections.map(s=>({
+      code: s.code, name: s.name, value: s.value, percent: toPercent(s.value),
+      item: s.items[0]
+    }))
+  };
+  const blob = new Blob([JSON.stringify(payload,null,2)], {type:'application/json'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `skf5s_ch${CH_ID}.json`;
+  a.click();
+  URL.revokeObjectURL(a.href);
+});
+
+// utils DOM
+function qs(sel, el=document){ return el.querySelector(sel); }
+function qsa(sel, el=document){ return [...el.querySelectorAll(sel)]; }
+
+// bootstrap
+document.addEventListener('DOMContentLoaded', ()=>{
+  renderHome();
+});
