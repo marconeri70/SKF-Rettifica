@@ -11,11 +11,11 @@ const LSKEY = 'skf5s_ch24_v1';
 const STATE = loadState() || makeDefaultState();
 STATE.chName = 'CH 24 — Rettifica';
 
-/* ======= PIN ogni azione protetta ======= */
+/* ======= PIN : richiesto per ogni azione protetta ======= */
 const PIN = {
   CODE: '2468', // <-- imposta qui
   _resolver:null,
-  ask(){ return new Promise(res=>{ this._resolver=res; pinModal.showModal(); pinInput.value=''; }); },
+  ask(){ return new Promise(res=>{ this._resolver=res; pinModal.showModal(); pinInput.value=''; pinInput.focus(); }); },
   close(ok){ pinModal.close(); this._resolver?.(ok); this._resolver=null; }
 };
 pinForm.addEventListener('submit', e=>{ e.preventDefault(); PIN.close(pinInput.value.trim()===PIN.CODE); });
@@ -139,7 +139,7 @@ function drawChart(byS, lateCount){
 
   vals.forEach((v,i)=>{
     const x=pad.left+i*(bw+gap)+gap/2;
-    // scala: per “Ritardi” disegna in scala 0..100 (se è basso resta una barretta)
+    // per “Ritardi” mostro il numero (scala 0..100)
     const val = i===5 ? Math.min(100,v) : v;
     const h=Math.round(ch*(val/max));
     const y=pad.top+ch-h;
@@ -147,7 +147,6 @@ function drawChart(byS, lateCount){
     g.fillStyle=cols[i]; g.fillRect(x,y,bw,h);
 
     g.font='600 12px system-ui'; g.textAlign='center';
-    // etichetta (percentuale o numero)
     g.fillStyle='#111827';
     const text=i===5 ? String(v) : `${v}%`;
     const inside = h>22;
@@ -289,6 +288,16 @@ function renderChecklist(){
     [...document.querySelectorAll('.badge')].forEach((el,i)=>{ const key='S'+(i+1); el.textContent=`${i+1}S ${kk.byS[key]||0}%`; });
     Object.keys(SINFO).forEach(key=> applyLate(document.getElementById(`panel-${key}`),key) );
   }
+}
+
+/* ======= Popup “i” a tema colore ======= */
+function openInfo(title, text, color){
+  const dlg = document.getElementById('infoModal');
+  const card = dlg.querySelector('.info-card');
+  document.getElementById('infoTitle').textContent = title;
+  document.getElementById('infoText').textContent = text;
+  card.style.borderTop = `6px solid ${color}`;
+  dlg.showModal();
 }
 
 /* ======= Scroll helper ======= */
