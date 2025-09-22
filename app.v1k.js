@@ -1,257 +1,308 @@
+/* ===== SKF 5S v1k (CH24) ===== */
+const SKF5S = (()=>{
 
-/* SKF 5S v1k core */
-(function(){
-  const COLORS = {
-    '1S':'#7e57c2','2S':'#ef5350','3S':'#f7b32b','4S':'#43a047','5S':'#2f6df6','LATE':'#ef5350'
+  // --- constants
+  const COLORS = { '1S':'#7E57C2','2S':'#EF5350','3S':'#F4B400','4S':'#2ECC71','5S':'#1E88E5', LATE:'#EF5350' };
+  const KEY = 'skf5s:CH24:v1k';
+
+  // --- data helpers
+  const defaultState = ()=>({
+    locked:false,
+    s:[
+      {id:'1S',name:'Selezionare',color:COLORS['1S'],items:[{resp:'',notes:'',date:'',score:0}]},
+      {id:'2S',name:'Sistemare',  color:COLORS['2S'],items:[{resp:'',notes:'',date:'',score:0}]},
+      {id:'3S',name:'Splendere',  color:COLORS['3S'],items:[{resp:'',notes:'',date:'',score:0}]},
+      {id:'4S',name:'Standardizzare',color:COLORS['4S'],items:[{resp:'',notes:'',date:'',score:0}]},
+      {id:'5S',name:'Sostenere',  color:COLORS['5S'],items:[{resp:'',notes:'',date:'',score:0}]},
+    ]
+  });
+  const load = ()=>{ try{ return JSON.parse(localStorage.getItem(KEY)) || defaultState(); }catch{ return defaultState(); } };
+  const save = s => localStorage.setItem(KEY, JSON.stringify(s));
+
+  // --- calc
+  const pct = s => {
+    if(!s.items.length) return 0;
+    const sum = s.items.reduce((a,b)=>a + Number(b.score||0), 0);
+    return Math.round((sum/(s.items.length*5))*100) || 0;
   };
-  const DEF = [
-    { key:'1S', title:'Selezionare', color:COLORS['1S'], info:'Eliminare il superfluo.' },
-    { key:'2S', title:'Sistemare',   color:COLORS['2S'], info:'Un posto per tutto e tutto al suo posto.' },
-    { key:'3S', title:'Splendere',   color:COLORS['3S'], info:'Pulire e prevenire lo sporco.' },
-    { key:'4S', title:'Standardizzare', color:COLORS['4S'], info:'Regole e segnali chiari.' },
-    { key:'5S', title:'Sostenere',   color:COLORS['5S'], info:'Abitudine e miglioramento continuo.' },
-  ];
+  const isLateItem = it => it.date && new Date(it.date) < new Date() && Number(it.score||0) < 5;
+  const lateCount = state => state.s.reduce((acc,sez)=> acc + sez.items.filter(isLateItem).length, 0);
 
-  const KEY = (ch)=>`skf5s_${ch}`;
-  const LOCK_KEY = (ch)=>`skf5s_${ch}_locked`;
-
-  function load(ch){
-    const raw = localStorage.getItem(KEY(ch));
-    if(raw) try { return JSON.parse(raw) } catch(e){}
-    // default dataset
-    const data = { ch, items:{ '1S':[], '2S':[], '3S':[], '4S':[], '5S':[] } };
-    localStorage.setItem(KEY(ch), JSON.stringify(data));
-    return data;
-  }
-  function save(ch,data){ localStorage.setItem(KEY(ch), JSON.stringify(data)); }
-
-  function mean(arr){
-    if(!arr.length) return 0;
-    let sum=0,c=0;
-    arr.forEach(v=>{ if(typeof v==='number') {sum+=v;c++;} });
-    return c? Math.round((sum/c)*100)/100 : 0;
-  }
-  function pctFromScores(items){
-    if(!items.length) return 0;
-    const v = mean(items.map(x=>Number(x.score||0)));
-    return Math.round((v/5)*100);
-  }
-  function lateCount(data){
-    const today = new Date().toISOString().slice(0,10);
-    let n=0; DEF.forEach(d=>{
-      data.items[d.key].forEach(x=>{ if(x.due && x.due<today && Number(x.score||0)<5) n++; });
-    });
-    return n;
-  }
-  function firstLateS(data){
-    const today = new Date().toISOString().slice(0,10);
-    for(const d of DEF){
-      const hit = data.items[d.key].find(x=>x.due && x.due<today && Number(x.score||0)<5);
-      if(hit) return d.key;
-    }
-    return null;
-  }
-  function avgAll(data){
-    const arr=[]; DEF.forEach(d=>{
-      const a=pctFromScores(data.items[d.key]); arr.push(a);
-    });
-    if(!arr.length) return 0;
-    return Math.round(arr.reduce((a,b)=>a+b,0)/arr.length);
-  }
-
-  function ensurePin(ok){
+  // --- PIN
+  const askPIN = (msg='Inserisci PIN') => {
     const pin = window.__PIN__ || '2424';
-    const v = prompt('Inserisci PIN');
-    if(v===pin){ ok(); }
-    else if(v!==null){ alert('PIN errato'); }
-  }
+    const v = prompt(msg);
+    if(v===null) return false;
+    if(v!==pin){ alert('PIN errato'); return false; }
+    return true;
+  };
 
-  // Home
+  // --- HOME (SVG chart to avoid overlap)
   function initHome(){
-    const ch='CH24';
-    const data=load(ch);
-    // Build simple bar chart
-    const wrap=document.getElementById('chart');
-    wrap.innerHTML='';
-    const barwrap=document.createElement('div'); barwrap.className='barwrap';
-    const labels=[];
-    DEF.forEach(d=>{
-      const val=pctFromScores(data.items[d.key]);
-      const bar=document.createElement('div'); bar.className='bar'; bar.style.background=d.color; bar.style.height=(val*1.6)+'px';
-      const lab=document.createElement('label'); lab.textContent=val+'%'; lab.style.color=d.color;
-      const cap=document.createElement('span'); cap.textContent=d.key;
-      bar.appendChild(lab); bar.appendChild(cap); barwrap.appendChild(bar);
-      labels.push({name:d.key,val, color:d.color});
-    });
-    // Late
-    const late=lateCount(data);
-    const lateBar=document.createElement('div'); lateBar.className='bar'; lateBar.style.background=COLORS.LATE; lateBar.style.height=(Math.min(late,100)*1.6)+'px';
-    const lateLab=document.createElement('label'); lateLab.textContent=late; lateLab.style.color=COLORS.LATE;
-    const lateCap=document.createElement('span'); lateCap.textContent='Ritardi';
-    lateBar.appendChild(lateLab); lateBar.appendChild(lateCap); barwrap.appendChild(lateBar);
-    wrap.appendChild(barwrap);
+    const state = load();
+    const perS = state.s.map(x=>({id:x.id, name:x.name, color:x.color, p:pct(x), late:x.items.filter(isLateItem).length}));
+    const lateAll = lateCount(state);
 
-    // legend (optional small)
-    const leg=document.createElement('div'); leg.className='legend';
-    labels.forEach(l=>{
-      const b=document.createElement('span'); b.className='badge'; b.innerHTML=`<i style="background:${l.color}"></i>${l.name}: ${l.val}%`;
-      leg.appendChild(b);
-    });
-    const b2=document.createElement('span'); b2.className='badge'; b2.innerHTML=`<i style="background:${COLORS.LATE}"></i>Ritardi: ${late}`;
-    leg.appendChild(b2);
-    wrap.appendChild(leg);
+    // draw chart (SVG, with padded labels)
+    const wrap = document.getElementById('chart');
+    wrap.innerHTML = '';
+    const W = wrap.clientWidth || 640, H = wrap.clientHeight || 280;
+    const PAD = {t:16, r:16, b:60, l:28};
+    const n = 6; // 5S + Ritardi
+    const bw = (W-PAD.l-PAD.r)/n * 0.58, gap = (W-PAD.l-PAD.r)/n * 0.42;
+    const svgNS='http://www.w3.org/2000/svg';
+    const svg=document.createElementNS(svgNS,'svg');
+    svg.setAttribute('viewBox', `0 0 ${W} ${H}`); svg.setAttribute('width','100%'); svg.setAttribute('height','100%');
+    wrap.appendChild(svg);
 
-    // late CTA
-    const lkey = firstLateS(data);
-    const lateCta=document.getElementById('lateCta');
-    if(lkey){
-      const link=document.getElementById('lateLink');
-      link.href='checklist.html#'+lkey;
-      lateCta.hidden=false;
-    } else {
-      lateCta.hidden=true;
+    const data = [...perS.map(s=>({label:s.id, val:s.p, color:s.color, isLate:false})), {label:'Ritardi', val:lateAll, color:COLORS.LATE, isLate:true}];
+
+    // light grid only at 0/50/100 to keep clean
+    [0,50,100].forEach(y=>{
+      const gy = PAD.t + (H-PAD.t-PAD.b)*(1-y/100);
+      const line=document.createElementNS(svgNS,'line');
+      line.setAttribute('x1', PAD.l); line.setAttribute('x2', W-PAD.r);
+      line.setAttribute('y1', gy);    line.setAttribute('y2', gy);
+      line.setAttribute('stroke', '#eef2f7'); svg.appendChild(line);
+      const t=document.createElementNS(svgNS,'text');
+      t.setAttribute('x', PAD.l-4); t.setAttribute('y', gy+4); t.setAttribute('text-anchor','end');
+      t.setAttribute('fill', '#7b8796'); t.setAttribute('font-size','11'); t.textContent = y;
+      svg.appendChild(t);
+    });
+
+    data.forEach((d,i)=>{
+      const x = PAD.l + i*((W-PAD.l-PAD.r)/n) + gap/2;
+      const maxH = (H-PAD.t-PAD.b);
+      const h = Math.min(maxH, maxH*(Math.max(0, d.val)/100));
+      const y = PAD.t + (maxH - h);
+
+      const rect = document.createElementNS(svgNS,'rect');
+      rect.setAttribute('x', x); rect.setAttribute('y', y);
+      rect.setAttribute('width', bw); rect.setAttribute('height', h);
+      rect.setAttribute('rx', 6); rect.setAttribute('fill', d.color);
+      svg.appendChild(rect);
+
+      const label = document.createElementNS(svgNS,'text');
+      label.setAttribute('x', x + bw/2); label.setAttribute('y', Math.max(PAD.t+12, y-6));
+      label.setAttribute('text-anchor','middle'); label.setAttribute('fill','#2a3446'); label.setAttribute('font-weight','800');
+      label.textContent = d.isLate ? d.val : (Math.round(d.val)+'%');
+      svg.appendChild(label);
+
+      const name = document.createElementNS(svgNS,'text');
+      name.setAttribute('x', x + bw/2); name.setAttribute('y', H-PAD.b+18);
+      name.setAttribute('text-anchor','middle'); name.setAttribute('fill','#49566a'); name.setAttribute('font-size','12');
+      name.textContent = d.label; svg.appendChild(name);
+    });
+
+    // legend
+    const legend = document.getElementById('legend'); legend.innerHTML='';
+    perS.forEach(s=>{
+      const el = document.createElement('div');
+      el.innerHTML = `<span class="dot" style="background:${s.color}"></span> ${s.id}: <b>${s.p}%</b>`;
+      legend.appendChild(el);
+    });
+    const l = document.createElement('div');
+    l.innerHTML = `<span class="dot" style="background:${COLORS.LATE}"></span> Ritardi: <b>${lateAll}</b>`;
+    legend.appendChild(l);
+
+    // CTA: “Vai alla S in ritardo: <S>”
+    const worst = perS.reduce((a,b)=> (b.late>a.late?b:a), {late:0});
+    const cta = document.getElementById('ctaLate');
+    cta.innerHTML = '';
+    if(worst.late>0){
+      const a = document.createElement('a');
+      a.className='btn primary';
+      a.href = `checklist.html#${worst.id}`;
+      a.textContent = `Vai alla S in ritardo: ${worst.id}`;
+      cta.appendChild(a);
     }
   }
 
-  // Checklist
-  function initChecklist(ch){
-    const state={ch, data:load(ch)};
-    const locked = localStorage.getItem(LOCK_KEY(ch))==='1';
-    const btnLock=document.getElementById('btnLock');
-    btnLock.textContent = locked? '🔒' : '🔓';
+  // --- CHECKLIST
+  function initChecklist(){
+    const state = load();
+    const chips = document.getElementById('chips');
+    const sections = document.getElementById('sections');
+    const kAvg = document.getElementById('kAvg');
+    const kLate = document.getElementById('kLate');
+    const lockBtn = document.getElementById('lockBtn');
+    const toggleAll = document.getElementById('toggleAll');
 
-    btnLock.addEventListener('click',()=>{
-      ensurePin(()=>{
-        const cur = localStorage.getItem(LOCK_KEY(ch))==='1';
-        localStorage.setItem(LOCK_KEY(ch), cur?'0':'1');
-        btnLock.textContent = cur? '🔓':'🔒';
-        render();
-      });
-    });
-
-    document.getElementById('btnToggle').addEventListener('click',()=>{
-      document.querySelectorAll('.section .body').forEach(b=>{
-        b.open = !b.open;
-      });
-    });
-
-    function addItem(key){
-      const it={title:'', resp:'', notes:'', score:0, due:''};
-      state.data.items[key].push(it);
-      save(ch,state.data); render();
-    }
-    function delItem(key, idx){
-      ensurePin(()=>{
-        state.data.items[key].splice(idx,1);
-        save(ch,state.data); render();
-      });
-    }
-    function setScore(key, idx, val){
-      state.data.items[key][idx].score = val;
-      save(ch,state.data); renderSummary();
+    function updateKPIs(){
+      const avg = Math.round(state.s.reduce((a,b)=> a + pct(b), 0)/state.s.length) || 0;
+      kAvg.textContent = avg + '%';
+      kLate.textContent = lateCount(state);
     }
 
-    function renderSummary(){
-      const srow=document.getElementById('summaryRow');
-      srow.innerHTML='';
-      DEF.forEach(d=>{
-        const pct=pctFromScores(state.data.items[d.key]);
-        const chip=document.createElement('div'); chip.className=`sumchip s${d.key[0]}`;
-        chip.innerHTML=`${d.key} <span class="pct">${pct}%</span>`;
-        srow.appendChild(chip);
-      });
-      // KPI
-      document.getElementById('kAvg').textContent = avgAll(state.data) + '%';
-      document.getElementById('kLate').textContent = lateCount(state.data);
-      // highlight overdue sections
-      const today = new Date().toISOString().slice(0,10);
-      DEF.forEach(d=>{
-        const sec=document.getElementById('sec_'+d.key);
-        const hasLate = state.data.items[d.key].some(x=>x.due && x.due<today && Number(x.score||0)<5);
-        sec.classList.toggle('overdue', hasLate);
+    function renderChips(){
+      chips.innerHTML = '';
+      state.s.forEach(sez=>{
+        const c = document.createElement('div');
+        c.className = 'chip';
+        c.style.background = sez.color;
+        c.textContent = `${sez.id} ${pct(sez)}%`;
+        if(sez.items.some(isLateItem)) c.style.boxShadow = '0 0 0 3px var(--late-border) inset';
+        c.onclick = ()=> document.getElementById(sez.id).scrollIntoView({behavior:'smooth', block:'start'});
+        chips.appendChild(c);
       });
     }
 
-    function render(){
-      const sections=document.getElementById('sections');
-      sections.innerHTML='';
-      const isLocked = localStorage.getItem(LOCK_KEY(ch))==='1';
+    function makeSection(sez){
+      const card = document.createElement('article');
+      card.className = 's-card';
+      card.id = sez.id;
+      if(sez.items.some(isLateItem)) card.classList.add('late');
 
-      DEF.forEach(d=>{
-        const sec=document.createElement('div'); sec.className='section'; sec.id='sec_'+d.key;
-        sec.innerHTML=`
-          <div class="secHead">
-            <div class="secColor" style="background:${d.color}"></div>
-            <strong>${d.key} — ${d.title}</strong>
-            <span class="secAvg" id="avg_${d.key}">Media: 0%</span>
-            <button class="icon s${d.key[0]} info" title="Info">i</button>
-            <button class="plus add" title="Aggiungi">+</button>
+      // header
+      const head = document.createElement('div');
+      head.className = 's-head';
+      head.innerHTML = `
+        <div class="s-title" style="color:${sez.color}">${sez.id} — ${sez.name}</div>
+        <div class="s-avg">Media: ${pct(sez)}%</div>
+        <button class="icon-btn info" title="Info">i</button>
+        <button class="icon-btn add" title="Aggiungi (+PIN)">＋</button>
+      `;
+      card.appendChild(head);
+
+      // info dialog
+      head.querySelector('.info').onclick = ()=>{
+        const dlg = document.getElementById('dlgInfo');
+        document.getElementById('dlgTitle').innerHTML = `<span class="pill" style="background:${sez.color}">${sez.id} — ${sez.name}</span>`;
+        const map = {
+          '1S':'Eliminare il superfluo.',
+          '2S':'Un posto per tutto e tutto al suo posto.',
+          '3S':'Pulire e prevenire lo sporco.',
+          '4S':'Regole e segnali chiari.',
+          '5S':'Abitudine e miglioramento continuo.'
+        };
+        document.getElementById('dlgBody').textContent = map[sez.id] || '';
+        dlg.showModal();
+        document.getElementById('dlgClose').onclick = ()=> dlg.close();
+      };
+
+      // add with PIN (duplica ultima voce)
+      head.querySelector('.add').onclick = ()=>{
+        if(!askPIN('PIN per aggiungere una voce')) return;
+        const last = sez.items[sez.items.length-1] || {resp:'',notes:'',date:'',score:0};
+        sez.items.push({...last});
+        save(state); renderAll();
+      };
+
+      // details toggle row + body
+      const toggle = document.createElement('div');
+      toggle.className = 'details-toggle';
+      toggle.innerHTML = `<span>▼</span><span>Dettagli</span>`;
+      let open = true;
+      toggle.onclick = ()=>{
+        open = !open;
+        toggle.firstChild.textContent = open ? '▼' : '▶';
+        body.style.display = open ? 'block' : 'none';
+      };
+      card.appendChild(toggle);
+
+      const body = document.createElement('div');
+      body.className = 'details';
+      card.appendChild(body);
+
+      // items
+      const locked = state.locked;
+      if(!sez.items.length) sez.items.push({resp:'',notes:'',date:'',score:0});
+      sez.items.forEach((it, idx)=>{
+        const row1 = document.createElement('div'); row1.className = 'row';
+        row1.innerHTML = `
+          <div class="full">
+            <label>Responsabile / Operatore</label>
+            <input type="text" placeholder="Inserisci il nome..." value="${it.resp||''}" ${locked?'disabled':''}>
           </div>
-          <details class="body" ${location.hash.slice(1)===d.key?'open':''}></details>
-        `;
-        const body=sec.querySelector('.body');
-
-        // add items
-        const arr=state.data.items[d.key];
-        if(!arr.length) arr.push({title:'', resp:'', notes:'', score:0, due:''});
-        arr.forEach((it,idx)=>{
-          const item=document.createElement('div'); item.className='item';
-          item.innerHTML=`
-            <input type="text" placeholder="Titolo voce..." value="${it.title||''}" ${isLocked?'disabled':''}>
-            <input type="text" placeholder="Responsabile..." value="${it.resp||''}" ${isLocked?'disabled':''}>
-            <textarea placeholder="Note..." ${isLocked?'disabled':''}>${it.notes||''}</textarea>
-            <div class="row">
-              <div class="score">
-                ${[0,1,3,5].map(v=>`<button ${isLocked?'disabled':''} data-v="${v}" class="${Number(it.score||0)===v?'active':''}">${v}</button>`).join('')}
-              </div>
-              <input type="date" value="${it.due||''}" ${isLocked?'disabled':''}>
-              <button class="btn trash" ${isLocked?'disabled':''}>🗑️</button>
+          <div class="full">
+            <label>Note</label>
+            <textarea placeholder="Note..." ${locked?'disabled':''}>${it.notes||''}</textarea>
+          </div>
+          <div class="full">
+            <label>Data</label>
+            <input type="date" value="${it.date||''}" ${locked?'disabled':''}>
+          </div>
+          <div class="full">
+            <div class="score">
+              ${[0,1,3,5].map(v=>`<button class="${Number(it.score||0)===v?'active':''}" ${locked?'disabled':''} data-score="${v}">${v}</button>`).join('')}
+              <button class="icon-btn del" ${locked?'disabled':''} title="Elimina (+PIN)">🗑</button>
             </div>
-          `;
-          const [inpTitle, inpResp, taNotes] = item.querySelectorAll('input[type=text], textarea');
-          const dateInput = item.querySelector('input[type=date]');
-          const scoreBtns = item.querySelectorAll('.score button');
-          const trash = item.querySelector('.trash');
+          </div>
+        `;
+        // wire events (scoped so non si blocca niente)
+        const [inpResp, taNotes, inpDate] = row1.querySelectorAll('input[type=text], textarea, input[type=date]');
+        inpResp.oninput = e=>{ it.resp = e.target.value; save(state); };
+        taNotes.oninput = e=>{ it.notes = e.target.value; save(state); };
+        inpDate.onchange = e=>{ it.date = e.target.value; save(state); renderAll(); };
 
-          inpTitle.addEventListener('input', e=>{ it.title=e.target.value; save(ch,state.data); });
-          inpResp.addEventListener('input', e=>{ it.resp=e.target.value; save(ch,state.data); });
-          taNotes.addEventListener('input', e=>{ it.notes=e.target.value; save(ch,state.data); });
-          dateInput.addEventListener('change', e=>{ it.due=e.target.value; save(ch,state.data); renderSummary(); });
-
-          scoreBtns.forEach(btn=>{
-            btn.addEventListener('click', ()=>{
-              setScore(d.key, idx, Number(btn.dataset.v));
-            });
-          });
-          trash.addEventListener('click', ()=> delItem(d.key, idx));
-
-          body.appendChild(item);
+        row1.querySelectorAll('button[data-score]').forEach(btn=>{
+          btn.onclick = ()=>{
+            it.score = Number(btn.dataset.score);
+            row1.querySelectorAll('button[data-score]').forEach(b=>b.classList.remove('active'));
+            btn.classList.add('active');
+            save(state); renderAll();
+          };
         });
+        row1.querySelector('.del').onclick = ()=>{
+          if(!askPIN('PIN per eliminare la voce')) return;
+          sez.items.splice(idx,1);
+          if(!sez.items.length) sez.items.push({resp:'',notes:'',date:'',score:0});
+          save(state); renderAll();
+        };
 
-        // avg per section
-        const avg=pctFromScores(state.data.items[d.key]);
-        sec.querySelector('#avg_'+d.key).textContent = `Media: ${avg}%`;
-
-        // buttons
-        sec.querySelector('.add').addEventListener('click', ()=>{
-          ensurePin(()=>addItem(d.key));
-        });
-        sec.querySelector('.info').addEventListener('click', ()=>{
-          const dlg=document.getElementById('dlgInfo');
-          const body=document.getElementById('dlgInfoBody');
-          body.innerHTML=`<div style="padding:10px"><div class="pill s${d.key[0]}" style="display:inline-block">${d.key} — ${d.title}</div><p style="margin-top:10px">${d.info}</p></div>`;
-          dlg.showModal();
-        });
-
-        sections.appendChild(sec);
+        body.appendChild(row1);
       });
 
-      document.getElementById('dlgClose').onclick=()=>document.getElementById('dlgInfo').close();
-      renderSummary();
+      return card;
     }
 
-    render();
+    function renderAll(){
+      // KPIs + chips
+      updateKPIs(); renderChips();
+
+      // sections
+      sections.innerHTML = '';
+      state.s.forEach(sez=>{
+        sections.appendChild(makeSection(sez));
+      });
+
+      // deep-link per “Vai alla S in ritardo: X”
+      if(location.hash){
+        const id = location.hash.slice(1);
+        const t = document.getElementById(id);
+        if(t) t.scrollIntoView({behavior:'smooth', block:'start'});
+      }
+
+      // apply lock UI
+      applyLockUI();
+    }
+
+    function applyLockUI(){
+      lockBtn.textContent = state.locked ? '🔓' : '🔒';
+      // (inputs e bottoni già disabilitati se locked al render)
+    }
+
+    // toggle all (azzurro, funziona sempre: chiude se aperte, apre se chiuse)
+    let allOpen = true;
+    toggleAll.onclick = ()=>{
+      const toggles = document.querySelectorAll('.details-toggle');
+      allOpen = !allOpen;
+      toggles.forEach(tg=>{
+        const body = tg.nextElementSibling;
+        body.style.display = allOpen ? 'block' : 'none';
+        tg.firstChild.textContent = allOpen ? '▼' : '▶';
+      });
+    };
+
+    // lock with PIN
+    lockBtn.onclick = ()=>{
+      if(!askPIN(state.locked ? 'PIN per sbloccare' : 'PIN per bloccare')) return;
+      state.locked = !state.locked; save(state); applyLockUI();
+    };
+
+    // first paint
+    renderAll();
   }
 
-  window.SKF5S = { initHome, initChecklist };
+  return { initHome, initChecklist };
 })();
