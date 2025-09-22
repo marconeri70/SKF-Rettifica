@@ -2,101 +2,40 @@
 <html lang="it">
 <head>
   <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>SKF 5S</title>
   <link rel="manifest" href="manifest.json" />
-  <link rel="icon" href="assets/skf-192.png" sizes="192x192" />
+  <link rel="icon" href="assets/skf-192.png" />
   <link rel="apple-touch-icon" href="assets/skf-192.png" />
-  <meta name="theme-color" content="#0b5fff" />
-  <link rel="stylesheet" href="style.v1k.css" />
-  <!-- Chart.js -->
-  <script defer src="./app.v1k.js?v=1k.24"></script>
+  <meta name="theme-color" content="#0b57d0" />
+  <link rel="stylesheet" href="style.css" />
+
+  <!-- Chart.js + DataLabels -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0"></script>
 </head>
 <body>
   <header class="appbar">
     <div class="brand">
-      <img src="assets/skf-192.png" alt="SKF" />
-      <span>SKF 5S</span>
+      <img src="assets/skf-192.png" alt="SKF" class="brand-logo" />
+      <div class="brand-text"><span>SKF</span><span class="thin">5S</span></div>
     </div>
-    <nav id="topActions">
-      <button id="btnToChecklist" class="link-btn" data-route="checklist">
-        Vai alla checklist →
-      </button>
-    </nav>
+    <nav id="topNav"></nav>
   </header>
 
-  <!-- HOME -->
-  <main id="page-home" class="page active" aria-labelledby="h1Home">
-    <section class="card hero">
-      <div class="hero-media">
-        <img src="assets/5s-hero.png" alt="Diagramma 5S" />
-      </div>
-      <div class="hero-text">
-        <h2 id="h1Home">Cosa è 5S</h2>
-        <ul class="what5s">
-          <li><span class="chip s1">1S Selezionare</span> — Eliminare il superfluo.</li>
-          <li><span class="chip s2">2S Sistemare</span> — Un posto per tutto e tutto al suo posto.</li>
-          <li><span class="chip s3">3S Splendere</span> — Pulire e prevenire lo sporco.</li>
-          <li><span class="chip s4">4S Standardizzare</span> — Regole e segnali chiari.</li>
-          <li><span class="chip s5">5S Sostenere</span> — Abitudine e miglioramento continuo.</li>
-        </ul>
-      </div>
-    </section>
+  <main id="app" class="container"></main>
 
-    <section class="card">
-      <h3 id="titleAndamento">Andamento CH 24 — Rettifica</h3>
-      <div class="chart-wrap">
-        <canvas id="chart5s" height="160"></canvas>
-      </div>
-      <div id="chartLegend" class="legend-row"></div>
+  <footer class="footer">
+    <span id="buildTag">BUILD v1k-CH24</span>
+  </footer>
 
-      <div id="lateButtons" class="late-row"></div>
-
-      <div class="export-row">
-        <button id="btnExport" class="btn pin">Esporta dati per Supervisore (PIN)</button>
-      </div>
-    </section>
-  </main>
-
-  <!-- CHECKLIST -->
-  <main id="page-checklist" class="page" aria-labelledby="h1Checklist">
-    <header class="subbar">
-      <button id="btnBack" class="back">← Indietro</button>
-      <h2 id="h1Checklist">CH 24 — Rettifica</h2>
-      <button id="btnLock" class="lock" title="Sblocca/Blocca">🔒</button>
-    </header>
-
-    <section class="summary">
-      <div class="kpi">
-        <div class="kpi-title">Punteggio medio</div>
-        <div class="kpi-val" id="avgScore">0%</div>
-      </div>
-      <div class="kpi">
-        <div class="kpi-title">Azioni in ritardo</div>
-        <div class="kpi-val" id="lateCount">0</div>
-      </div>
-    </section>
-
-    <section class="chips-row" id="chipsRow">
-      <!-- riempito da JS con 1S…5S -->
-    </section>
-
-    <div class="toolbar">
-      <button id="btnToggleAll" class="btn primary">Comprimi / Espandi</button>
-    </div>
-
-    <section id="sections" class="sections">
-      <!-- schede 1S..5S generate da JS -->
-    </section>
-  </main>
-
-  <footer class="build">BUILD v1k-CH24</footer>
-
-  <script defer src="app.v1k.js"></script>
+  <script src="app.js" defer></script>
   <script>
-    // PWA (facoltativo)
+    // PWA
     if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.register('sw.js').catch(()=>{});
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('sw.js');
+      });
     }
   </script>
 </body>
