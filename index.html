@@ -5,25 +5,18 @@
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
   <title>SKF 5S • CH 24 Rettifica</title>
   <link rel="icon" href="assets/skf-192.png" />
-  <link rel="stylesheet" href="style.v1k.css">
+  <link rel="stylesheet" href="style.v1m.css">
 </head>
 <body>
   <header class="topbar">
     <div class="brand"><img src="assets/skf-192.png" alt="SKF"><span>SKF 5S</span></div>
-    <div class="tools">
-      <a class="btn ghost" href="checklist.html">Vai alla checklist →</a>
-    </div>
+    <div class="tools"><a class="btn ghost" href="checklist.html">Vai alla checklist →</a></div>
   </header>
 
   <main class="container narrow">
     <section class="card hero-card">
-      <img src="assets/5s-hero.png" alt="5S hero">
-      <div>
-        <h1>CH 24 — Rettifica</h1>
-        <div class="cta">
-          <a class="btn primary" href="checklist.html">Vai alla checklist</a>
-        </div>
-      </div>
+      <img src="assets/5s-hero.png" alt="5S">
+      <h1>CH 24 — Rettifica</h1>
     </section>
 
     <section class="card">
@@ -39,31 +32,36 @@
 
     <section class="card">
       <h2>Andamento CH 24</h2>
-      <canvas id="introChart" height="140"></canvas>
+      <canvas id="introChart" height="200"></canvas>
     </section>
   </main>
 
-  <div class="build-badge">BUILD v1k-CH24</div>
+  <div class="build-badge">BUILD v1m-CH24</div>
 
-  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <script>
   (function(){
     const KEY='skf.5s.v1k';
-    function load(){try{const v=localStorage.getItem(KEY);if(v){const s=JSON.parse(v);if(s&&Array.isArray(s.areas))return s}}catch(e){}return{areas:[]}}
-    function kpi(area){
-      if(!area) return {score:0,late:0};
-      const Ss=['1S','2S','3S','4S','5S']; let sum=0,tot=0,late=0,now=Date.now();
-      Ss.forEach(S=>(((area.sectors||{}).Rettifica||{})[S]||[]).forEach(it=>{
-        const v=Math.max(0,Math.min(5,parseInt(it.val||0,10)||0)); sum+=v; tot+=5;
-        const t=it.due?Date.parse(it.due):NaN; if(!isNaN(t)&&t<now&&v<5) late++;
-      }));
-      return {score:tot?Math.round((sum/tot)*100):0,late};
-    }
-    const st=load(); const a=st.areas[0]; const {score,late}=kpi(a);
+    function load(){ try{ return JSON.parse(localStorage.getItem(KEY))||{areas:[]}; }catch(e){return{areas:[]}} }
+    function makeSector(){return{'1S':[],'2S':[],'3S':[],'4S':[],'5S':[]};}
+    function normalize(st){ if(!st.areas.length) st.areas.push({line:"CH 24",activeSector:"Rettifica",sectors:{Rettifica:makeSector()}}); return st; }
+    const st=normalize(load()), a=st.areas[0], sec=a.sectors.Rettifica;
+    const now=Date.now(); let late=0, byS={'1S':0,'2S':0,'3S':0,'4S':0,'5S':0};
+    Object.keys(sec).forEach(S=>{
+      const arr=sec[S]; if(!arr.length){byS[S]=0;return;}
+      let sum=0;
+      arr.forEach(it=>{
+        const v=parseInt(it.val||0,10)||0; sum+=v;
+        if(it.due && Date.parse(it.due)<now && v<5) late++;
+      });
+      byS[S]=Math.round((sum/(arr.length*5))*100);
+    });
     const ctx=document.getElementById('introChart').getContext('2d');
     new Chart(ctx,{
       type:'bar',
-      data:{labels:['Punteggio medio','Azioni in ritardo'],datasets:[{data:[score,late]}]},
+      data:{labels:['1S','2S','3S','4S','5S','Azioni in ritardo'],
+        datasets:[{data:[byS['1S'],byS['2S'],byS['3S'],byS['4S'],byS['5S'],late],
+        backgroundColor:['#8e44ad','#e74c3c','#f39c12','#27ae60','#2980b9','#c0392b']}]},
       options:{plugins:{legend:{display:false}},scales:{y:{beginAtZero:true,max:100,grid:{display:false}},x:{grid:{display:false}}}}
     });
   })();
