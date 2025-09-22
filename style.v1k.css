@@ -1,1 +1,61 @@
-/* CSS lungo qui (abbreviato per brevità nel codice sopra) */
+/* ====== SKF 5S v1k ====== */
+:root{
+  --skf:#005BAC;--bg:#f5f7fb;--card:#fff;--muted:#8a95a7;--ink:#0e1726;
+  --s1:#7E57C2;--s2:#EF5350;--s3:#F4B400;--s4:#2ECC71;--s5:#1E88E5;
+  --late:#ffdde0;--late-border:#ff6b6b;
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0}
+body{font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;background:var(--bg);color:var(--ink)}
+.container{max-width:980px;margin:0 auto;padding:12px}
+.appbar{position:sticky;top:0;z-index:10;background:#fff;border-bottom:1px solid #e7ebf0;
+  display:flex;align-items:center;gap:10px;padding:10px 12px}
+.brand{display:flex;align-items:center;gap:10px}
+.logo{width:40px;height:40px;border-radius:10px}
+.title .t1{font-weight:700;margin-right:6px}
+.title .t2{opacity:.8}
+.title.only{margin-left:auto;margin-right:auto;font-weight:700}
+.btn{border:0;border-radius:10px;padding:8px 12px;background:var(--skf);color:#fff;cursor:pointer}
+.btn.ghost{background:transparent;color:var(--skf);border:1px solid #d8e1ee}
+.icon-btn{border:1px solid #d8e1ee;background:#fff;border-radius:10px;padding:6px 10px;cursor:pointer}
+.card{background:var(--card);border-radius:16px;padding:14px;margin:12px 0;box-shadow:0 2px 10px rgb(10 30 60 / .06)}
+.foot{padding:20px 0;text-align:center;color:var(--muted);font-size:12px}
+/* pills */
+.pill{color:#fff;border-radius:8px;padding:2px 8px;font-weight:700}
+.s1{background:var(--s1)}.s2{background:var(--s2)}.s3{background:var(--s3)}.s4{background:var(--s4)}.s5{background:var(--s5)}
+/* hero */
+.hero{display:grid;grid-template-columns:140px 1fr;gap:14px}
+.hero-img img{width:100%;border-radius:16px}
+.s-list{padding-left:16px}
+/* KPI */
+.kpis{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.kpi .kpi-label{color:var(--muted);font-size:14px}
+.kpi .kpi-value{font-size:32px;font-weight:800}
+/* controls */
+.controls{display:flex;gap:10px;align-items:center}
+/* schede */
+.s-sections{display:flex;flex-direction:column;gap:14px}
+.s-card{border:2px solid transparent}
+.s-card.late{background:var(--late);border-color:var(--late-border)}
+.s-head{display:flex;align-items:center;justify-content:space-between;gap:10px}
+.s-title{font-size:20px;font-weight:800}
+.s-title.s1{color:var(--s1)}.s-title.s2{color:var(--s2)}.s-title.s3{color:var(--s3)}
+.s-title.s4{color:var(--s4)}.s-title.s5{color:var(--s5)}
+.s-actions{display:flex;gap:8px;align-items:center}
+.badge{background:#eef3fb;border:1px solid #d8e1ee;border-radius:10px;padding:6px 10px;color:#2d3b53}
+.row{display:grid;grid-template-columns:1fr 180px 1fr;gap:8px;margin-top:10px}
+.row input, .row select{width:100%;border:1px solid #d8e1ee;border-radius:10px;padding:10px;background:#fff}
+.score-btns{display:flex;gap:6px}
+.score-btns button{border:1px solid #d8e1ee;background:#fff;border-radius:10px;padding:6px 10px;cursor:pointer}
+.score-btns button.active{background:var(--skf);color:#fff;border-color:var(--skf)}
+.info-dialog{border:0;border-radius:16px;max-width:520px;width:92%}
+.info-dialog::backdrop{background:rgb(10 20 40 / .35)}
+.info-head{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:10px 12px;border-bottom:1px solid #eef3fb}
+.info-head .pill{display:inline-block}
+@media (max-width:720px){
+  .hero{grid-template-columns:1fr}
+  .row{grid-template-columns:1fr}
+}
+/* disable when locked */
+body[data-locked="1"] .page-checklist .container input,
+body[data-locked="1"] .page-checklist .container select{background:#f1f4f9;color:#7a879a}
