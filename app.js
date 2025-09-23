@@ -15,7 +15,7 @@
 const CONFIG = {
   PIN: "6170",                 // PIN per azioni protette
   CHANNEL_DEFAULT: "CH 24",    // canale di default (es. CH 24)
-  AREA: "Montaggio"            // Area mostrata nei titoli (Montaggio/Rettifica)
+  AREA: "Rettifica"            // Area mostrata nei titoli (Montaggio/Rettifica)
 };
 
 // Colori istituzionali per le 5S
