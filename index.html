@@ -3,49 +3,86 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>SKF 5S</title>
-  <link rel="stylesheet" href="./style.css?v=2025-09-22c" />
+  <title>SKF 5S — Rettifica</title>
+
+  <!-- PWA -->
+  <link rel="manifest" href="manifest.json" />
+  <meta name="theme-color" content="#0a57d5" />
+  <link rel="icon" href="assets/pwa-192.png" />
+
+  <link rel="stylesheet" href="style.css" />
+  <script defer src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+  <script defer src="app.js"></script>
 </head>
-<body>
-  <header class="topbar">
-    <div class="brand">
-      <!-- Se il tuo file logo ha nome diverso, cambia questo src -->
-      <img src="./assets/skf-logo.png" alt="SKF" class="logo">
-      <span class="brand-multi">
-        <b class="c-s1">S</b>
-        <b class="c-s2">K</b>
-        <b class="c-s3">F</b>
-        <b class="c-s4">5</b>
-        <b class="c-s5">S</b>
-      </span>
+<body data-page="home">
+  <header class="appbar">
+    <div class="left">
+      <img class="skf-logo" src="assets/skf-logo.png" alt="SKF" />
+      <h1 class="brand brand--wordmark">
+        <span class="brand-skf">SKF</span>
+        <span class="brand-5s">5S</span>
+      </h1>
     </div>
-    <nav id="navActions"></nav>
+
+    <div class="right">
+      <button id="lockBtn" class="icon-btn" aria-label="Impostazioni / PIN">🔒</button>
+      <a class="cta" href="checklist.html">Vai alla checklist →</a>
+    </div>
   </header>
 
-  <main id="app" class="container"></main>
+  <main class="container">
+    <!-- Hero -->
+    <section class="card hero">
+      <div class="hero-grid">
+        <img class="hero-img hero-img--big" src="assets/5s-hero.png" alt="Diagramma 5S" />
+        <div>
+          <h2>Cosa è 5S</h2>
+          <ul class="fiveS">
+            <li><span class="chip s1">1S Selezionare</span> — Eliminare il superfluo.</li>
+            <li><span class="chip s2">2S Sistemare</span> — Un posto per tutto e tutto al suo posto.</li>
+            <li><span class="chip s3">3S Splendere</span> — Pulire e prevenire lo sporco.</li>
+            <li><span class="chip s4">4S Standardizzare</span> — Regole e segnali chiari.</li>
+            <li><span class="chip s5">5S Sostenere</span> — Abitudine e miglioramento continuo.</li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <!-- Grafico -->
+    <section class="card">
+      <h2 id="chartTitle">Andamento CH 24 — Rettifica</h2>
+      <div class="chart-wrap">
+        <canvas id="progressChart" height="180"></canvas>
+      </div>
+
+      <div id="lateBtns" class="late-buttons"></div>
+
+      <div class="export-row">
+        <button id="exportBtn" class="btn secondary">Esporta dati per Supervisore (PIN)</button>
+      </div>
+    </section>
+  </main>
 
   <!-- Modale PIN -->
-  <dialog id="pinModal">
-    <form method="dialog" class="pin-card" id="pinForm">
-      <h3>Sblocca azione</h3>
-      <p>Inserisci il PIN per procedere.</p>
-      <input type="password" id="pinInput" inputmode="numeric" maxlength="8" placeholder="PIN" required />
+  <dialog id="pinDialog" class="modal">
+    <form method="dialog" class="modal-box">
+      <h3>Impostazioni protette</h3>
+      <label class="field">
+        <span>Inserisci PIN</span>
+        <input id="pinInput" inputmode="numeric" placeholder="••••" />
+      </label>
+
+      <label class="field">
+        <span>Nome canale (CH)</span>
+        <input id="channelInput" placeholder="CH 24" />
+      </label>
+
       <menu>
-        <button type="submit" class="btn primary">Conferma</button>
-        <button type="button" class="btn" onclick="PIN.close(false)">Annulla</button>
+        <button class="btn secondary" value="cancel" type="button" id="pinCancel">Annulla</button>
+        <button id="pinConfirmBtn" class="btn" type="button">Conferma</button>
       </menu>
+      <p class="hint">Il PIN è configurabile in <code>app.js</code> (CONFIG.PIN).</p>
     </form>
   </dialog>
-
-  <!-- Modale info “i” -->
-  <dialog id="infoModal">
-    <div class="info-card">
-      <h3 id="infoTitle">Info</h3>
-      <p id="infoText"></p>
-      <button class="btn primary" onclick="document.getElementById('infoModal').close()">Chiudi</button>
-    </div>
-  </dialog>
-
-  <script src="./app.js?v=2025-09-22c" defer></script>
 </body>
 </html>
