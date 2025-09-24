@@ -344,47 +344,44 @@ function saveAndRefresh(k, scroll){
 }
 
 /* INFO – con punteggio */
+/* INFO – con voti che restano attivi e riportati solo in note */
 function openInfo(k){
-  const dlg = document.getElementById("infoDialog");
-  const title = document.getElementById("infoTitle");
-  const content = document.getElementById("infoContent");
-  title.textContent = `${k.toUpperCase()} — Info`;
-  const points = INFO_POINTS[k]||[];
-  content.innerHTML = `
-    <ol>
-      ${points.map((t,i)=>`
-        <li>
-          <div class="pointline" data-k="${k}" data-text="${encodeURIComponent(t)}">
-            ${i+1}. ${t}
-            <div class="points" style="margin-top:6px">
-              ${[0,1,3,5].map(p=>`<button data-act="score" data-k="${k}" data-p="${p}" style="width:36px;height:30px">${p}</button>`).join("")}
-            </div>
+  const dlg=document.getElementById("infoDialog");
+  const content=document.getElementById("infoContent");
+  const points=INFO_POINTS[k]||[];
+  content.innerHTML=`<ol>${
+    points.map((t,i)=>`
+      <li>
+        <div class="pointline" data-text="${encodeURIComponent(t)}">
+          ${i+1}. ${t}
+          <div class="points">
+            ${[0,1,3,5].map(p=>`<button data-p="${p}">${p}</button>`).join("")}
           </div>
-        </li>`).join("")}
-    </ol>
-    <p class="muted">Tocca un numero per assegnare il punteggio e aggiungere il testo alle <b>Note</b> della S.</p>
-  `;
-  content.onclick = (e)=>{
-    const btn = e.target.closest('button[data-act="score"]');
-    if(!btn) return;
-    const kk = btn.dataset.k, p = +btn.dataset.p;
-    // usa il primo item della S visibile
-    const first = state.items[kk][0];
-    first.points = p;
-    // append nota (una volta)
-    const noteText = decodeURIComponent(btn.closest(".pointline").dataset.text);
-    if(!first.note?.includes(noteText)){
-      first.note = (first.note?first.note+"\n":"") + "- " + noteText;
+          <div class="note-mini"></div>
+        </div>
+      </li>`).join("")
+  }</ol>`;
+  content.onclick=(e)=>{
+    const btn=e.target.closest("button[data-p]");
+    if(!btn)return;
+    const val=+btn.dataset.p;
+    const line=btn.closest(".pointline");
+    line.querySelectorAll("button").forEach(b=>b.classList.remove("active"));
+    btn.classList.add("active");
+    const text=decodeURIComponent(line.dataset.text);
+    // aggiungi nota visiva sotto
+    line.querySelector(".note-mini").textContent=`Assegnato voto: ${val}`;
+    // append alle note della S
+    const first=state.items[k][0];
+    const toAdd=`[${val}] ${text}`;
+    if(!first.note?.includes(toAdd)){
+      first.note=(first.note?first.note+"\n":"")+toAdd;
     }
-    saveAndRefresh(kk);
+    setJSON(storageKey("state"),state);
   };
-  dlg.querySelector(".modal-box").style.borderTop = `6px solid ${COLORS[k]||'#0a57d5'}`;
   dlg.showModal();
 }
-
-document.getElementById?.("infoCloseBtn")?.addEventListener("click", ()=> {
-  document.getElementById("infoDialog").close();
-});
+document.getElementById("infoCloseBtn").onclick=()=>document.getElementById("infoDialog").close();
 
 /* CHART */
 let chart;
