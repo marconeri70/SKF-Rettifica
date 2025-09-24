@@ -38,6 +38,39 @@ const setPin = (p)=> localStorage.setItem(storageKey("pin"), String(p||""));
 /* ============================
  *  PWA Service Worker
  * ============================ */
+// Helper robusto per scaricare JSON (funziona anche su iOS/Safari)
+function downloadJSON(filename, obj) {
+  const json = JSON.stringify(obj, null, 2);
+  // Fallback per Safari/iOS: apri in nuova tab se il download diretto è bloccato
+  const isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
+
+  try {
+    const blob = new Blob([json], { type: "application/json" });
+    const url  = URL.createObjectURL(blob);
+    const a    = document.createElement("a");
+    a.href = url;
+    a.download = filename;
+    a.rel = "noopener";
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    setTimeout(()=> URL.revokeObjectURL(url), 2000);
+  } catch (e) {
+    // Fallback assoluto: data URL (alcuni Safari vecchi)
+    const data = "data:application/json;charset=utf-8," + encodeURIComponent(json);
+    if (isSafari) {
+      window.open(data, "_blank");
+    } else {
+      const a = document.createElement("a");
+      a.href = data;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+    }
+  }
+}
+
 if ("serviceWorker" in navigator) {
   window.addEventListener("load", ()=> navigator.serviceWorker.register("sw.js").catch(()=>{}));
 }
