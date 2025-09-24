@@ -34,8 +34,8 @@ let state = getJSON(storageKey("state"), {
   points: { s1:0, s2:0, s3:0, s4:0, s5:0 },
   notes:  { s1:"", s2:"", s3:"", s4:"", s5:"" },
   dates:  { s1:null, s2:null, s3:null, s4:null, s5:null },
-  // nuovo: scelte dei punti nel popup, per calcolare la media
-  detail: { s1:{}, s2:{}, s3:{}, s4:{}, s5:{} }   // es. detail.s1[0]=3 significa: punto #1 di S1 valutato 3
+  // scelte dei punti nel popup, per calcolare la media
+  detail: { s1:{}, s2:{}, s3:{}, s4:{}, s5:{} }   // es. detail.s1[0]=3  -> punto #1 di S1 valutato 3
 });
 function savePin(p){ state.pin = p; setJSON(storageKey("state"), state); localStorage.setItem("skf5s:pin", JSON.stringify(p)); }
 
@@ -100,11 +100,58 @@ function updateStatsAndLate(){
   });
 }
 
+/** Utilità Note + parsing frasi */
+function parsePoints(txt){
+  const out = [];
+  const re = /\((\d+)\)\s*([^]+?)(?=\s*\(\d+\)\s*|$)/g;
+  let m;
+  while((m = re.exec(txt))){ out.push(m[2].trim()); }
+  return out;
+}
+function squaresSummaryColored(score){
+  // 🟦 = scelto, ⬜ = non scelto
+  const order = [0,1,3,5];
+  return order.map(v => (v===score ? `🟦${v}` : `⬜${v}`)).join(" ");
+}
+function appendNote(k, text, score){
+  const ta = document.querySelector(`#sheet-${k} textarea`);
+  if(!ta) return;
+  const line = `${squaresSummaryColored(score)} — ${text}`;
+  ta.value = (ta.value ? ta.value.replace(/\s*$/,"")+"\n" : "") + line;
+  state.notes[k] = ta.value;
+  setJSON(storageKey("state"), state);
+}
+function nearestScore(mean){
+  const choices = [0,1,3,5];
+  let best = 0, bestDiff = Infinity;
+  for (const c of choices){
+    const d = Math.abs(mean - c);
+    if (d < bestDiff) { bestDiff = d; best = c; }
+  }
+  return best;
+}
+function recalcFromDetailAndApply(k){
+  const picks = Object.values(state.detail[k]||{});
+  if (picks.length===0) return; // niente ancora
+  const mean = picks.reduce((a,b)=>a+b,0) / picks.length;
+  const newScore = nearestScore(mean);
+  // applica alla scheda
+  state.points[k] = newScore;
+  setJSON(storageKey("state"), state);
+  document.querySelectorAll(`#sheet-${k} .points button`).forEach(b=>{
+    b.classList.toggle("active", Number(b.dataset.p)===newScore);
+  });
+  const sv = document.querySelector(`#sheet-${k} .s-value`);
+  if (sv) sv.textContent = `Valore: ${newScore*20}%`;
+  updateStatsAndLate();
+}
+
 /** HOME */
 let chart;
 function renderChart(){
   const ctx = document.getElementById("progressChart");
   if(!ctx) return;
+
   const vals = ["s1","s2","s3","s4","s5"].map(k=> (state.points[k]??0)*20 );
   const delayed = Object.keys(state.dates).filter(k=> isLate(k)).length;
 
@@ -121,7 +168,37 @@ function renderChart(){
     },
     options:{
       responsive:true,
-      plugins:{ legend:{display:false}, tooltip:{enabled:true} },
+      plugins:{
+        legend:{display:false},
+        tooltip:{
+          enabled:true,
+          callbacks:{
+            label: (item)=>{
+              // riga valore principale
+              if (item.dataIndex===5) return "Ritardi: " + item.raw;
+              return `${item.label}: ${item.raw}%`;
+            },
+            afterBody: (items)=>{
+              // riassunto Note scelte nel popup per S1..S5
+              const idx = items[0].dataIndex;
+              if (idx<0 || idx>4) return;
+              const key = ["s1","s2","s3","s4","s5"][idx];
+              const det = state.detail[key]||{};
+              const pts = parsePoints(INFO_TEXT[key]||"");
+              const lines = Object.keys(det)
+                .map(n=>Number(n))
+                .sort((a,b)=>a-b)
+                .slice(0,6) // massimo 6 righe per non esagerare
+                .map(n=>{
+                  const score = det[n];
+                  const text  = pts[n] || "";
+                  return `${n+1}) ${squaresSummaryColored(score)} ${text}`;
+                });
+              return lines.length ? lines : ["Nessuna nota selezionata"];
+            }
+          }
+        }
+      },
       scales:{
         y:{beginAtZero:true,max:100,grid:{display:false},ticks:{callback:v=>v+"%"}},
         x:{grid:{display:false},ticks:{maxRotation:0}}
@@ -129,6 +206,7 @@ function renderChart(){
     }
   });
 
+  // pulsanti “in ritardo”
   const late = [];
   ["s1","s2","s3","s4","s5"].forEach((k,i)=>{ if(isLate(k)) late.push({k, label:`${i+1}S in ritardo`}); });
   const box = document.getElementById("lateBtns");
@@ -318,50 +396,6 @@ function setupChecklist(){
 }
 
 /** Popup “i” con punti interattivi + media automatica */
-function parsePoints(txt){
-  const out = [];
-  const re = /\((\d+)\)\s*([^]+?)(?=\s*\(\d+\)\s*|$)/g;
-  let m;
-  while((m = re.exec(txt))){ out.push(m[2].trim()); }
-  return out;
-}
-function squaresSummaryColored(score){
-  // 🟦 = scelto, ⬜ = non scelto
-  const order = [0,1,3,5];
-  return order.map(v => (v===score ? `🟦${v}` : `⬜${v}`)).join(" ");
-}
-function appendNote(k, text, score){
-  const ta = document.querySelector(`#sheet-${k} textarea`);
-  if(!ta) return;
-  const line = `${squaresSummaryColored(score)} — ${text}`;
-  ta.value = (ta.value ? ta.value.replace(/\s*$/,"")+"\n" : "") + line;
-  state.notes[k] = ta.value;
-  setJSON(storageKey("state"), state);
-}
-function nearestScore(mean){
-  const choices = [0,1,3,5];
-  let best = 0, bestDiff = Infinity;
-  for (const c of choices){
-    const d = Math.abs(mean - c);
-    if (d < bestDiff) { bestDiff = d; best = c; }
-  }
-  return best;
-}
-function recalcFromDetailAndApply(k){
-  const picks = Object.values(state.detail[k]||{});
-  if (picks.length===0) return; // niente ancora
-  const mean = picks.reduce((a,b)=>a+b,0) / picks.length;
-  const newScore = nearestScore(mean);
-  // applica alla scheda
-  state.points[k] = newScore;
-  setJSON(storageKey("state"), state);
-  document.querySelectorAll(`#sheet-${k} .points button`).forEach(b=>{
-    b.classList.toggle("active", Number(b.dataset.p)===newScore);
-  });
-  const sv = document.querySelector(`#sheet-${k} .s-value`);
-  if (sv) sv.textContent = `Valore: ${newScore*20}%`;
-  updateStatsAndLate();
-}
 function openInfo(k){
   const dlg = document.getElementById("infoDialog");
   const title = document.getElementById("infoTitle");
@@ -403,8 +437,8 @@ function openInfo(k){
     if (!state.detail[key]) state.detail[key]={};
     state.detail[key][idx] = score;
     setJSON(storageKey("state"), state);
-    // aggiunge riga in Note (blu)
-    const text = pts[idx];
+    // aggiunge riga in Note (blu evidenziato via emoji)
+    const text = parsePoints(INFO_TEXT[key]||"")[idx];
     appendNote(key, text, score);
     // calcola media e aggiorna scheda
     recalcFromDetailAndApply(key);
