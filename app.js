@@ -1,6 +1,6 @@
 /** CONFIGURAZIONE */
 const CONFIG = {
-  AREA: "Rettifica",           // <- per Montaggio cambia qui in "Montaggio"
+  AREA: "Rettifica",           // Per Montaggio cambia qui in "Montaggio"
   CHANNEL_DEFAULT: "CH 24",
   DEFAULT_PIN: "6170"
 };
@@ -33,9 +33,10 @@ let state = getJSON(storageKey("state"), {
   pin: getJSON("skf5s:pin", CONFIG.DEFAULT_PIN),
   points: { s1:0, s2:0, s3:0, s4:0, s5:0 },
   notes:  { s1:"", s2:"", s3:"", s4:"", s5:"" },
-  dates:  { s1:null, s2:null, s3:null, s4:null, s5:null }
+  dates:  { s1:null, s2:null, s3:null, s4:null, s5:null },
+  // nuovo: scelte dei punti nel popup, per calcolare la media
+  detail: { s1:{}, s2:{}, s3:{}, s4:{}, s5:{} }   // es. detail.s1[0]=3 significa: punto #1 di S1 valutato 3
 });
-/* mantengo il PIN anche a livello globale per cambio cross-area */
 function savePin(p){ state.pin = p; setJSON(storageKey("state"), state); localStorage.setItem("skf5s:pin", JSON.stringify(p)); }
 
 /** Titoli dinamici */
@@ -68,7 +69,6 @@ function openPinDialog(){
     if (entered !== String(state.pin)) { alert("PIN errato"); return; }
     state.channel = chInput.value.trim() || CONFIG.CHANNEL_DEFAULT;
 
-    // cambio PIN opzionale
     if (np1.value || np2.value){
       if (np1.value !== np2.value) { alert("I due PIN non coincidono"); return; }
       if (!/^\d{3,8}$/.test(np1.value)) { alert("PIN non valido"); return; }
@@ -148,7 +148,6 @@ function setupHome(){
   renderChart();
   document.getElementById("lockBtn")?.addEventListener("click", openPinDialog);
   document.getElementById("exportBtn")?.addEventListener("click", ()=>{
-    // richiesta PIN
     const entered = prompt("Inserisci PIN per esportare");
     if (entered !== String(state.pin)) return;
 
@@ -158,7 +157,8 @@ function setupHome(){
       date: new Date().toISOString(),
       points: state.points,
       notes: state.notes,
-      dates: state.dates
+      dates: state.dates,
+      detail: state.detail
     };
     const blob = new Blob([JSON.stringify(payload,null,2)], {type:"application/json"});
     const a = document.createElement("a");
@@ -246,7 +246,7 @@ function setupChecklist(){
     wrap.appendChild(card);
   });
 
-  // punteggi scheda (resta come prima)
+  // punteggi scheda (manuali)
   wrap.addEventListener("click",(e)=>{
     const btn = e.target.closest(".points button");
     if(!btn) return;
@@ -269,14 +269,14 @@ function setupChecklist(){
     updateStatsAndLate();
   });
 
-  // elimina con PIN (reset campi scheda)
+  // elimina con PIN (reset scheda)
   wrap.addEventListener("click",(e)=>{
     const del = e.target.closest(".del");
     if(!del) return;
     const pin = prompt("Inserisci PIN per eliminare");
     if (pin !== String(state.pin)) return;
     const k = del.closest(".sheet").id.replace("sheet-","");
-    state.points[k]=0; state.notes[k]=""; state.dates[k]=null;
+    state.points[k]=0; state.notes[k]=""; state.dates[k]=null; state.detail[k]={};
     setJSON(storageKey("state"), state);
     const s = del.closest(".sheet");
     s.querySelectorAll(".points button").forEach(b=>b.classList.remove("active"));
@@ -301,7 +301,6 @@ function setupChecklist(){
     if (pin !== String(state.pin)) return;
     const card = add.closest(".sheet");
     const clone = card.cloneNode(true);
-    // genera id unico e reset campi
     const uid = Math.random().toString(36).slice(2,7);
     clone.id = card.id + "-x" + uid;
     clone.querySelectorAll("textarea").forEach(t=> t.value="");
@@ -318,27 +317,50 @@ function setupChecklist(){
   updateStatsAndLate();
 }
 
-/** Popup “i” con punti interattivi */
+/** Popup “i” con punti interattivi + media automatica */
 function parsePoints(txt){
-  // spezza su "(n)" mantenendo l'ordine
   const out = [];
   const re = /\((\d+)\)\s*([^]+?)(?=\s*\(\d+\)\s*|$)/g;
   let m;
   while((m = re.exec(txt))){ out.push(m[2].trim()); }
   return out;
 }
-function squaresSummary(score){
-  // restituisce stringa con quadratini e selezione evidenziata
+function squaresSummaryColored(score){
+  // 🟦 = scelto, ⬜ = non scelto
   const order = [0,1,3,5];
-  return order.map(v=> v===score ? `■${v}` : `□${v}`).join(" ");
+  return order.map(v => (v===score ? `🟦${v}` : `⬜${v}`)).join(" ");
 }
 function appendNote(k, text, score){
   const ta = document.querySelector(`#sheet-${k} textarea`);
   if(!ta) return;
-  const line = `${squaresSummary(score)} — ${text}`;
+  const line = `${squaresSummaryColored(score)} — ${text}`;
   ta.value = (ta.value ? ta.value.replace(/\s*$/,"")+"\n" : "") + line;
   state.notes[k] = ta.value;
   setJSON(storageKey("state"), state);
+}
+function nearestScore(mean){
+  const choices = [0,1,3,5];
+  let best = 0, bestDiff = Infinity;
+  for (const c of choices){
+    const d = Math.abs(mean - c);
+    if (d < bestDiff) { bestDiff = d; best = c; }
+  }
+  return best;
+}
+function recalcFromDetailAndApply(k){
+  const picks = Object.values(state.detail[k]||{});
+  if (picks.length===0) return; // niente ancora
+  const mean = picks.reduce((a,b)=>a+b,0) / picks.length;
+  const newScore = nearestScore(mean);
+  // applica alla scheda
+  state.points[k] = newScore;
+  setJSON(storageKey("state"), state);
+  document.querySelectorAll(`#sheet-${k} .points button`).forEach(b=>{
+    b.classList.toggle("active", Number(b.dataset.p)===newScore);
+  });
+  const sv = document.querySelector(`#sheet-${k} .s-value`);
+  if (sv) sv.textContent = `Valore: ${newScore*20}%`;
+  updateStatsAndLate();
 }
 function openInfo(k){
   const dlg = document.getElementById("infoDialog");
@@ -347,25 +369,27 @@ function openInfo(k){
   title.textContent = `${k.toUpperCase()} — Info`;
   cont.innerHTML = "";
 
+  if (!state.detail[k]) state.detail[k] = {};
   const pts = parsePoints(INFO_TEXT[k] || "");
+
   const ol = document.createElement("ol");
   pts.forEach((txt, idx)=>{
     const li = document.createElement("li");
+    const already = state.detail[k][idx] ?? null;
     const row = document.createElement("div");
     row.className = "pointline";
     row.innerHTML = `
       <div>${idx+1}. ${txt}</div>
       <div class="pick" data-k="${k}" data-idx="${idx}">
-        ${[0,1,3,5].map(v=>`<button type="button" data-score="${v}">${v}</button>`).join("")}
+        ${[0,1,3,5].map(v=>`<button type="button" data-score="${v}" class="${already===v?'picked':''}">${v}</button>`).join("")}
       </div>
-      <div class="note-mini">Clicca un quadratino per aggiungere la riga in Note.</div>
+      <div class="note-mini">Seleziona un valore per aggiungere la riga in Note.</div>
     `;
     li.appendChild(row);
     ol.appendChild(li);
   });
   cont.appendChild(ol);
 
-  // delega click su pick
   cont.onclick = (e)=>{
     const btn = e.target.closest('.pick button');
     if(!btn) return;
@@ -375,12 +399,17 @@ function openInfo(k){
     const idx = Number(pick.dataset.idx);
     // evidenzia selezione
     pick.querySelectorAll('button').forEach(b=> b.classList.toggle('picked', b===btn));
-    // aggiunge riga in Note
+    // salva scelta
+    if (!state.detail[key]) state.detail[key]={};
+    state.detail[key][idx] = score;
+    setJSON(storageKey("state"), state);
+    // aggiunge riga in Note (blu)
     const text = pts[idx];
     appendNote(key, text, score);
+    // calcola media e aggiorna scheda
+    recalcFromDetailAndApply(key);
   };
 
-  // colore bordo del modal
   dlg.querySelector(".modal-box").style.borderTop = `6px solid ${COLORS[k]||'#0a57d5'}`;
   dlg.showModal();
 }
