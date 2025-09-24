@@ -1,9 +1,9 @@
 {
-  "name": "SKF 5S — Rettifica",
+  "name": "SKF 5S",
   "short_name": "SKF 5S",
-  "start_url": "index.html",
+  "start_url": "./",
   "display": "standalone",
-  "background_color": "#f5f7fb",
+  "background_color": "#0a57d5",
   "theme_color": "#0a57d5",
   "icons": [
     { "src": "assets/pwa-192.png", "sizes": "192x192", "type": "image/png" },
