@@ -172,13 +172,8 @@ function setupHome(){
       notes: state.notes,
       dates: state.dates
     };
-    const blob = new Blob([JSON.stringify(payload,null,2)], {type:"application/json"});
-    const a = document.createElement("a");
-    a.href = URL.createObjectURL(blob);
-    a.download = `SKF-5S-${CONFIG.AREA}-${state.channel.replace(/\s+/g,'_')}.json`;
-    document.body.appendChild(a);
-    a.click();
-    a.remove();
+    const fname = `SKF-5S-${CONFIG.AREA}-${state.channel.replace(/\s+/g,'_')}.json`;
+    downloadJSON(fname, payload);
   });
 }
 
