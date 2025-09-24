@@ -8,6 +8,7 @@
 html,body{margin:0;padding:0;background:var(--bg);color:var(--text);font:16px/1.4 system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,Cantarell,"Helvetica Neue",Arial}
 img{max-width:100%;display:block}
 
+/* Topbar */
 .topbar{
   position:sticky;top:0;z-index:10;background:#0a57d5;color:#fff;
   display:grid;grid-template-columns:1fr auto;align-items:center;gap:12px;
@@ -15,9 +16,7 @@ img{max-width:100%;display:block}
 }
 .brand{display:flex;align-items:center;gap:10px;min-width:0}
 .brand-logo{width:36px;height:36px;border-radius:8px;object-fit:cover}
-.brand-text{font-weight:700;font-size:22px;white-space:nowrap}
-.brand-text .skf{letter-spacing:.5px;background:linear-gradient(90deg,#ff4d4d,#ffb84d);-webkit-background-clip:text;background-clip:text;color:transparent}
-.brand-text .s5s{margin-left:6px;color:#a78bfa}
+.brand-text{font-weight:800;font-size:22px;white-space:nowrap;color:#fff} /* ← scritta bianca */
 
 .topbar-actions{display:flex;align-items:center;gap:10px;min-width:0}
 .lock-btn{border:0;background:#eaf2ff;color:#0a57d5;border-radius:14px;padding:10px 12px;cursor:pointer;flex:0 0 auto}
@@ -26,15 +25,26 @@ img{max-width:100%;display:block}
 .cta .arrow{font-weight:700}
 .cta span{display:block}
 
+/* Layout base */
 .container{max-width:1040px;margin:20px auto;padding:0 14px}
 .card{background:var(--card);border-radius:var(--radius);padding:18px;box-shadow:var(--shadow);margin-bottom:18px}
 .section-title{margin:0 0 12px;font-size:22px}
 
+/* Hero */
 .hero-card{display:block}
 .hero-img-wrap{display:flex;justify-content:flex-start}
 .hero-5s{width:min(420px,90%);height:auto}
 
-.pill{color:#fff;padding:8px 14px;border-radius:14px}
+/* Lista 5S — NIENTE SOVRAPPOSIZIONI */
+.what5s{list-style:none;padding:0;margin:12px 0 0;display:flex;flex-direction:column;gap:14px}
+.what5s li{
+  display:flex;align-items:flex-start;gap:12px; /* spazio tra pill e testo */
+  line-height:1.35;
+}
+.what5s .pill{flex:0 0 auto}         /* la pill non si restringe */
+.what5s .desc{flex:1 1 auto;min-width:0} /* il testo va a capo */
+
+.pill{color:#fff;padding:8px 14px;border-radius:14px;display:inline-block}
 .pill.s1{background:var(--vio)} .pill.s2{background:var(--red)}
 .pill.s3{background:var(--yel)} .pill.s4{background:var(--gre)}
 .pill.s5{background:var(--blu)}
@@ -50,6 +60,7 @@ img{max-width:100%;display:block}
 .btn.primary{background:#0a57d5;color:#fff}
 .btn.toggle{background:#e8eefc;color:#0a57d5}
 
+/* Stats + schede */
 .stats-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:10px}
 .stat-card{background:var(--card);border-radius:14px;padding:14px;box-shadow:var(--shadow)}
 .stat-label{color:var(--muted);display:block;margin-bottom:6px}
@@ -79,6 +90,7 @@ img{max-width:100%;display:block}
 .points button{border:1px solid #d7dbe6;background:#f8fafc;border-radius:10px;padding:8px 12px;cursor:pointer}
 .points button.active{background:#0a57d5;color:#fff;border-color:#0a57d5}
 
+/* Modale / popup “i” con scroll */
 .modal{border:0;padding:0;background:rgba(0,0,0,.3)}
 .modal::backdrop{background:rgba(0,0,0,.35)}
 .modal-box{background:#fff;border-radius:16px;min-width:min(680px,92vw);max-width:92vw;padding:16px;box-shadow:var(--shadow)}
@@ -86,12 +98,12 @@ img{max-width:100%;display:block}
 .modal-actions{display:flex;justify-content:flex-end;gap:8px;margin-top:10px}
 .info-scroll{max-height:min(60vh,520px);overflow:auto}
 
-/* chip interattivi nel popup */
+/* chip interattivi */
 .info-chips{display:flex;flex-direction:column;gap:10px;margin-bottom:8px}
 .info-chip{display:flex;align-items:flex-start;gap:12px;width:100%;text-align:left;background:#f3f4f6;border:0;padding:10px 12px;border-radius:14px;cursor:pointer}
 .info-chip .n{display:inline-flex;align-items:center;justify-content:center;color:#fff;border-radius:999px;width:26px;height:26px;font-weight:700}
 
-/* header responsive fix (no sovrapposizioni) */
+/* Responsive */
 @media (max-width:640px){
   .brand-text{font-size:20px}
   .topbar{grid-template-columns:1fr auto}
