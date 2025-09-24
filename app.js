@@ -1,82 +1,103 @@
-/** ===========================
- *  CONFIG (puoi sovrascrivere da <script> prima di app.js con window.CONFIG)
- *  =========================== */
-const DEFAULT_CONFIG = {
-  PIN: "6170",                // PIN predefinito (puoi cambiarlo poi dal lucchetto)
-  CHANNEL_DEFAULT: "CH 24",   // Canale di default (es. CH 24)
-  AREA: "Rettifica"           // Nome area (Rettifica o Montaggio)
+/** =========================
+ *  CONFIG (personalizza qui)
+ *  =========================
+ *  Per creare "Rettifica" o "Montaggio", cambia AREA e CHANNEL_DEFAULT.
+ *  PIN iniziale modificabile anche offline dal dialog (serve il PIN attuale).
+ */
+const CONFIG = {
+  PIN: "6170",
+  CHANNEL_DEFAULT: "CH 24",
+  AREA: "Rettifica"      // <- metti "Montaggio" nella versione Montaggio
 };
-const CONFIG = Object.assign({}, DEFAULT_CONFIG, (window.CONFIG || {}));
 
-/** Colori corporate per le 5S (usati ovunque, inclusi grafico e badge) */
 const COLORS = {
-  s1: "#7c3aed", // viola
-  s2: "#ef4444", // rosso
-  s3: "#f59e0b", // giallo
-  s4: "#10b981", // verde
-  s5: "#2563eb"  // blu
+  s1: "#7c3aed", s2: "#ef4444", s3: "#f59e0b", s4: "#10b981", s5: "#2563eb",
 };
 
-/** Testi INFO con punti numerati (1)(2)... — verranno convertiti in chip cliccabili */
-const INFO_TEXT = {
-  s1: "(1) L'area pedonale è esente da congestione/ostacoli (area libera) e da pericoli di inciampo. (2) Nel pavimento non sono stati trovati materiali, strumenti, materiali di consumo non identificati. (3) Nell'area sono presenti solo i materiali di consumo, gli strumenti, le attrezzature, i mobili necessari. Tutti gli elementi non necessari sono stati rimossi o contrassegnati per la rimozione. (4) Nell'area è presente solo il materiale necessario per il lavoro in corso; materiali obsoleti o non necessari vengono rimossi. (5) Documenti/espositori/visualizzazioni necessari e pertinenti sono presenti e in buone condizioni. (6) Area etichetta rossa, processo e team sono definiti. (7) Il processo del tag rosso funziona. (8) Esiste una lavagna 5S con piano, foto prima&dopo, punteggi audit e SPL. (9) Esistono prove che 1S sia sostenibile (lista di controllo/piano periodico). (10) Il concetto 5S & 1S è compreso e le responsabilità sono definite. (11) Tutti i membri sono coinvolti.",
-  s2: "(1) Area/team definiti; membri comprendono 5S e 1S. (2) Niente di non necessario in zona. (3) Articoli/attrezzature di sicurezza chiaramente contrassegnati e accessibili. (4) Interruttori/uscite d'emergenza visibili e accessibili. (5) Stazioni qualità ben definite (strumenti, master...). (6) Scarto senza compromessi seguito. (7) Posizioni prefissate con identificazione e min/max per utenze, strumenti, pulizia, consumabili. (8) Posizioni definite per bidoni/contenitori/oli con indicatori chiari. (9) WIP/accettati/rifiutati/quarantena con posizioni designate e identificazione. (10) Materie prime/pack/componenti con posizioni designate e identificazione. (11) Layout con confini/corridoi/pedonali/carrelli e aree DPI definito. (12) File/documenti identificati e organizzati al punto d'uso. (13) Miglioramenti con one-touch, Poka-Yoke, ergonomia. (14) Prove di sostenibilità 2S (checklist/piano). (15) 5S e 2S compresi; responsabilità definite. (16) Tutti i membri partecipano.",
-  s3: "(1) Non si trovano cose inutili in zona. (2) I miglioramenti 2S sono mantenuti. (3) Verifiche regolari; deviazioni corrette. (4) Area/team definiti; 5S, 1S e 2S compresi. (5) Pavimenti/scale/pareti puliti e privi di sporco, oli, trucioli, imballi ecc. (6) Segnali/avvertenze/etichette puliti e leggibili. (7) Documenti in buono stato e protetti. (8) Luci/ventilazioni/aria condizionata funzionanti e pulite. (9) Fonti di sporco identificate e note. (10) Piani d'azione per contenere/eliminare lo sporco. (11) Azioni eseguite secondo piano. (12) Miglioramenti per ridurre pulizie e eliminare alla fonte. (13) Riciclaggio attivo; smistamento corretto. (14) Demarcazioni permanenti (pavimento/posizioni). (15) Prove di sostenibilità 3S (routine pulizia/checklist/piano). (16) 5S e 3S compresi; responsabilità definite; partecipazione.",
-  s4: "(1) Allarmi/management visivo per abnormalità e capacità (Min/Max, imballi, scorte, componenti). (2) Colori/segni standard per lubrificazione, tubi, valvole ecc., mappati e mantenuti. (3) Standard 5S consolidati e aggiornati; usati per training e guida miglioramento. (4) Schede/istruzioni 5S integrate nella gestione e attività quotidiane.",
-  s5: "(1) Tutti (inclusi i nuovi) sono formati sugli standard 5S e coinvolti. (2) 5S è un'abitudine; standard seguiti da tutti. (3) Layered audit secondo programma definito. (4) Foto prima/dopo mantenute come riferimento. (5) Obiettivi 5S esposti."
+/** Testi INFO: ogni chiave s1..s5 è un array di punti cliccabili */
+const INFO_POINTS = {
+  s1: [
+    "L'area pedonale è libera da ostacoli e pericoli di inciampo.",
+    "Nel pavimento non ci sono materiali o attrezzi non identificati.",
+    "Sono presenti solo materiali/strumenti necessari; il resto è rimosso.",
+    "Presente solo il materiale necessario per il lavoro in corso.",
+    "Documenti/visualizzazioni necessari e aggiornati.",
+    "Definiti team e processo per etichetta rossa.",
+    "Processo etichetta rossa funzionante.",
+    "Lavagna 5S aggiornata (piano, foto prima/dopo, audit).",
+    "Evidenze per garantire la sostenibilità di 1S.",
+    "5S & 1S compresi dal team e responsabilità definite.",
+    "Coinvolgimento di tutti i membri nelle attività dell’area."
+  ],
+  s2: [
+    "Area/team definiti; comprensione 5S e dettaglio 1S.",
+    "Nessun oggetto non necessario nella zona.",
+    "Sicurezza: articoli/attrezzature ben segnalati e accessibili.",
+    "Uscite e interruttori d’emergenza visibili e accessibili.",
+    "Stazioni qualità definite e ordinate (strumenti, master...).",
+    "Scarto senza compromessi (SWC) seguito.",
+    "Posizioni prefissate per utenze, strumenti, pulizia ecc.",
+    "Posizioni per bidoni/rifiuti/oli con identificazione chiara.",
+    "WIP/accettate/rifiutate/quarantena con posizioni e segnaletica.",
+    "Materie prime/componenti con posizioni e identificazione.",
+    "Layout iniziale con confini, corsie e zone DPI.",
+    "Documenti archiviati al punto di utilizzo e ordinati.",
+    "Miglioramenti: one-touch, Poka-Yoke, ergonomia.",
+    "Piano per sostenibilità 2S (check periodico).",
+    "2S compresa dal team, ruoli chiari; tutti partecipano."
+  ],
+  s3: [
+    "Assenza di cose inutili in zona.",
+    "Miglioramenti 2S mantenuti.",
+    "Verifiche periodiche e attuazione deviazioni.",
+    "Team comprende bene 1S/2S.",
+    "Pavimenti/pareti puliti; assenza oli/trucioli/imballi.",
+    "Cartelli di sicurezza/qualità puliti e leggibili.",
+    "Documenti in buone condizioni e protetti.",
+    "Luci/ventilazione condizionamento in ordine.",
+    "Fonti di sporco identificate e note al team.",
+    "Piani d’azione per eliminare/limitare la fonte.",
+    "Esecuzione coerente delle azioni pianificate.",
+    "Miglioramenti per prevenire la pulizia (elimina cause).",
+    "Riciclo attivo con corretta differenziazione.",
+    "Demarcazioni rese permanenti.",
+    "Routine di pulizia e check 5S aggiornati e sostenibili.",
+    "5S & 3S compresi; partecipazione attiva del team."
+  ],
+  s4: [
+    "Visual management & allarmi visivi per anomalie a colpo d’occhio.",
+    "Colori/segni standard per lubrificazione, tubi, valvole ecc.",
+    "Standard 5S consolidati e aggiornati (training & guida).",
+    "Istruzioni/controlli 5S integrati nel management quotidiano."
+  ],
+  s5: [
+    "Formazione 5S a tutti, inclusi i nuovi, con coinvolgimento.",
+    "5S come abitudine consolidata e standard rispettati.",
+    "Layered audit con programma definito e strutturato.",
+    "Foto prima/dopo come riferimento mantenute visibili.",
+    "Obiettivi e attestati 5S ben esposti."
+  ]
 };
 
 /* ============================
- *  STORAGE helpers
+ * Storage helpers
  * ============================ */
 const storageKey = (k)=>`skf5s:${CONFIG.AREA}:${k}`;
-const getJSON = (k,d)=>{ try { return JSON.parse(localStorage.getItem(k)) ?? d; } catch { return d; } };
+const getJSON = (k,d)=>{ try{ return JSON.parse(localStorage.getItem(k))??d; }catch{ return d; } };
 const setJSON = (k,v)=> localStorage.setItem(k, JSON.stringify(v));
+
 const getPin = ()=> localStorage.getItem(storageKey("pin")) || CONFIG.PIN;
 const setPin = (p)=> localStorage.setItem(storageKey("pin"), String(p||""));
 
 /* ============================
- *  PWA Service Worker
+ * PWA Service Worker
  * ============================ */
-// Helper robusto per scaricare JSON (funziona anche su iOS/Safari)
-function downloadJSON(filename, obj) {
-  const json = JSON.stringify(obj, null, 2);
-  // Fallback per Safari/iOS: apri in nuova tab se il download diretto è bloccato
-  const isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
-
-  try {
-    const blob = new Blob([json], { type: "application/json" });
-    const url  = URL.createObjectURL(blob);
-    const a    = document.createElement("a");
-    a.href = url;
-    a.download = filename;
-    a.rel = "noopener";
-    document.body.appendChild(a);
-    a.click();
-    a.remove();
-    setTimeout(()=> URL.revokeObjectURL(url), 2000);
-  } catch (e) {
-    // Fallback assoluto: data URL (alcuni Safari vecchi)
-    const data = "data:application/json;charset=utf-8," + encodeURIComponent(json);
-    if (isSafari) {
-      window.open(data, "_blank");
-    } else {
-      const a = document.createElement("a");
-      a.href = data;
-      a.download = filename;
-      document.body.appendChild(a);
-      a.click();
-      a.remove();
-    }
-  }
-}
-
 if ("serviceWorker" in navigator) {
-  window.addEventListener("load", ()=> navigator.serviceWorker.register("sw.js").catch(()=>{}));
+  window.addEventListener("load", ()=> navigator.serviceWorker.register("sw.js"));
 }
 
 /* ============================
- *  STATO
+ * Stato
  * ============================ */
 let state = getJSON(storageKey("state"), {
   channel: CONFIG.CHANNEL_DEFAULT,
@@ -86,62 +107,75 @@ let state = getJSON(storageKey("state"), {
 });
 
 /* ============================
- *  UI – Titoli dinamici
+ * Util
  * ============================ */
-function refreshTitles(){
-  const chartTitle = document.getElementById("chartTitle");
-  const pageTitle  = document.getElementById("pageTitle");
-  if (chartTitle) chartTitle.textContent = `Andamento ${state.channel} — ${CONFIG.AREA}`;
-  if (pageTitle)  pageTitle.textContent  = `${state.channel} — ${CONFIG.AREA}`;
+function todayStr(){ return new Date().toISOString().slice(0,10); }
+
+/* Download robusto JSON (anche Safari/iOS) */
+function downloadJSON(filename, obj) {
+  const json = JSON.stringify(obj, null, 2);
+  const isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
+  try {
+    const blob = new Blob([json], { type:"application/json" });
+    const url  = URL.createObjectURL(blob);
+    const a    = document.createElement("a");
+    a.href = url; a.download = filename; a.rel="noopener";
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(()=> URL.revokeObjectURL(url), 2000);
+  } catch(e){
+    const data = "data:application/json;charset=utf-8," + encodeURIComponent(json);
+    if (isSafari) window.open(data,"_blank");
+    else {
+      const a=document.createElement("a");
+      a.href=data; a.download=filename;
+      document.body.appendChild(a); a.click(); a.remove();
+    }
+  }
 }
 
 /* ============================
- *  DIALOG PIN / Canale / Cambio PIN
+ * PIN dialog
  * ============================ */
+function refreshTitles(){
+  const chartTitle = document.getElementById("chartTitle");
+  if (chartTitle) chartTitle.textContent = `Andamento ${state.channel} — ${CONFIG.AREA}`;
+
+  const pageTitle = document.getElementById("pageTitle");
+  if (pageTitle) pageTitle.textContent = `${state.channel} — ${CONFIG.AREA}`;
+
+  const pageTitleH1 = document.getElementById("pageTitleH1");
+  if (pageTitleH1) pageTitleH1.textContent = `${state.channel} — ${CONFIG.AREA}`;
+}
+
 function openPinDialog(){
   const dlg = document.getElementById("pinDialog");
   if (!dlg) return;
+  dlg.showModal();
 
-  // Reset campi
-  const pinInput  = document.getElementById("pinInput");
-  const chInput   = document.getElementById("channelInput");
-  const newPin1   = document.getElementById("newPin1");
-  const newPin2   = document.getElementById("newPin2");
+  const pinInput = document.getElementById("pinInput");
+  const chInput  = document.getElementById("channelInput");
+  const newPin1  = document.getElementById("newPin1");
+  const newPin2  = document.getElementById("newPin2");
   pinInput.value = "";
   chInput.value  = state.channel ?? CONFIG.CHANNEL_DEFAULT;
-  if (newPin1) newPin1.value = "";
-  if (newPin2) newPin2.value = "";
-
-  dlg.showModal();
+  if (newPin1) newPin1.value="";
+  if (newPin2) newPin2.value="";
 
   const confirm = document.getElementById("pinConfirmBtn");
   const cancel  = document.getElementById("pinCancel");
 
   const onConfirm = ()=>{
-    const current = pinInput.value;
-    if (current !== getPin()){
-      alert("PIN errato");
-      return;
-    }
-
-    // Salva CH
-    state.channel = (chInput.value || "").trim() || CONFIG.CHANNEL_DEFAULT;
-    setJSON(storageKey("state"), state);
-
-    // Cambio PIN (opzionale)
+    const ok = pinInput.value === getPin();
+    if (!ok) { alert("PIN errato"); return; }
+    state.channel = chInput.value.trim() || CONFIG.CHANNEL_DEFAULT;
+    // cambio PIN (opzionale)
     if (newPin1 && newPin2 && (newPin1.value || newPin2.value)){
-      if (newPin1.value.length < 3){
-        alert("Il nuovo PIN deve avere almeno 3 cifre.");
-        return;
-      }
-      if (newPin1.value !== newPin2.value){
-        alert("I due PIN non coincidono.");
-        return;
-      }
+      if (newPin1.value.length < 3){ alert("Il nuovo PIN deve avere almeno 3 cifre."); return; }
+      if (newPin1.value !== newPin2.value){ alert("I due PIN non coincidono."); return; }
       setPin(newPin1.value);
       alert("PIN aggiornato.");
     }
-
+    setJSON(storageKey("state"), state);
     refreshTitles();
     dlg.close();
   };
@@ -152,15 +186,15 @@ function openPinDialog(){
 }
 
 /* ============================
- *  HOME
+ * Home
  * ============================ */
 function setupHome(){
   refreshTitles();
   renderChart();
-
   document.getElementById("lockBtn")?.addEventListener("click", openPinDialog);
+
+  // Export con PIN
   document.getElementById("exportBtn")?.addEventListener("click", ()=>{
-    // per esportare serve PIN ogni volta
     const p = prompt("Inserisci PIN per esportare");
     if (p !== getPin()) return;
 
@@ -178,43 +212,40 @@ function setupHome(){
 }
 
 /* ============================
- *  CHECKLIST (seconda pagina)
+ * Checklist
  * ============================ */
 function setupChecklist(){
   refreshTitles();
   document.getElementById("lockBtn")?.addEventListener("click", openPinDialog);
 
-  // badge riassuntivi cliccabili
   const summary = document.getElementById("summaryBadges");
   ["s1","s2","s3","s4","s5"].forEach(k=>{
     const v = state.points[k] ?? 0;
-    const el = document.createElement("button");
-    el.className = `s-badge ${k}`;
-    el.textContent = `${k.toUpperCase()} ${v*20}%`;
-    el.addEventListener("click", ()=> {
-      document.getElementById(`sheet-${k}`)?.scrollIntoView({behavior:"smooth",block:"start"});
-    });
-    summary.appendChild(el);
+    const b = document.createElement("button");
+    b.className = `s-badge ${k}`;
+    b.textContent = `${k.toUpperCase()} ${v*20}%`;
+    b.addEventListener("click", ()=> document.getElementById(`sheet-${k}`)?.scrollIntoView({behavior:"smooth"}));
+    summary.appendChild(b);
   });
 
-  // Comprimi/Espandi tutte
-  document.getElementById("toggleAll")?.addEventListener("click", ()=>{
-    document.querySelectorAll(".s-details").forEach(det=> det.open = !det.open);
+  document.getElementById("toggleAll").addEventListener("click", ()=>{
+    const list = document.querySelectorAll(".s-details");
+    const openCount = Array.from(list).filter(d=>d.open).length;
+    list.forEach(d=> d.open = openCount===0);
   });
 
-  // Rendering schede
   const wrap = document.getElementById("sheets");
   const defs = [
-    {k:"s1", name:"1S — Selezionare",    color:COLORS.s1},
-    {k:"s2", name:"2S — Sistemare",      color:COLORS.s2},
-    {k:"s3", name:"3S — Splendere",      color:COLORS.s3},
-    {k:"s4", name:"4S — Standardizzare", color:COLORS.s4},
-    {k:"s5", name:"5S — Sostenere",      color:COLORS.s5}
+    {k:"s1", name:"1S — Selezionare",   color:COLORS.s1},
+    {k:"s2", name:"2S — Sistemare",     color:COLORS.s2},
+    {k:"s3", name:"3S — Splendere",     color:COLORS.s3},
+    {k:"s4", name:"4S — Standardizzare",color:COLORS.s4},
+    {k:"s5", name:"5S — Sostenere",     color:COLORS.s5},
   ];
-  const todayStr = ()=> new Date().toISOString().slice(0,10);
 
+  wrap.innerHTML = "";
   defs.forEach(({k,name,color})=>{
-    const val  = state.points[k] ?? 0;
+    const val = state.points[k] ?? 0;
     const late = isLate(k);
 
     const card = document.createElement("article");
@@ -234,12 +265,12 @@ function setupChecklist(){
 
         <label class="field">
           <span>Responsabile / Operatore</span>
-          <input placeholder="Inserisci il nome..." value="">
+          <input class="who" placeholder="Inserisci il nome..." value="">
         </label>
 
         <label class="field">
           <span>Note</span>
-          <textarea rows="3" placeholder="Note...">${state.notes[k]??""}</textarea>
+          <textarea class="note" rows="3" placeholder="Note...">${state.notes[k]??""}</textarea>
         </label>
 
         <div class="field">
@@ -251,7 +282,7 @@ function setupChecklist(){
                 <button data-k="${k}" data-p="${p}" class="${val===p?'active':''}">${p}</button>
               `).join("")}
             </div>
-            <button class="icon danger del" title="Cancella valori">🗑</button>
+            <button class="icon danger del" title="Elimina (PIN)">🗑</button>
           </div>
         </div>
       </details>
@@ -259,7 +290,7 @@ function setupChecklist(){
     wrap.appendChild(card);
   });
 
-  // Gestione punteggi
+  // Punteggi
   wrap.addEventListener("click",(e)=>{
     const btn = e.target.closest(".points button");
     if(!btn) return;
@@ -272,7 +303,15 @@ function setupChecklist(){
     updateStatsAndLate();
   });
 
-  // Data → ritardo
+  // Note persistenti
+  wrap.addEventListener("input",(e)=>{
+    const ta = e.target.closest(".note");
+    if(!ta) return;
+    const k = ta.closest(".sheet").id.replace("sheet-","");
+    state.notes[k] = ta.value; setJSON(storageKey("state"), state);
+  });
+
+  // Date → ritardo
   wrap.addEventListener("change",(e)=>{
     const inp = e.target.closest('input[type="date"][data-date]');
     if(!inp) return;
@@ -282,30 +321,30 @@ function setupChecklist(){
     updateStatsAndLate();
   });
 
-  // Elimina (serve PIN ogni volta)
+  // Elimina con PIN
   wrap.addEventListener("click",(e)=>{
     const del = e.target.closest(".del");
     if(!del) return;
-    const p = prompt("Inserisci PIN per eliminare");
-    if (p !== getPin()) return;
+    if (prompt("Inserisci PIN per eliminare") !== getPin()) return;
     const k = del.closest(".sheet").id.replace("sheet-","");
-    state.points[k]=0; state.notes[k]=""; state.dates[k]=null;
+    state.points[k]=0; state.notes[k]=""; state.dates[k]=todayStr();
     setJSON(storageKey("state"), state);
     del.closest(".sheet").querySelectorAll(".points button").forEach(b=>b.classList.remove("active"));
     del.closest(".sheet").querySelector(".s-value").textContent="Valore: 0%";
-    del.closest(".sheet").querySelector('textarea').value="";
-    del.closest(".sheet").querySelector('input[type="date"]').value=new Date().toISOString().slice(0,10);
+    del.closest(".sheet").querySelector('.note').value="";
+    del.closest(".sheet").querySelector('input[type="date"]').value=todayStr();
     updateStatsAndLate();
   });
 
-  // Info → chips interattivi che appendono alle note
+  // Info modal
   wrap.addEventListener("click",(e)=>{
     const infoBtn = e.target.closest(".info");
     if(!infoBtn) return;
     openInfo(infoBtn.dataset.k);
   });
 
-  document.getElementById("infoCloseBtn")?.addEventListener("click", ()=> {
+  // Chiudi info
+  document.getElementById("infoCloseBtn").addEventListener("click", ()=> {
     document.getElementById("infoDialog").close();
   });
 
@@ -313,128 +352,122 @@ function setupChecklist(){
 }
 
 /* ============================
- *  Ritardi
+ * Ritardo
  * ============================ */
 function isLate(k){
   const d = state.dates[k];
   if(!d) return false;
   const today = new Date(); today.setHours(0,0,0,0);
   const chosen = new Date(d); chosen.setHours(0,0,0,0);
-  // è in ritardo se la data immessa è prima di oggi
   return chosen < today;
 }
 
 function updateStatsAndLate(){
   const arr = Object.values(state.points);
   const avg = arr.length ? Math.round(arr.reduce((a,b)=>a+b,0)/arr.length*20) : 0;
-  document.getElementById("avgScore")?.replaceChildren(document.createTextNode(`${avg}%`));
-
   const lateList = Object.keys(state.dates).filter(k=> isLate(k));
+  document.getElementById("avgScore")?.replaceChildren(document.createTextNode(`${avg}%`));
   document.getElementById("lateCount")?.replaceChildren(document.createTextNode(String(lateList.length)));
-
   ["s1","s2","s3","s4","s5"].forEach(k=>{
     document.getElementById(`sheet-${k}`)?.classList.toggle("late", isLate(k));
   });
-
-  // Se siamo in home, ridisegniamo il grafico per aggiornare “Ritardi”
-  if (document.getElementById("progressChart")) renderChart();
+  renderChart(); // aggiorna home se aperta in stessa sessione
 }
 
 /* ============================
- *  INFO dialog con CHIP interattivi
+ * Info modal con punti cliccabili
  * ============================ */
 function openInfo(k){
-  const dlg  = document.getElementById("infoDialog");
-  const box  = document.getElementById("infoText");
-  const title= document.getElementById("infoTitle");
-  if (!dlg || !box) return;
+  const points = INFO_POINTS[k] || [];
+  const dlg = document.getElementById("infoDialog");
+  const title = document.getElementById("infoTitle");
+  const content = document.getElementById("infoContent");
 
   title.textContent = `${k.toUpperCase()} — Info`;
-  box.innerHTML = "";
-
-  const raw = INFO_TEXT[k] || "";
-  const chips = document.createElement("div");
-  chips.className = "info-chips";
-
-  // Estrai punti nel formato (1) testo ... (2) testo ...
-  const re = /\((\d+)\)\s*([^()]+?)(?=(\(\d+\)|$))/g;
-  let m, any=false;
-  while ((m = re.exec(raw)) !== null){
-    any = true;
-    const n = m[1];
-    const t = m[2].trim();
-    const btn = document.createElement("button");
-    btn.type = "button";
-    btn.className = "info-chip";
-    btn.innerHTML = `<span class="n" style="background:${COLORS[k]||'#0a57d5'}">${n}</span><span>${t}</span>`;
-    btn.addEventListener("click", ()=>{
-      // appende il testo alla textarea note della rispettiva S
-      const ta = document.querySelector(`#sheet-${k} textarea`);
-      if (!ta) return;
-      const prefix = ta.value.trim() ? "\n• " : "• ";
-      ta.value = ta.value.trim() + (ta.value.trim() ? "\n" : "") + `• ${t}`;
-      state.notes[k] = ta.value;
-      setJSON(storageKey("state"), state);
-    });
-    chips.appendChild(btn);
-  }
-
-  if (any) box.appendChild(chips);
+  content.innerHTML = `
+    <ol class="points-list">
+      ${points.map((t,i)=>`
+        <li>
+          <button type="button" class="pointline" data-k="${k}" data-text="${encodeURIComponent(t)}">
+            ${i+1}. ${t}
+          </button>
+        </li>`).join("")}
+    </ol>
+    <p class="muted">Tocca un punto per inserirlo nelle <b>Note</b> della scheda.</p>
+  `;
+  // click su un punto → aggiungi alle note della S corrente
+  content.addEventListener("click", onPointClick, { once:true });
   dlg.querySelector(".modal-box").style.borderTop = `6px solid ${COLORS[k]||'#0a57d5'}`;
   dlg.showModal();
 }
 
+function onPointClick(e){
+  const btn = e.target.closest(".pointline");
+  if(!btn) return;
+  const k = btn.dataset.k;
+  const text = decodeURIComponent(btn.dataset.text);
+  const note = document.querySelector(`#sheet-${k} .note`);
+  if (note){
+    note.value = (note.value ? note.value + "\n" : "") + "- " + text;
+    note.dispatchEvent(new Event("input", {bubbles:true}));
+  }
+}
+
 /* ============================
- *  GRAFICO (senza griglie) + pulsanti “in ritardo”
+ * Chart
  * ============================ */
 let chart;
 function renderChart(){
   const ctx = document.getElementById("progressChart");
-  if(!ctx || typeof Chart==="undefined") return;
-
+  if(!ctx) return;
   const vals = ["s1","s2","s3","s4","s5"].map(k=> (state.points[k]??0)*20 );
   const delayed = Object.keys(state.dates).filter(k=> isLate(k)).length;
 
   if(chart) chart.destroy();
-  chart = new Chart(ctx,{
+  chart = new Chart(ctx, {
     type:"bar",
     data:{
       labels:["1S","2S","3S","4S","5S","Ritardi"],
       datasets:[{
-        data:[...vals, delayed],
-        backgroundColor:[COLORS.s1,COLORS.s2,COLORS.s3,COLORS.s4,COLORS.s5,"#ef4444"]
+        data:[...vals, delayed ? Math.min(delayed*20,100) : 0],
+        backgroundColor:["#7c3aed","#ef4444","#f59e0b","#10b981","#2563eb","#ef4444"]
       }]
     },
     options:{
       responsive:true,
-      plugins:{ legend:{display:false}, tooltip:{enabled:true} },
+      plugins:{
+        legend:{display:false},
+        tooltip:{enabled:true},
+        datalabels:false
+      },
       scales:{
-        y:{beginAtZero:true,max:100,ticks:{callback:v=>v+"%"}, grid:{display:false}}, // senza linee
-        x:{ticks:{maxRotation:0}, grid:{display:false}}                              // senza linee
+        y:{beginAtZero:true,max:100, grid:{display:false}, ticks:{callback:v=>v+"%"}},
+        x:{grid:{display:false}, ticks:{maxRotation:0}}
       }
     }
   });
 
+  // Pulsanti “in ritardo”
+  const late = [];
+  ["s1","s2","s3","s4","s5"].forEach((k,i)=>{ if(isLate(k)) late.push({k, label:`${i+1}S in ritardo`}); });
   const box = document.getElementById("lateBtns");
-  if (!box) return;
-  box.innerHTML = "";
-  ["s1","s2","s3","s4","s5"].forEach((k,i)=>{
-    if (isLate(k)){
+  if (box){
+    box.innerHTML = "";
+    late.forEach(({k,label})=>{
       const b = document.createElement("button");
       b.className = `late-btn ${k}`;
-      b.textContent = `${i+1}S in ritardo`;
-      b.addEventListener("click", ()=> location.href = `checklist.html#sheet-${k}`);
+      b.textContent = label;
+      b.addEventListener("click", ()=> { window.location.href = `checklist.html#sheet-${k}`; });
       box.appendChild(b);
-    }
-  });
+    });
+  }
 }
 
 /* ============================
- *  ROUTER
+ * Router
  * ============================ */
 document.addEventListener("DOMContentLoaded", ()=>{
   refreshTitles();
-  const page = document.body.dataset.page;
-  if (page==="home")      setupHome();
-  if (page==="checklist") setupChecklist();
+  if (document.body.dataset.page==="home") setupHome();
+  if (document.body.dataset.page==="checklist") setupChecklist();
 });
