@@ -1,58 +1,51 @@
 <!doctype html>
 <html lang="it">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>SKF 5S — CH 24 Rettifica</title>
-
-  <link rel="manifest" href="manifest.json" />
-  <meta name="theme-color" content="#0a57d5" />
-  <link rel="icon" href="assets/pwa-192.png" />
-
-  <link rel="stylesheet" href="style.css" />
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>SKF 5S – Checklist</title>
+  <link rel="manifest" href="manifest.json"/>
+  <link rel="icon" href="assets/skf-logo.png"/>
+  <link rel="stylesheet" href="style.css"/>
   <script defer src="app.js"></script>
 </head>
 <body data-page="checklist">
-  <header class="appbar">
-    <div class="left">
-      <a class="back" href="index.html">← Indietro</a>
-      <h1 id="pageTitle">CH 24 — Rettifica</h1>
-    </div>
-    <div class="right">
-      <button id="lockBtn" class="icon-btn" aria-label="Sblocca funzioni">🔒</button>
-    </div>
+  <header class="topbar">
+    <a href="./" class="back">← Indietro</a>
+    <h1 id="pageTitle" class="page-title">CH 24 — (Area)</h1>
+    <button id="lockBtn" class="lock-btn" aria-label="Impostazioni" title="Impostazioni">🔒</button>
   </header>
 
   <main class="container">
-    <section class="cards">
-      <div class="stat">
-        <div class="stat-title">Punteggio medio</div>
-        <div class="stat-value" id="avgScore">0%</div>
+    <section class="stats-grid">
+      <div class="stat-card">
+        <span class="stat-label">Punteggio medio</span>
+        <span class="stat-value" id="avgScore">0%</span>
       </div>
-      <div class="stat">
-        <div class="stat-title">Azioni in ritardo</div>
-        <div class="stat-value" id="lateCount">0</div>
+      <div class="stat-card">
+        <span class="stat-label">Azioni in ritardo</span>
+        <span class="stat-value" id="lateCount">0</span>
       </div>
     </section>
 
-    <section class="card">
-      <div id="summaryBadges" class="s-badges"></div>
-      <button id="toggleAll" class="btn tertiary">Comprimi / Espandi</button>
-    </section>
+    <div id="summaryBadges" class="summary-badges"></div>
+
+    <div class="toolbar">
+      <button id="toggleAll" class="btn toggle">Comprimi / Espandi</button>
+    </div>
 
     <section id="sheets" class="sheets"></section>
   </main>
 
-  <!-- Modale info S -->
+  <!-- Popup Info “i” -->
   <dialog id="infoDialog" class="modal">
-    <div class="modal-box">
-      <h3 id="infoTitle">Info</h3>
-      <p id="infoText"></p>
-      <menu>
-        <button id="infoCloseBtn" class="btn" type="button">Chiudi</button>
-      </menu>
-    </div>
+    <form method="dialog" class="modal-box">
+      <h3 id="infoTitle" class="modal-title">Info</h3>
+      <div id="infoText" class="info-scroll"></div>
+      <div class="modal-actions">
+        <button id="infoCloseBtn" class="btn primary">Chiudi</button>
+      </div>
+    </form>
   </dialog>
 </body>
 </html>
-
