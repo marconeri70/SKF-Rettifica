@@ -1,464 +1,393 @@
-/** =========================
- *  CONFIGURAZIONE GENERALE
- *  ========================= */
+/** CONFIGURAZIONE */
 const CONFIG = {
-  AREA: "Rettifica",            // ← per Montaggio imposta "Montaggio"
+  AREA: "Rettifica",           // <- per Montaggio cambia qui in "Montaggio"
   CHANNEL_DEFAULT: "CH 24",
-  DEFAULT_PIN: "6170",          // PIN di fabbrica, poi sovrascrivibile offline
+  DEFAULT_PIN: "6170"
 };
-
 const COLORS = {
-  s1: "#7c3aed", // viola
-  s2: "#ef4444", // rosso
-  s3: "#f59e0b", // giallo
-  s4: "#10b981", // verde
-  s5: "#2563eb", // blu
+  s1:"#7c3aed", s2:"#ef4444", s3:"#f59e0b", s4:"#10b981", s5:"#2563eb"
 };
 
-/** Punti interattivi (solo come NOTE, non aggiornano il punteggio della scheda) */
-const INFO_POINTS = {
-  s1: [
-    "L'area pedonale è libera da ostacoli e pericoli di inciampo.",
-    "Nessun materiale/attrezzo non identificato sul pavimento.",
-    "Solo materiali/strumenti necessari; il resto è rimosso.",
-    "Solo materiale necessario per il lavoro in corso.",
-    "Documenti/visualizzazioni necessari, aggiornati, in buono stato.",
-    "Definiti team e processo etichetta rossa; processo attivo.",
-    "Lavagna 5S aggiornata (piano, foto prima/dopo, audit).",
-    "Evidenze che garantiscono la sostenibilità di 1S.",
-    "5S/1S compresi dal team; responsabilità definite.",
-    "Tutti i membri partecipano alle attività dell'area."
-  ],
-  s2: [
-    "Niente di non necessario presente nella zona.",
-    "Articoli/attrezzature di sicurezza marcati e accessibili.",
-    "Interruttori/uscite d'emergenza visibili e liberi.",
-    "Stazioni qualità definite e organizzate.",
-    "SWC (scarto senza compromessi) seguito.",
-    "Posizioni prefissate per utenze/strumenti/pulizia con indicatori.",
-    "Posizioni definite per contenitori/rifiuti/oli con identificazione.",
-    "WIP/accettati/rifiutati/quarantena ben identificati.",
-    "MP/componenti con posizioni designate e identificazione.",
-    "Layout con demarcazioni, corsie e aree DPI definito.",
-    "File/documenti identificati e organizzati al punto d'uso.",
-    "Miglioramenti: one-touch, poka-yoke, ergonomia, PoU.",
-    "Piano/controllo periodico a garanzia della 2S.",
-    "2S e 5S ben compresi; responsabilità definite.",
-    "Partecipazione del team alle attività 5S."
-  ],
-  s3: [
-    "Mantenute le condizioni create da 2S.",
-    "Pulizie regolari; applicate correzioni/miglioramenti.",
-    "Pavimenti/pareti/scale puliti: assenza di oli/chip/scarti.",
-    "Segnaletica di qualità e sicurezza pulita e leggibile.",
-    "Documenti protetti da sporco/usura.",
-    "Illuminazione e ventilazione in ordine e pulite.",
-    "Fonti di sporco identificate e note.",
-    "Piani d'azione per eliminare/mitigare la fonte di sporco.",
-    "Miglioramenti per prevenire la ricomparsa dello sporco.",
-    "Riciclo rifiuti attivo; corretta differenziazione.",
-    "Demarcazioni rese permanenti.",
-    "Routine 3S in checklist; controllo periodico in atto.",
-    "3S e 5S compresi; responsabilità definite.",
-    "Partecipazione del team 3S/5S."
-  ],
-  s4: [
-    "Visual management per cogliere anomalia/capacità a colpo d'occhio.",
-    "Colori/segni standard per lubrificazioni, tubi, valvole.",
-    "Standard 5S consolidati e aggiornati; usati per training.",
-    "Schede/istruzioni 5S integrate nella gestione quotidiana."
-  ],
-  s5: [
-    "Tutti (anche i nuovi) formati sugli standard 5S e coinvolti.",
-    "5S è abitudine: standard seguiti da tutti con continuità.",
-    "Layered audit eseguiti con programma strutturato.",
-    "Foto prima/dopo presenti e mantenute come riferimento.",
-    "Obiettivi e risultati 5S esposti e monitorati."
-  ],
+/** TESTI INFO – formato "(1) ... (2) ... (3) ..." */
+const INFO_TEXT = {
+  s1: "(1) L'area pedonale è libera da ostacoli e pericoli di inciampo. (2) Nessun materiale/attrezzo non identificato sul pavimento. (3) Solo materiali/strumenti necessari presenti; il resto è rimosso. (4) Solo materiale necessario per il lavoro in corso. (5) Documenti/visualizzazioni necessari, aggiornati, in buono stato. (6) Definiti team e processo etichetta rossa; processo attivo. (7) Lavagna 5S aggiornata (piano, foto prima/dopo, audit). (8) Evidenze che garantiscono la sostenibilità di 1S. (9) 5S/1S compresi dal team; responsabilità definite. (10) Tutti i membri partecipano alle attività dell'area.",
+  s2: "(1) Area e team definiti; nessuna cosa non necessaria in zona. (2) Articoli di sicurezza chiaramente contrassegnati e accessibili. (3) Uscite/interruttori emergenza visibili e liberi. (4) Stazioni qualità definite e organizzate. (5) SWC seguito. (6) Posizioni prefissate per utenze/strumenti/pulizia con indicatori min/max. (7) Posizioni definite per contenitori e rifiuti con identificazione chiara. (8) WIP/accettati/rifiutati/quarantena con posizioni e identificazione. (9) Materie prime/componenti con posizioni designate. (10) Layout con corridoi/aree/pedonali e DPI definito. (11) File/documenti identificati e organizzati al punto d'uso. (12) Miglioramenti one-touch/poka-yoke/ergonomia. (13) Evidenze di sostenibilità 2S. (14) 5S/2S compresi; responsabilità definite. (15) Partecipazione di tutti.",
+  s3: "(1) Non si trovano cose inutili. (2) Miglioramenti 2S mantenuti. (3) Verifiche regolari e azioni su deviazioni. (4) Area/team definiti; 1S/2S compresi. (5) Pavimenti/pareti puliti e senza detriti/oli/trucioli ecc. (6) Segnali/etichette puliti, corretti e leggibili. (7) Documenti in buone condizioni e protetti. (8) Luci/ventilazione/AC in ordine e pulite. (9) Fonti sporco identificate e note. (10) Piani d'azione per eliminare fonti sporco. (11) Azioni eseguite. (12) Miglioramenti per prevenire pulizia (meno tappe, eliminazione fonte). (13) Riciclaggio attivo con corretto smistamento. (14) Demarcazioni rese permanenti. (15) Evidenze di sostenibilità 3S. (16) 5S/3S compresi; responsabilità definite; partecipazione di tutti.",
+  s4: "(1) Visual management/kanban/Min-Max implementati (gestire a vista). (2) Colori/segni standard per lubrificazioni, tubazioni, valvole, ecc. (3) Standard 5S consolidati e aggiornati come training/guida. (4) Istruzioni 5S integrate nella gestione quotidiana.",
+  s5: "(1) Tutti formati sugli standard 5S e coinvolti. (2) 5S come abitudine; standard seguiti da tutti. (3) Layered audit programmati. (4) Foto prima/dopo mantenute come riferimento. (5) Obiettivi 5S esposti."
 };
 
-/** ==============
- *  STORAGE UTILS
- *  ============== */
-const storageKey = (k) => `skf5s:${CONFIG.AREA}:${k}`;
-const getJSON = (k, d) => { try { return JSON.parse(localStorage.getItem(k)) ?? d; } catch { return d; } };
-const setJSON = (k, v) => localStorage.setItem(k, JSON.stringify(v));
+/** Helpers storage */
+const storageKey = k => `skf5s:${CONFIG.AREA}:${k}`;
+const getJSON = (k,d)=>{ try{ return JSON.parse(localStorage.getItem(k)) ?? d; }catch{ return d; } };
+const setJSON = (k,v)=> localStorage.setItem(k, JSON.stringify(v));
 
-/** PIN persistente (cambiabile offline) */
-function loadPin() {
-  return localStorage.getItem(storageKey("PIN")) ?? CONFIG.DEFAULT_PIN;
-}
-function savePin(newPin) {
-  localStorage.setItem(storageKey("PIN"), newPin);
-}
-
-/** =========
- *  PWA SW
- *  ========= */
+/** Service worker */
 if ("serviceWorker" in navigator) {
-  window.addEventListener("load", () => navigator.serviceWorker.register("sw.js").catch(()=>{}));
+  window.addEventListener("load", ()=> navigator.serviceWorker.register("sw.js"));
 }
 
-/** =======
- *  STATO
- *  ======= */
+/** Stato */
 let state = getJSON(storageKey("state"), {
   channel: CONFIG.CHANNEL_DEFAULT,
-  // punteggi 0/1/3/5 → visualizzati come 0/20/60/100%
-  points: { s1: 0, s2: 0, s3: 0, s4: 0, s5: 0 },
-  notes:  { s1: "", s2: "", s3: "", s4: "", s5: "" },
-  dates:  { s1: null, s2: null, s3: null, s4: null, s5: null }
+  pin: getJSON("skf5s:pin", CONFIG.DEFAULT_PIN),
+  points: { s1:0, s2:0, s3:0, s4:0, s5:0 },
+  notes:  { s1:"", s2:"", s3:"", s4:"", s5:"" },
+  dates:  { s1:null, s2:null, s3:null, s4:null, s5:null }
 });
+/* mantengo il PIN anche a livello globale per cambio cross-area */
+function savePin(p){ state.pin = p; setJSON(storageKey("state"), state); localStorage.setItem("skf5s:pin", JSON.stringify(p)); }
 
-/** ==============
- *  TITOLI / UI
- *  ============== */
-function refreshTitles() {
+/** Titoli dinamici */
+function refreshTitles(){
   const chartTitle = document.getElementById("chartTitle");
   if (chartTitle) chartTitle.textContent = `Andamento ${state.channel} — ${CONFIG.AREA}`;
-
   const pageTitle = document.getElementById("pageTitle");
   if (pageTitle) pageTitle.textContent = `${state.channel} — ${CONFIG.AREA}`;
 }
 
-/** ===========
- *  DIALOG PIN
- *  =========== */
-function openPinDialog() {
+/** PIN dialog (con cambio PIN offline) */
+function openPinDialog(){
   const dlg = document.getElementById("pinDialog");
   if (!dlg) return;
 
+  dlg.showModal();
   const pinInput = document.getElementById("pinInput");
   const chInput  = document.getElementById("channelInput");
-  const new1     = document.getElementById("newPin1");
-  const new2     = document.getElementById("newPin2");
-  document.getElementById("pinCancel").onclick = () => dlg.close();
+  const np1 = document.getElementById("newPin1");
+  const np2 = document.getElementById("newPin2");
+  const okBtn = document.getElementById("pinConfirmBtn");
+  const cancel = document.getElementById("pinCancel");
 
   pinInput.value = "";
   chInput.value = state.channel ?? CONFIG.CHANNEL_DEFAULT;
-  new1.value = ""; new2.value = "";
+  np1.value = ""; np2.value = "";
 
-  document.getElementById("pinConfirmBtn").onclick = () => {
-    const current = loadPin();
-    if (pinInput.value !== current) { alert("PIN errato"); return; }
-
-    // aggiorna CH
+  okBtn.onclick = ()=>{
+    const entered = pinInput.value.trim();
+    if (entered !== String(state.pin)) { alert("PIN errato"); return; }
     state.channel = chInput.value.trim() || CONFIG.CHANNEL_DEFAULT;
-    setJSON(storageKey("state"), state);
-    refreshTitles();
 
     // cambio PIN opzionale
-    if (new1.value || new2.value) {
-      if (new1.value !== new2.value) { alert("I PIN nuovi non coincidono"); return; }
-      if (!/^\d{4,8}$/.test(new1.value)) { alert("PIN: 4-8 cifre"); return; }
-      savePin(new1.value);
-      alert("PIN aggiornato.");
+    if (np1.value || np2.value){
+      if (np1.value !== np2.value) { alert("I due PIN non coincidono"); return; }
+      if (!/^\d{3,8}$/.test(np1.value)) { alert("PIN non valido"); return; }
+      savePin(np1.value);
     }
+    setJSON(storageKey("state"), state);
+    refreshTitles();
     dlg.close();
   };
-
-  dlg.showModal();
+  cancel.onclick = ()=> dlg.close();
 }
 
-/** ==========
- *  HOME PAGE
- *  ========== */
+/** Utilità ritardi */
+function isLate(k){
+  const d = state.dates[k];
+  if(!d) return false;
+  const today = new Date(); today.setHours(0,0,0,0);
+  const chosen = new Date(d); chosen.setHours(0,0,0,0);
+  return chosen < today;
+}
+function updateStatsAndLate(){
+  const arr = Object.values(state.points);
+  const avg = arr.length ? Math.round(arr.reduce((a,b)=>a+b,0)/arr.length*20) : 0;
+  const lateList = Object.keys(state.dates).filter(k=> isLate(k));
+  document.getElementById("avgScore")?.replaceChildren(document.createTextNode(`${avg}%`));
+  document.getElementById("lateCount")?.replaceChildren(document.createTextNode(String(lateList.length)));
+  ["s1","s2","s3","s4","s5"].forEach(k=>{
+    document.getElementById(`sheet-${k}`)?.classList.toggle("late", isLate(k));
+  });
+}
+
+/** HOME */
 let chart;
-function renderChart() {
-  const canvas = document.getElementById("progressChart");
-  if (!canvas) return;
+function renderChart(){
+  const ctx = document.getElementById("progressChart");
+  if(!ctx) return;
+  const vals = ["s1","s2","s3","s4","s5"].map(k=> (state.points[k]??0)*20 );
+  const delayed = Object.keys(state.dates).filter(k=> isLate(k)).length;
 
-  const vals = ["s1","s2","s3","s4","s5"].map(k => (state.points[k] ?? 0) * 20);
-  const delayed = Object.keys(state.dates).filter(k => isLate(k)).length;
-
-  if (chart) chart.destroy();
-  chart = new Chart(canvas, {
-    type: "bar",
-    data: {
-      labels: ["1S","2S","3S","4S","5S","Ritardi"],
-      datasets: [{
-        data: [...vals, delayed],
-        backgroundColor: [COLORS.s1, COLORS.s2, COLORS.s3, COLORS.s4, COLORS.s5, "#ef4444"],
-        borderRadius: 8
+  if(chart) chart.destroy();
+  chart = new Chart(ctx, {
+    type:"bar",
+    data:{
+      labels:["1S","2S","3S","4S","5S","Ritardi"],
+      datasets:[{
+        data:[...vals, delayed],
+        backgroundColor:["#7c3aed","#ef4444","#f59e0b","#10b981","#2563eb","#ef4444"],
+        borderWidth:0
       }]
     },
-    options: {
-      responsive: true,
-      plugins: {
-        legend: { display: false },
-        tooltip: { enabled: true }
-      },
-      scales: {
-        y: {
-          beginAtZero: true, max: 100,
-          grid: { display: false },
-          ticks: { callback: v => v + "%" }
-        },
-        x: {
-          grid: { display: false }
-        }
+    options:{
+      responsive:true,
+      plugins:{ legend:{display:false}, tooltip:{enabled:true} },
+      scales:{
+        y:{beginAtZero:true,max:100,grid:{display:false},ticks:{callback:v=>v+"%"}},
+        x:{grid:{display:false},ticks:{maxRotation:0}}
       }
     }
   });
 
-  // pulsanti S in ritardo
   const late = [];
-  ["s1","s2","s3","s4","s5"].forEach((k, i) => { if (isLate(k)) late.push({k, label: `${i+1}S in ritardo`}); });
+  ["s1","s2","s3","s4","s5"].forEach((k,i)=>{ if(isLate(k)) late.push({k, label:`${i+1}S in ritardo`}); });
   const box = document.getElementById("lateBtns");
-  if (box) {
-    box.innerHTML = "";
-    late.forEach(({k, label}) => {
-      const b = document.createElement("button");
-      b.className = `late-btn ${k}`;
-      b.textContent = label;
-      b.style.borderColor = COLORS[k];
-      b.onclick = () => { window.location.href = `checklist.html#sheet-${k}`; };
-      box.appendChild(b);
-    });
-  }
+  if (!box) return;
+  box.innerHTML = "";
+  late.forEach(({k,label})=>{
+    const b = document.createElement("button");
+    b.className = `late-btn ${k}`;
+    b.style.borderColor = COLORS[k];
+    b.textContent = label;
+    b.addEventListener("click", ()=> { window.location.href = `checklist.html#sheet-${k}`; });
+    box.appendChild(b);
+  });
 }
-
-function exportForSupervisor() {
-  const pinOk = prompt("Inserisci PIN per esportare") === loadPin();
-  if (!pinOk) return;
-
-  const payload = {
-    area: CONFIG.AREA,
-    channel: state.channel,
-    updatedAt: new Date().toISOString(),
-    points: state.points,
-    notes: state.notes,
-    dates: state.dates,
-    avg: averageScore(),
-    late: Object.keys(state.dates).filter(k => isLate(k))
-  };
-  const blob = new Blob([JSON.stringify(payload, null, 2)], {type:"application/json"});
-  const a = document.createElement("a");
-  a.href = URL.createObjectURL(blob);
-  a.download = `${CONFIG.AREA}-${state.channel.replace(/\s+/g,'_')}.json`;
-  a.click();
-  URL.revokeObjectURL(a.href);
-}
-
-function setupHome() {
+function setupHome(){
   refreshTitles();
   renderChart();
   document.getElementById("lockBtn")?.addEventListener("click", openPinDialog);
-  document.getElementById("exportBtn")?.addEventListener("click", exportForSupervisor);
-}
+  document.getElementById("exportBtn")?.addEventListener("click", ()=>{
+    // richiesta PIN
+    const entered = prompt("Inserisci PIN per esportare");
+    if (entered !== String(state.pin)) return;
 
-/** =============
- *  CHECKLIST PAGE
- *  ============= */
-function todayStr() { return new Date().toISOString().slice(0,10); }
-function isLate(k) {
-  const d = state.dates[k];
-  if (!d) return false;
-  const t = new Date(); t.setHours(0,0,0,0);
-  const c = new Date(d); c.setHours(0,0,0,0);
-  return c < t;
-}
-function averageScore() {
-  const arr = Object.values(state.points);
-  return arr.length ? Math.round(arr.reduce((a,b)=>a+b,0)/arr.length*20) : 0;
-}
-
-function updateStatsAndLate() {
-  const avg = averageScore();
-  const lateCount = Object.keys(state.dates).filter(k => isLate(k)).length;
-  const avgEl = document.getElementById("avgScore");
-  const lateEl = document.getElementById("lateCount");
-  if (avgEl)  avgEl.textContent  = `${avg}%`;
-  if (lateEl) lateEl.textContent = String(lateCount);
-
-  ["s1","s2","s3","s4","s5"].forEach(k => {
-    document.getElementById(`sheet-${k}`)?.classList.toggle("late", isLate(k));
+    const payload = {
+      area: CONFIG.AREA,
+      channel: state.channel,
+      date: new Date().toISOString(),
+      points: state.points,
+      notes: state.notes,
+      dates: state.dates
+    };
+    const blob = new Blob([JSON.stringify(payload,null,2)], {type:"application/json"});
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+    a.download = `SKF-5S-${CONFIG.AREA}-${state.channel}.json`;
+    a.click();
+    URL.revokeObjectURL(a.href);
   });
-
-  // aggiorna grafico in home se aperto in altra tab/frame
-  try { renderChart(); } catch {}
 }
 
-function setupChecklist() {
+/** CHECKLIST */
+function setupChecklist(){
   refreshTitles();
   document.getElementById("lockBtn")?.addEventListener("click", openPinDialog);
 
-  // Badge riassuntivi cliccabili
   const summary = document.getElementById("summaryBadges");
-  if (summary) {
-    summary.innerHTML = "";
-    ["s1","s2","s3","s4","s5"].forEach((k,i)=>{
-      const v = state.points[k] ?? 0;
-      const btn = document.createElement("button");
-      btn.className = `s-badge ${k}`;
-      btn.textContent = `${i+1}S ${v*20}%`;
-      btn.onclick = () => document.getElementById(`sheet-${k}`)?.scrollIntoView({behavior:"smooth", block:"start"});
-      summary.appendChild(btn);
+  ["s1","s2","s3","s4","s5"].forEach(k=>{
+    const v = state.points[k] ?? 0;
+    const el = document.createElement("button");
+    el.className = `s-badge ${k}`;
+    el.textContent = `${k.toUpperCase()} ${v*20}%`;
+    el.addEventListener("click", ()=> {
+      document.getElementById(`sheet-${k}`)?.scrollIntoView({behavior:"smooth",block:"start"});
     });
-  }
-
-  document.getElementById("toggleAll")?.addEventListener("click", ()=>{
-    document.querySelectorAll(".s-details").forEach(d => d.open = !d.open);
+    summary.appendChild(el);
   });
 
-  // Crea le 5 schede
+  document.getElementById("toggleAll")?.addEventListener("click", ()=>{
+    document.querySelectorAll(".s-details").forEach(det=> det.open = !det.open);
+  });
+
   const wrap = document.getElementById("sheets");
-  if (wrap) {
-    wrap.innerHTML = "";
-    const defs = [
-      {k:"s1", name:"1S — Selezionare",    color:COLORS.s1},
-      {k:"s2", name:"2S — Sistemare",      color:COLORS.s2},
-      {k:"s3", name:"3S — Splendere",      color:COLORS.s3},
-      {k:"s4", name:"4S — Standardizzare", color:COLORS.s4},
-      {k:"s5", name:"5S — Sostenere",      color:COLORS.s5},
-    ];
+  const defs = [
+    {k:"s1", name:"1S — Selezionare",   color:COLORS.s1},
+    {k:"s2", name:"2S — Sistemare",     color:COLORS.s2},
+    {k:"s3", name:"3S — Splendere",     color:COLORS.s3},
+    {k:"s4", name:"4S — Standardizzare",color:COLORS.s4},
+    {k:"s5", name:"5S — Sostenere",     color:COLORS.s5},
+  ];
+  const todayStr = ()=> new Date().toISOString().slice(0,10);
 
-    defs.forEach(({k,name,color})=>{
-      const val = state.points[k] ?? 0;
-      const card = document.createElement("article");
-      card.className = "sheet" + (isLate(k) ? " late" : "");
-      card.id = `sheet-${k}`;
-      card.innerHTML = `
-        <div class="sheet-head">
-          <span class="s-color" style="background:${color}"></span>
-          <h3 class="s-title" style="color:${color}">${name}</h3>
-          <span class="s-value">Valore: ${val*20}%</span>
-          <button class="icon info" data-k="${k}" aria-label="Info">i</button>
-          <button class="icon add"  data-k="${k}" aria-label="Duplica">+</button>
-        </div>
-        <details class="s-details" open>
-          <summary>▼ Dettagli</summary>
-          <label class="field">
-            <span>Responsabile / Operatore</span>
-            <input id="resp-${k}" placeholder="Inserisci il nome..." />
-          </label>
-          <label class="field">
-            <span>Note</span>
-            <textarea id="note-${k}" rows="3" placeholder="Note...">${state.notes[k]??""}</textarea>
-          </label>
-          <div class="field">
-            <span>Data</span>
-            <div class="row">
-              <input type="date" value="${state.dates[k] ?? todayStr()}" data-date="${k}">
-              <div class="points">
-                ${[0,1,3,5].map(p=>`<button data-k="${k}" data-p="${p}" class="${val===p?'active':''}">${p}</button>`).join("")}
-              </div>
-              <button class="icon danger del" title="Pulisci scheda">🗑</button>
+  defs.forEach(({k,name,color})=>{
+    const val = state.points[k] ?? 0;
+    const late = isLate(k);
+
+    const card = document.createElement("article");
+    card.className = "sheet" + (late ? " late":"");
+    card.id = `sheet-${k}`;
+    card.innerHTML = `
+      <div class="sheet-head">
+        <span class="s-color" style="background:${color}"></span>
+        <h3 class="s-title" style="color:${color}">${name}</h3>
+        <span class="s-value">Valore: ${(val*20)}%</span>
+        <button class="icon info" aria-label="Info" data-k="${k}">i</button>
+        <button class="icon add" aria-label="Duplica">+</button>
+      </div>
+
+      <details class="s-details" open>
+        <summary>▼ Dettagli</summary>
+
+        <label class="field">
+          <span>Responsabile / Operatore</span>
+          <input placeholder="Inserisci il nome..." value="">
+        </label>
+
+        <label class="field">
+          <span>Note</span>
+          <textarea rows="3" placeholder="Note...">${state.notes[k]??""}</textarea>
+        </label>
+
+        <div class="field">
+          <span>Data</span>
+          <div class="row">
+            <input type="date" value="${state.dates[k]??todayStr()}" data-date="${k}">
+            <div class="points">
+              ${[0,1,3,5].map(p=>`
+                <button data-k="${k}" data-p="${p}" class="${val===p?'active':''}">${p}</button>
+              `).join("")}
             </div>
+            <button class="icon danger del">🗑</button>
           </div>
-        </details>
-      `;
-      wrap.appendChild(card);
-    });
+        </div>
+      </details>
+    `;
+    wrap.appendChild(card);
+  });
 
-    // Eventi dinamici
-    wrap.addEventListener("click", (e)=>{
-      // punteggio scheda
-      const pb = e.target.closest(".points button");
-      if (pb) {
-        const k = pb.dataset.k;
-        const p = Number(pb.dataset.p);
-        state.points[k] = p;
-        setJSON(storageKey("state"), state);
-        // attiva selezione
-        document.querySelectorAll(`.points button[data-k="${k}"]`).forEach(b => b.classList.toggle("active", Number(b.dataset.p)===p));
-        document.querySelector(`#sheet-${k} .s-value`).textContent = `Valore: ${p*20}%`;
-        updateStatsAndLate();
-        return;
-      }
-      // info popup
-      const info = e.target.closest(".info");
-      if (info) { openInfo(info.dataset.k); return; }
-      // elimina (con PIN)
-      const del = e.target.closest(".del");
-      if (del) {
-        if (prompt("Inserisci PIN per pulire la scheda") !== loadPin()) return;
-        const k = del.closest(".sheet").id.replace("sheet-","");
-        state.points[k]=0; state.notes[k]=""; state.dates[k]=todayStr();
-        setJSON(storageKey("state"), state);
-        document.getElementById(`note-${k}`).value = "";
-        del.closest(".sheet").querySelectorAll(`.points button`).forEach(b=>b.classList.remove("active"));
-        document.querySelector(`#sheet-${k} .s-value`).textContent = "Valore: 0%";
-        del.closest(".sheet").querySelector('input[type="date"]').value = state.dates[k];
-        updateStatsAndLate();
-      }
-    });
+  // punteggi scheda (resta come prima)
+  wrap.addEventListener("click",(e)=>{
+    const btn = e.target.closest(".points button");
+    if(!btn) return;
+    const k = btn.dataset.k;
+    const p = Number(btn.dataset.p);
+    state.points[k] = p;
+    setJSON(storageKey("state"), state);
+    document.querySelectorAll(`.points button[data-k="${k}"]`).forEach(b=>b.classList.toggle("active", Number(b.dataset.p)===p));
+    document.querySelector(`#sheet-${k} .s-value`).textContent = `Valore: ${p*20}%`;
+    updateStatsAndLate();
+  });
 
-    // cambio data → ritardo
-    wrap.addEventListener("change",(e)=>{
-      const inp = e.target.closest('input[type="date"][data-date]');
-      if (!inp) return;
-      const k = inp.dataset.date;
-      state.dates[k] = inp.value;
-      setJSON(storageKey("state"), state);
-      updateStatsAndLate();
-    });
-  }
+  // date → ritardo
+  wrap.addEventListener("change",(e)=>{
+    const inp = e.target.closest('input[type="date"][data-date]');
+    if(!inp) return;
+    const k = inp.dataset.date;
+    state.dates[k] = inp.value;
+    setJSON(storageKey("state"), state);
+    updateStatsAndLate();
+  });
+
+  // elimina con PIN (reset campi scheda)
+  wrap.addEventListener("click",(e)=>{
+    const del = e.target.closest(".del");
+    if(!del) return;
+    const pin = prompt("Inserisci PIN per eliminare");
+    if (pin !== String(state.pin)) return;
+    const k = del.closest(".sheet").id.replace("sheet-","");
+    state.points[k]=0; state.notes[k]=""; state.dates[k]=null;
+    setJSON(storageKey("state"), state);
+    const s = del.closest(".sheet");
+    s.querySelectorAll(".points button").forEach(b=>b.classList.remove("active"));
+    s.querySelector(".s-value").textContent="Valore: 0%";
+    s.querySelector('textarea').value="";
+    s.querySelector('input[type="date"]').value=new Date().toISOString().slice(0,10);
+    updateStatsAndLate();
+  });
+
+  // info popup
+  wrap.addEventListener("click",(e)=>{
+    const infoBtn = e.target.closest(".info");
+    if(!infoBtn) return;
+    openInfo(infoBtn.dataset.k);
+  });
+
+  // + duplicazione scheda (PIN)
+  wrap.addEventListener("click",(e)=>{
+    const add = e.target.closest(".add");
+    if(!add) return;
+    const pin = prompt("Inserisci PIN per duplicare");
+    if (pin !== String(state.pin)) return;
+    const card = add.closest(".sheet");
+    const clone = card.cloneNode(true);
+    // genera id unico e reset campi
+    const uid = Math.random().toString(36).slice(2,7);
+    clone.id = card.id + "-x" + uid;
+    clone.querySelectorAll("textarea").forEach(t=> t.value="");
+    clone.querySelectorAll('input[type="date"]').forEach(d=> d.value=new Date().toISOString().slice(0,10));
+    clone.querySelectorAll(".points button").forEach(b=> b.classList.remove("active"));
+    clone.querySelector(".s-value").textContent="Valore: 0%";
+    card.after(clone);
+  });
+
+  document.getElementById("infoCloseBtn")?.addEventListener("click", ()=> {
+    document.getElementById("infoDialog").close();
+  });
 
   updateStatsAndLate();
 }
 
-/** ==================
- *  POPUP INFO (NOTE)
- *  ================== */
-function openInfo(k) {
+/** Popup “i” con punti interattivi */
+function parsePoints(txt){
+  // spezza su "(n)" mantenendo l'ordine
+  const out = [];
+  const re = /\((\d+)\)\s*([^]+?)(?=\s*\(\d+\)\s*|$)/g;
+  let m;
+  while((m = re.exec(txt))){ out.push(m[2].trim()); }
+  return out;
+}
+function squaresSummary(score){
+  // restituisce stringa con quadratini e selezione evidenziata
+  const order = [0,1,3,5];
+  return order.map(v=> v===score ? `■${v}` : `□${v}`).join(" ");
+}
+function appendNote(k, text, score){
+  const ta = document.querySelector(`#sheet-${k} textarea`);
+  if(!ta) return;
+  const line = `${squaresSummary(score)} — ${text}`;
+  ta.value = (ta.value ? ta.value.replace(/\s*$/,"")+"\n" : "") + line;
+  state.notes[k] = ta.value;
+  setJSON(storageKey("state"), state);
+}
+function openInfo(k){
   const dlg = document.getElementById("infoDialog");
   const title = document.getElementById("infoTitle");
-  const content = document.getElementById("infoContent");
+  const cont = document.getElementById("infoContent");
   title.textContent = `${k.toUpperCase()} — Info`;
-  const pts = INFO_POINTS[k] ?? [];
-  const square = (p)=> {
-    // 0,1,3,5 → pos 0..3
-    const map = {0:0,1:1,3:2,5:3};
-    const pos = map[p] ?? 0;
-    return "□ □ □ □".split(" ").map((s,i)=> i===pos ? "■" : "□").join(" ");
+  cont.innerHTML = "";
+
+  const pts = parsePoints(INFO_TEXT[k] || "");
+  const ol = document.createElement("ol");
+  pts.forEach((txt, idx)=>{
+    const li = document.createElement("li");
+    const row = document.createElement("div");
+    row.className = "pointline";
+    row.innerHTML = `
+      <div>${idx+1}. ${txt}</div>
+      <div class="pick" data-k="${k}" data-idx="${idx}">
+        ${[0,1,3,5].map(v=>`<button type="button" data-score="${v}">${v}</button>`).join("")}
+      </div>
+      <div class="note-mini">Clicca un quadratino per aggiungere la riga in Note.</div>
+    `;
+    li.appendChild(row);
+    ol.appendChild(li);
+  });
+  cont.appendChild(ol);
+
+  // delega click su pick
+  cont.onclick = (e)=>{
+    const btn = e.target.closest('.pick button');
+    if(!btn) return;
+    const pick = btn.closest('.pick');
+    const score = Number(btn.dataset.score);
+    const key = pick.dataset.k;
+    const idx = Number(pick.dataset.idx);
+    // evidenzia selezione
+    pick.querySelectorAll('button').forEach(b=> b.classList.toggle('picked', b===btn));
+    // aggiunge riga in Note
+    const text = pts[idx];
+    appendNote(key, text, score);
   };
-  content.innerHTML = `
-    <ol>
-      ${pts.map((t,i)=>`
-        <li>
-          <div class="pointline" data-text="${encodeURIComponent(t)}">
-            ${i+1}. ${t}
-            <div class="points">
-              ${[0,1,3,5].map(p=>`<button data-p="${p}">${p}</button>`).join("")}
-            </div>
-            <div class="note-mini"></div>
-          </div>
-        </li>
-      `).join("")}
-    </ol>
-  `;
-  // clic sui voti → resta attivo + aggiunge nota (solo testo) nella scheda, non cambia punteggio scheda
-  content.onclick = (e)=>{
-    const btn = e.target.closest("button[data-p]");
-    if (!btn) return;
-    const p = Number(btn.dataset.p);
-    const line = btn.closest(".pointline");
-    line.querySelectorAll("button").forEach(b=>b.classList.remove("active"));
-    btn.classList.add("active");
-    const txt = decodeURIComponent(line.dataset.text);
-    line.querySelector(".note-mini").textContent = `${square(p)}  Voto: ${p}`;
-    // append nelle NOTE della scheda
-    const textarea = document.querySelector(`#note-${k}`);
-    if (textarea) {
-      const toAdd = `[${p}] ${txt}`;
-      const now = textarea.value || "";
-      if (!now.split("\n").includes(toAdd)) {
-        textarea.value = now ? now + "\n" + toAdd : toAdd;
-        state.notes[k] = textarea.value;
-        setJSON(storageKey("state"), state);
-      }
-    }
-  };
-  document.getElementById("infoCloseBtn").onclick = () => dlg.close();
+
+  // colore bordo del modal
+  dlg.querySelector(".modal-box").style.borderTop = `6px solid ${COLORS[k]||'#0a57d5'}`;
   dlg.showModal();
 }
 
-/** ========
- *  ROUTER
- *  ======== */
-document.addEventListener("DOMContentLoaded", () => {
+/** Router */
+document.addEventListener("DOMContentLoaded", ()=>{
   refreshTitles();
-  if (document.body.dataset.page === "home")      setupHome();
-  if (document.body.dataset.page === "checklist") setupChecklist();
+  if (document.body.dataset.page==="home") setupHome();
+  if (document.body.dataset.page==="checklist") setupChecklist();
 });
