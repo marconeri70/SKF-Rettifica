@@ -17,7 +17,7 @@
       <a href="index.html" class="back">← Indietro</a>
       <img src="assets/skf-logo.png" alt="SKF" class="brand-logo" />
       <span class="brand-text">
-        <b class="c-s">S</b><b class="c-k">K</b><b class="c-f">F</b>&nbsp;<b class="c-1s">5</b><b class="c-5s">S</b>
+        SKF&nbsp;<b class="c-1s">5</b><b class="c-5s">S</b>
       </span>
     </div>
     <div class="appbar-actions">
@@ -27,20 +27,13 @@
   </header>
 
   <main class="container">
-    <!-- puoi nasconderlo da CSS se non lo vuoi duplicato -->
-    <h1 id="pageTitleH1" class="h1 center-title"></h1>
-
     <section class="kpi-row">
       <div class="kpi"><div class="kpi-label">Punteggio medio</div><div id="avgScore" class="kpi-value">0%</div></div>
       <div class="kpi"><div class="kpi-label">Azioni in ritardo</div><div id="lateCount" class="kpi-value">0</div></div>
     </section>
 
     <div id="summaryBadges" class="summary-badges"></div>
-
-    <div class="center">
-      <button id="toggleAll" class="btn pill">Comprimi / Espandi</button>
-    </div>
-
+    <div class="center"><button id="toggleAll" class="btn pill">Comprimi / Espandi</button></div>
     <section id="sheets" class="sheets"></section>
   </main>
 
@@ -49,9 +42,7 @@
     <form method="dialog" class="modal-box">
       <h3 id="infoTitle" class="modal-title">Info</h3>
       <div id="infoContent" class="info-content"></div>
-      <menu class="modal-actions">
-        <button id="infoCloseBtn" class="btn primary">Chiudi</button>
-      </menu>
+      <button id="infoCloseBtn" class="btn primary float-close">Chiudi ✕</button>
     </form>
   </dialog>
 </body>
