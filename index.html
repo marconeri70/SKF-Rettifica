@@ -1,87 +1,97 @@
 <!doctype html>
 <html lang="it">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>SKF 5S — Rettifica</title>
-
-  <!-- PWA -->
-  <link rel="manifest" href="manifest.json" />
-  <meta name="theme-color" content="#0a57d5" />
-  <link rel="icon" href="assets/pwa-192.png" />
-
-  <link rel="stylesheet" href="style.css" />
-  <script defer src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>SKF 5S</title>
+  <link rel="manifest" href="manifest.json"/>
+  <link rel="icon" href="assets/skf-logo.png"/>
+  <link rel="stylesheet" href="style.css"/>
+  <script defer src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <script defer src="app.js"></script>
 </head>
 <body data-page="home">
-  <header class="appbar">
-    <div class="left">
-      <img class="skf-logo" src="assets/skf-logo.png" alt="SKF" />
-      <h1 class="brand brand--wordmark">
-        <span class="brand-skf">SKF</span>
-        <span class="brand-5s">5S</span>
-      </h1>
+  <!-- Topbar -->
+  <header class="topbar">
+    <div class="brand">
+      <img src="assets/skf-logo.png" alt="SKF" class="brand-logo"/>
+      <span class="brand-text">
+        <span class="skf">SKF</span> <span class="s5s">5S</span>
+      </span>
     </div>
 
-    <div class="right">
-      <button id="lockBtn" class="icon-btn" aria-label="Impostazioni / PIN">🔒</button>
-      <a class="cta" href="checklist.html">Vai alla checklist →</a>
+    <div class="topbar-actions">
+      <button id="lockBtn" class="lock-btn" aria-label="Impostazioni canale/PIN" title="Impostazioni">
+        🔒
+      </button>
+      <a class="cta" href="checklist.html">
+        <span>Vai alla checklist</span>
+        <span class="arrow">→</span>
+      </a>
     </div>
   </header>
 
   <main class="container">
-    <!-- Hero -->
-    <section class="card hero">
-      <div class="hero-grid">
-        <img class="hero-img hero-img--big" src="assets/5s-hero.png" alt="Diagramma 5S" />
-        <div>
-          <h2>Cosa è 5S</h2>
-          <ul class="fiveS">
-            <li><span class="chip s1">1S Selezionare</span> — Eliminare il superfluo.</li>
-            <li><span class="chip s2">2S Sistemare</span> — Un posto per tutto e tutto al suo posto.</li>
-            <li><span class="chip s3">3S Splendere</span> — Pulire e prevenire lo sporco.</li>
-            <li><span class="chip s4">4S Standardizzare</span> — Regole e segnali chiari.</li>
-            <li><span class="chip s5">5S Sostenere</span> — Abitudine e miglioramento continuo.</li>
-          </ul>
-        </div>
+    <section class="card hero-card">
+      <div class="hero-img-wrap">
+        <img src="assets/5s-hero.png" class="hero-5s" alt="5S"/>
       </div>
+      <h2 class="section-title">Cosa è 5S</h2>
+      <ul class="what5s">
+        <li><b class="pill s1">1S Selezionare</b> — Eliminare il superfluo.</li>
+        <li><b class="pill s2">2S Sistemare</b> — Un posto per tutto e tutto al suo posto.</li>
+        <li><b class="pill s3">3S Splendere</b> — Pulire e prevenire lo sporco.</li>
+        <li><b class="pill s4">4S Standardizzare</b> — Regole e segnali chiari.</li>
+        <li><b class="pill s5">5S Sostenere</b> — Abitudine e miglioramento continuo.</li>
+      </ul>
     </section>
 
-    <!-- Grafico -->
     <section class="card">
-      <h2 id="chartTitle">Andamento CH 24 — Rettifica</h2>
-      <div class="chart-wrap">
-        <canvas id="progressChart" height="180"></canvas>
-      </div>
+      <h2 id="chartTitle" class="section-title">Andamento CH 24 — (Area)</h2>
+      <canvas id="progressChart" height="120"></canvas>
 
-      <div id="lateBtns" class="late-buttons"></div>
+      <div id="lateBtns" class="late-btns"></div>
 
       <div class="export-row">
-        <button id="exportBtn" class="btn secondary">Esporta dati per Supervisore (PIN)</button>
+        <button id="exportBtn" class="btn primary">Esporta dati per Supervisore (PIN)</button>
       </div>
     </section>
   </main>
 
-  <!-- Modale PIN -->
+  <!-- Dialog PIN / Canale / Cambio PIN -->
   <dialog id="pinDialog" class="modal">
     <form method="dialog" class="modal-box">
-      <h3>Impostazioni protette</h3>
+      <h3 class="modal-title">Impostazioni</h3>
+
       <label class="field">
-        <span>Inserisci PIN</span>
-        <input id="pinInput" inputmode="numeric" placeholder="••••" />
+        <span>Canale (CH)</span>
+        <input id="channelInput" placeholder="es. CH 24"/>
       </label>
 
       <label class="field">
-        <span>Nome canale (CH)</span>
-        <input id="channelInput" placeholder="CH 24" />
+        <span>PIN attuale</span>
+        <input id="pinInput" type="password" inputmode="numeric" autocomplete="off" placeholder="Inserisci PIN"/>
       </label>
 
-      <menu>
-        <button class="btn secondary" value="cancel" type="button" id="pinCancel">Annulla</button>
-        <button id="pinConfirmBtn" class="btn" type="button">Conferma</button>
-      </menu>
-      <p class="hint">Il PIN è configurabile in <code>app.js</code> (CONFIG.PIN).</p>
+      <details class="change-pin">
+        <summary>Cambia PIN</summary>
+        <div class="change-pin-grid">
+          <label class="field">
+            <span>Nuovo PIN</span>
+            <input id="newPin1" type="password" inputmode="numeric" autocomplete="off" placeholder="Nuovo PIN"/>
+          </label>
+          <label class="field">
+            <span>Conferma nuovo PIN</span>
+            <input id="newPin2" type="password" inputmode="numeric" autocomplete="off" placeholder="Ripeti PIN"/>
+          </label>
+        </div>
+        <p class="hint">Il cambio PIN funziona anche offline (salvato nel dispositivo).</p>
+      </details>
+
+      <div class="modal-actions">
+        <button id="pinCancel" class="btn">Annulla</button>
+        <button id="pinConfirmBtn" class="btn primary">Salva</button>
+      </div>
     </form>
   </dialog>
 </body>
