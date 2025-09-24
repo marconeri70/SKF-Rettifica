@@ -1,57 +1,41 @@
-/** =========================================================
- *  SKF 5S – APP JS (Rettifica/Montaggio compatibile)
- *  - Popup “i” con scroll + chip interattivi che appendono alle Note
- *  - Duplica scheda con “+” previa richiesta PIN (duplica visiva)
- *  - Ritardi calcolati dalla data (oggi escluso → se data < oggi = ritardo)
- *  - PIN per cambio CH dall’icona lucchetto o Export
- *  - Grafico con colonna “Ritardi” e pulsanti “S in ritardo”
- *  - PWA Service Worker (sw.js)
- *  - Tutto configurabile via CONFIG e INFO_TEXT
- *  ========================================================= */
-
-/** ========== CONFIGURAZIONE ==========
- *  Modifica qui per canale, area e PIN
- */
+/** ===================== CONFIG ===================== */
 const CONFIG = {
-  PIN: "6170",                 // PIN per azioni protette
-  CHANNEL_DEFAULT: "CH 24",    // canale di default (es. CH 24)
-  AREA: "Rettifica"            // Area mostrata nei titoli (Montaggio/Rettifica)
+  PIN: "6170",                 // PIN iniziale (cambiabile offline)
+  CHANNEL_DEFAULT: "CH 24",
+  AREA: "Rettifica"            // ← cambia in "Rettifica" nella repo Rettifica
 };
 
-// Colori istituzionali per le 5S
-const COLORS = {
-  s1: "#7c3aed", // viola
-  s2: "#ef4444", // rosso
-  s3: "#f59e0b", // giallo
-  s4: "#10b981", // verde
-  s5: "#2563eb"  // blu
-};
+const COLORS = { s1:"#7c3aed", s2:"#ef4444", s3:"#f59e0b", s4:"#10b981", s5:"#2563eb" };
 
-/** ========== TESTI INFO ==========
- *  Ogni S ha un testo lungo. I punti (1) (2) ... verranno
- *  trasformati in chip cliccabili nel popup.
- *
- *  Inserisci qui i testi aggiornati (puoi usare \n liberamente).
- */
+/** TESTI INFO (adatta liberamente) */
 const INFO_TEXT = {
-  s1: "(1) L'area pedonale è esente da congestione/ostacoli (area libera) e da pericoli di inciampo. (2). Nel pavimento non sono stati trovati materiali, strumenti, materiali di consumo non identificati. (3). Nell'area sono presenti solo i materiali di consumo, gli strumenti, le attrezzature, i mobili necessari. Tutti gli elementi non necessari (non richiesti o richiesti con una frequenza molto minore) sono stati rimossi o contrassegnati per la rimozione. (4). Nell'area è presente solo il materiale necessario per il lavoro in corso. Materiali obsoleti o non necessari, l'inventario viene rimosso. (ad es. Buono/ Rilavorazione/ Scarto, nessuna possibilità di confusione,viene conservato solo un materiale in esecuzione). (5) Nell'area sono presenti in buone condizioni solo i documenti, gli espositori, le visualizzazioni, le bacheche, i poster necessari e pertinenti per il lavoro in corso. (6) Sono definiti l'area etichetta rossa, il processo e il team. (7) Il processo del tag rosso funziona bene. (8) Lavagna 5S esiste per mostrare il piano, i miglioramenti fatti (Foto Prima & Dopo), punteggio audit, SPL ed è gestito bene. (9) Esistono prove per garantire che 1S sia sostenibile in quest'area (lista di controllo/piano per lo smistamento periodico/piano per l'audit periodico). (10) Il concetto generale di 5S & 1S in dettaglio è ben compreso dai membri e la responsabilità è definita. (11) Tutti i membri sono coinvolti e partecipano all'attività nella loro area.",
-  s2: "(1) Area, team sono definiti e i membri comprendono 5-S complessivi e dettagli di 1-S. (2) Nessuna cosa non necessaria si trova nella zona. (3) Tutti gli articoli/attrezzature relative alla sicurezza sono chiaramente contrassegnati e facilmente accessibili. (4) Tutti gli interruttori di emergenza, le uscite di emergenza sono altamente visibili, facilmente accessibili. (5) Tutte le stazioni di qualità ben definite e organizzate (strumenti di misurazione, master ecc.). (6) Lo scarto senza compromessi (SWC) è rigorosamente seguito (7) Esiste una posizione prefissata per utenze, strumenti, materiali per la pulizia, infissi, materiali di consumo e attrezzature mobili con identificazione e indicatore (quantità minima/massima). (8) Le posizioni sono definite per bidoni, contenitori, bidoni dei rifiuti, oli con identificazione e indicatore chiari. (9) Tutto il  WIP, le parti accettate, le parti rifiutate, le parti in quarantena hanno posizioni designate e una chiara identificazione nell'area. (10) Tutte le materie prime, i materiali di imballaggio dei componenti hanno posizioni designate e una chiara identificazione. (11) Viene creato il layout iniziale che evidenzia i confini, i corridoi, le corsie pedonali, le corsie dei carrelli elevatori, tutte le posizioni per gli articoli necessari, i materiali, l'area riservata che richiede dispositivi di protezione individuale (DPI) (tutti gli articoli diversi da macchine e accessori) (12) Tutti i file, i documenti sono chiaramente identificati e organizzati nel punto di utilizzo. (13) I miglioramenti sono realizzati seguendo i concetti: raccolti con un solo tocco, prova di errore, punto di utilizzo, ergonomia per eliminare la confusione di cose e ridurre l'affaticamento. (14) Esistono prove per garantire che le 2S siano sostenibili in quest'area (lista di controllo/Piano per il controllo periodico) (15).Il concetto di 5S e 2S complessivi in ​​dettaglio è ben compreso dai membri e la responsabilità è definita. (16)Tutti i membri sono coinvolti e partecipano al 5S.",
-  s3: "(1) Non si tovano cose inutili in zona. (2) 2-S i migliramenti sono ben mantenuti. (3) Le verifiche automatiche vengono eseguite regolarmente e le deviazioni, i miglioramenti vengono attuati. (4) L'area, la squadra è definita, i membri capiscono bene 5S in generale e i dettagli di 1-S, 2-S. (5) Pavimenti, scale, pareti sono puliti e privi di sporco, detriti, olio, grasso, liquido di raffreddamento, bagliore, trucioli, componenti, parti, hardware, scatole vuote, materiale di imballaggio ecc. (6) Tutti i segnali, le avvertenze, le etichette, ecc. relativi alla sicurezza e alla qualità sono puliti, posizionati correttamente e di facile lettura. (7) Tutti i documeni in buone condizioni e documenti regolarmente usati sono protetti per prevenire sprco e danni. (8) Tutte le luci, i vantilazioni e l'aria condizionata in perfette condizioni e pulite. (9) Tutte le fonti sporche sono identificate, documentate e note a tutti i membri. (10) Esistono piani d'azione per eliminare/contenere la fonte di sporco. (11). Le azioni vengono eseguite secondo il piano. (12) Vengono apportati miglioramenti per migliorare e prevenire la pulizia utilizzando concetti come (meno tappa) e l'eliminazione della fonte di sporco (13) Il sistema di riciclaggio dei rifiuti è attivo e i rifiuti vengono smistati nel cestino giusto. (14) Tutte le demarcazioni sono rese permanenti - Marcatura a pavimento e marcatura di tutte le posizioni. (15) Esistono prove per garantire che le 3S siano sostenibili in quest'area (routine di pulizia stabilite e aggiornate nella checklist delle 5S, Piano per il controllo periodico). (15) Il concetto di 5S e 3S complessivi in ​​dettaglio è ben compreso dai membri e la responsabilità è definita. (16) Tutti i membri sono coinvolti e partecipano a 5S.",
-  s4: "(1) Tecniche di allarmi visivi & management visivo sono stati realizzati per determinare facilmente anormalità & capacità (Gestire a prima vista) incluso tecniche di  rifornimento (Min/Max) livelli, materiale da imballaggio, forniture di magazzino e componenti. (2) Colori & segni standard per lubrificazione, tubi, valvole ecc. sono realizzati & mantenuti. Tabelli display sono mappati & processo è stabilito per garantire solo informazione attuale è disponibile. (3) Standard 5S (consolidando tutte le condizioni 5S raggiunte) è sviluppato e regolarmente aggiornato. Questo viene usato come materiale training per dipendenti nuovi & libro di guida per miglioramento continuo. (4) Schede di controllo, istruzioni 5S sono integrati con managemet quotidiano & attività quotidiane.",
-  s5: "(1) Ognuno (incluso dipendente nuovo) viene formato sugli standard 5S ed è coinvolto. (2) Le attività 5S sono un abitudine, tutti membri &  tutti gli standard  sono seguiti da tutti con coinvolgimento totale. (3) Vengono eseguiti layered audit mediante un programma ben definiti e strutturato. (4) Esistono foto prima/dopo di postazioni che hanno subito dei miglioramenti e devono essere mantenute come a riferimento di foto. (5) Attestati e obiettivi delle 5s sono messi in evidenza"
+  s1: "(1) L'area pedonale è esente da congestione/ostacoli (area libera) e da pericoli di inciampo. (2) Nel pavimento non sono stati trovati materiali, strumenti, materiali di consumo non identificati. (3) Nell'area sono presenti solo i materiali di consumo, gli strumenti, le attrezzature, i mobili necessari. (4) Nell'area è presente solo il materiale necessario per il lavoro in corso. (5) Nell'area sono presenti in buone condizioni solo i documenti, gli espositori e le visualizzazioni necessari. (6) Definiti area etichetta rossa, processo e team. (7) Processo del tag rosso funzionante. (8) Lavagna 5S aggiornata (piano, prima/dopo, punteggio, SPL). (9) Evidenze che 1S è sostenibile (checklist/piani/audit). (10) 5S & 1S compresi; responsabilità definite. (11) Tutti i membri partecipano.",
+  s2: "(1) Area e team definiti; comprensione 5S e 1S. (2) Niente oggetti non necessari. (3) Sicurezza identificata e accessibile. (4) Interruttori/uscite emergenza accessibili. (5) Stazioni qualità organizzate. (6) SWC seguito. (7) Posizioni prefissate (min/max) per utenze/strumenti/pulizie/consumabili. (8) Posizioni e identificazioni per bidoni/rifiuti/oli. (9) WIP/OK/KO/Quarantena con posizioni e identificazioni. (10) Materie prime/imballi con posizioni e ID. (11) Layout con confini, corsie, posizioni, aree DPI. (12) Documenti identificati al punto d’uso. (13) Miglioramenti one-touch/poka-yoke/ergonomia. (14) Evidenze di sostenibilità 2S. (15) 5S/2S compresi; responsabilità chiare. (16) Tutti partecipano.",
+  s3: "(1) Nessun oggetto inutile. (2) Miglioramenti 2S mantenuti. (3) Verifiche regolari con azioni. (4) Team comprende 5S, 1S, 2S. (5) Pavimenti/pareti/scale puliti. (6) Segnaletica pulita e leggibile. (7) Documenti in buono stato e protetti. (8) Illuminazione/ventilazione/aria condizionata in efficienza. (9) Fonti di sporco identificate. (10) Piani per eliminare/contenere la fonte. (11) Azioni secondo piano. (12) Migliorie per prevenire lo sporco. (13) Riciclo rifiuti attivo. (14) Demarcazioni permanenti. (15) Evidenze sostenibilità 3S. (16) 5S/3S compresi; tutti partecipano.",
+  s4: "(1) Visual management per anomalie/capacità (Min/Max, imballi, magazzino, componenti). (2) Standard colori per lubrificazioni/tubi/valvole; display aggiornati. (3) Standard 5S consolidati e aggiornati per training/guida. (4) Schede/istruzioni 5S integrate nel DMS quotidiano.",
+  s5: "(1) Tutti formati e coinvolti sugli standard 5S. (2) 5S come abitudine. (3) Layered audit su programma. (4) Foto prima/dopo come riferimento. (5) Obiettivi/risultati 5S esposti."
 };
 
-/** ========== STORAGE helper ========== */
-const storageKey = (k) => `skf5s:${CONFIG.AREA}:${k}`;
-const getJSON = (k, d) => { try { return JSON.parse(localStorage.getItem(k)) ?? d; } catch { return d; } };
-const setJSON = (k, v) => localStorage.setItem(k, JSON.stringify(v));
+/** ===================== STORAGE ===================== */
+const storageKey = (k)=>`skf5s:${CONFIG.AREA}:${k}`;
+const getJSON = (k,d)=>{ try{ return JSON.parse(localStorage.getItem(k))??d; }catch{ return d; } };
+const setJSON = (k,v)=> localStorage.setItem(k, JSON.stringify(v));
 
-/** ========== PWA Service Worker ========== */
-if ("serviceWorker" in navigator) {
-  window.addEventListener("load", () => navigator.serviceWorker.register("sw.js").catch(()=>{}));
+/** PIN persistente offline */
+function getStoredPin(){
+  const saved = localStorage.getItem(storageKey("pin"));
+  return saved ?? CONFIG.PIN;
+}
+function setStoredPin(newPin){
+  localStorage.setItem(storageKey("pin"), newPin);
 }
 
-/** ========== STATO ========== */
+/** ===================== PWA SW ===================== */
+if ("serviceWorker" in navigator) {
+  window.addEventListener("load", ()=> navigator.serviceWorker.register("sw.js").catch(()=>{}));
+}
+
+/** ===================== STATO ===================== */
 let state = getJSON(storageKey("state"), {
   channel: CONFIG.CHANNEL_DEFAULT,
   points: { s1:0, s2:0, s3:0, s4:0, s5:0 },
@@ -59,81 +43,85 @@ let state = getJSON(storageKey("state"), {
   dates:  { s1:null, s2:null, s3:null, s4:null, s5:null }
 });
 
-/** ========== PIN dialog (lucchetto / export) ========== */
+/** ===================== PIN / CANALE dialog ===================== */
 function openPinDialog(){
   const dlg = document.getElementById("pinDialog");
   if (!dlg) return;
 
-  // reset campi
   const pinInput = document.getElementById("pinInput");
   const chInput  = document.getElementById("channelInput");
-  pinInput.value = "";
-  chInput.value  = state.channel ?? CONFIG.CHANNEL_DEFAULT;
+  const newPin1  = document.getElementById("newPin1");
+  const newPin2  = document.getElementById("newPin2");
 
-  // hook bottoni
+  chInput.value = state.channel ?? CONFIG.CHANNEL_DEFAULT;
+  pinInput.value = ""; newPin1.value = ""; newPin2.value = "";
+
   const confirm = document.getElementById("pinConfirmBtn");
   const cancel  = document.getElementById("pinCancel");
 
-  const onConfirm = () => {
-    const ok = pinInput.value === CONFIG.PIN;
-    if (!ok) { alert("PIN errato"); return; }
+  confirm.onclick = ()=>{
+    const current = pinInput.value;
+    const realPin = getStoredPin();
+
+    if (current !== realPin) { alert("PIN errato"); return; }
+
+    // salva CH
     state.channel = chInput.value.trim() || CONFIG.CHANNEL_DEFAULT;
     setJSON(storageKey("state"), state);
     refreshTitles();
+
+    // cambio PIN opzionale
+    if (newPin1.value || newPin2.value){
+      if (newPin1.value !== newPin2.value) { alert("I due PIN non coincidono"); return; }
+      if (!/^\d{4,8}$/.test(newPin1.value)) { alert("Il PIN deve essere 4-8 cifre"); return; }
+      setStoredPin(newPin1.value);
+      alert("PIN aggiornato nel dispositivo.");
+    }
+
     dlg.close();
   };
 
-  const onCancel  = () => dlg.close();
-
-  confirm.onclick = onConfirm;
-  cancel.onclick  = onCancel;
-
+  cancel.onclick = ()=> dlg.close();
   dlg.showModal();
 }
 
-/** ========== Utility titoli dinamici ========== */
+/** ===================== TITOLI ===================== */
 function refreshTitles(){
   const chartTitle = document.getElementById("chartTitle");
   if (chartTitle) chartTitle.textContent = `Andamento ${state.channel} — ${CONFIG.AREA}`;
-
   const pageTitle = document.getElementById("pageTitle");
   if (pageTitle) pageTitle.textContent = `${state.channel} — ${CONFIG.AREA}`;
 }
 
-/** ========== HOME (prima pagina) ========== */
+/** ===================== HOME ===================== */
 function setupHome(){
   refreshTitles();
   renderChart();
-
-  // lucchetto per cambiare CH (e per export protetto)
   document.getElementById("lockBtn")?.addEventListener("click", openPinDialog);
   document.getElementById("exportBtn")?.addEventListener("click", openPinDialog);
 }
 
-/** ========== CHECKLIST (seconda pagina) ========== */
+/** ===================== CHECKLIST ===================== */
 function setupChecklist(){
   refreshTitles();
-
-  // lucchetto per cambio CH
   document.getElementById("lockBtn")?.addEventListener("click", openPinDialog);
 
-  // badge riassuntivi cliccabili → scroll alla S
+  // badge riassuntivi
   const summary = document.getElementById("summaryBadges");
-  if (summary) {
-    summary.innerHTML = "";
+  if (summary){
+    summary.innerHTML="";
     ["s1","s2","s3","s4","s5"].forEach(k=>{
       const v = state.points[k] ?? 0;
       const el = document.createElement("button");
       el.className = `s-badge ${k}`;
       el.textContent = `${k.toUpperCase()} ${v*20}%`;
       el.addEventListener("click", ()=> {
-        document.getElementById(`sheet-${k}`)?.scrollIntoView({behavior:"smooth", block:"start"});
+        document.getElementById(`sheet-${k}`)?.scrollIntoView({behavior:"smooth",block:"start"});
       });
       summary.appendChild(el);
     });
   }
 
-  // comprimi / espandi tutte
   document.getElementById("toggleAll")?.addEventListener("click", ()=>{
     document.querySelectorAll(".s-details").forEach(det=> det.open = !det.open);
   });
@@ -157,7 +145,7 @@ function setupChecklist(){
     const late = isLate(k);
 
     const card = document.createElement("article");
-    card.className = "sheet" + (late ? " late" : "");
+    card.className = "sheet" + (late?" late":"");
     card.id = `sheet-${k}`;
     card.innerHTML = `
       <div class="sheet-head">
@@ -183,7 +171,7 @@ function setupChecklist(){
 
         <div class="field">
           <span>Data</span>
-          <div class="row">
+          <div style="display:flex;gap:10px;align-items:center">
             <input type="date" value="${state.dates[k]??todayStr()}" data-date="${k}">
             <div class="points">
               ${[0,1,3,5].map(p=>`
@@ -198,7 +186,7 @@ function setupChecklist(){
     wrap.appendChild(card);
   });
 
-  // punteggi (delegato)
+  // punteggi
   wrap.addEventListener("click",(e)=>{
     const btn = e.target.closest(".points button");
     if(!btn) return;
@@ -206,8 +194,7 @@ function setupChecklist(){
     const p = Number(btn.dataset.p);
     state.points[k] = p;
     setJSON(storageKey("state"), state);
-    document.querySelectorAll(`.points button[data-k="${k}"]`)
-      .forEach(b=>b.classList.toggle("active", Number(b.dataset.p)===p));
+    document.querySelectorAll(`.points button[data-k="${k}"]`).forEach(b=>b.classList.toggle("active", Number(b.dataset.p)===p));
     document.querySelector(`#sheet-${k} .s-value`).textContent = `Valore: ${p*20}%`;
     updateStatsAndLate();
   });
@@ -222,11 +209,11 @@ function setupChecklist(){
     updateStatsAndLate();
   });
 
-  // elimina con PIN
+  // elimina (PIN)
   wrap.addEventListener("click",(e)=>{
     const del = e.target.closest(".del");
     if(!del) return;
-    if (prompt("Inserisci PIN per eliminare") !== CONFIG.PIN) return;
+    if (prompt("Inserisci PIN per eliminare") !== getStoredPin()) return;
     const k = del.closest(".sheet").id.replace("sheet-","");
     state.points[k]=0; state.notes[k]=""; state.dates[k]=null;
     setJSON(storageKey("state"), state);
@@ -237,39 +224,33 @@ function setupChecklist(){
     updateStatsAndLate();
   });
 
-  // info “i”
+  // info
   wrap.addEventListener("click",(e)=>{
     const infoBtn = e.target.closest(".info");
     if(!infoBtn) return;
     openInfo(infoBtn.dataset.k);
   });
 
-  // chiudi popup info
-  document.getElementById("infoCloseBtn")?.addEventListener("click", ()=> {
+  document.getElementById("infoCloseBtn")?.addEventListener("click", ()=>{
     const d = document.getElementById("infoDialog");
     if (d?.open) d.close();
   });
 
-  // clic fuori dal box → chiudi
-  document.getElementById("infoDialog")?.addEventListener("click", (e) => {
+  document.getElementById("infoDialog")?.addEventListener("click", (e)=>{
     const dlg = e.currentTarget;
     const box = dlg.querySelector(".modal-box");
     if (!box.contains(e.target)) dlg.close();
   });
 
-  // "+" → PIN e duplicazione visiva
-  wrap.addEventListener("click", (e) => {
-    const addBtn = e.target.closest(".add");
-    if (!addBtn) return;
-
-    if (prompt("Inserisci PIN per aggiungere") !== CONFIG.PIN) return;
-
-    const card = addBtn.closest(".sheet");
-    if (!card) return;
-
+  // “+” → duplica (PIN)
+  wrap.addEventListener("click",(e)=>{
+    const add = e.target.closest(".add");
+    if(!add) return;
+    if (prompt("Inserisci PIN per aggiungere") !== getStoredPin()) return;
+    const card = add.closest(".sheet");
     const clone = card.cloneNode(true);
-    const title = clone.querySelector(".s-title");
-    if (title) title.textContent = title.textContent + " (copia)";
+    const t = clone.querySelector(".s-title");
+    if (t) t.textContent += " (copia)";
     clone.id = card.id + "-copy-" + Math.floor(Math.random()*10000);
     card.after(clone);
   });
@@ -277,7 +258,7 @@ function setupChecklist(){
   updateStatsAndLate();
 }
 
-/** ========== RITARDI & STATISTICHE ========== */
+/** ===================== RITARDI & STATS ===================== */
 function isLate(k){
   const d = state.dates[k];
   if(!d) return false;
@@ -285,138 +266,110 @@ function isLate(k){
   const chosen = new Date(d); chosen.setHours(0,0,0,0);
   return chosen < today;
 }
-
 function updateStatsAndLate(){
-  // media % sul totale S con voto assegnato (0,1,3,5 → convertito *20)
   const arr = Object.values(state.points);
   const avg = arr.length ? Math.round(arr.reduce((a,b)=>a+b,0)/arr.length*20) : 0;
   document.getElementById("avgScore")?.replaceChildren(document.createTextNode(`${avg}%`));
 
-  // conteggio ritardi
   const lateList = Object.keys(state.dates).filter(k=> isLate(k));
   document.getElementById("lateCount")?.replaceChildren(document.createTextNode(String(lateList.length)));
 
-  // evidenzia schede in ritardo
   ["s1","s2","s3","s4","s5"].forEach(k=>{
     document.getElementById(`sheet-${k}`)?.classList.toggle("late", isLate(k));
   });
 }
 
-/** ========== INFO POPUP ========== */
-// Converte il testo lungo in array di punti dai (1) (2) ...
-function parseNumbered(text) {
-  return text.split(/\(\d+\)\s*/).map(s => s.trim()).filter(Boolean);
+/** ===================== INFO POPUP ===================== */
+function parseNumbered(text){
+  return text.split(/\(\d+\)\s*/).map(s=>s.trim()).filter(Boolean);
 }
-
-let currentInfoKey = null; // s1..s5 del popup aperto
+let currentInfoKey = null;
 
 function openInfo(k){
   currentInfoKey = k;
-
-  const dlg   = document.getElementById("infoDialog");
-  const box   = dlg.querySelector(".modal-box");
+  const dlg = document.getElementById("infoDialog");
+  const box = dlg.querySelector(".modal-box");
   const title = document.getElementById("infoTitle");
-  const body  = document.getElementById("infoText");   // contenitore scorrevole
+  const body = document.getElementById("infoText");
 
   title.textContent = `${k.toUpperCase()} — Info`;
-  box.style.borderTop = `6px solid ${COLORS[k] || '#0a57d5'}`;
+  box.style.borderTop = `6px solid ${COLORS[k]||'#0a57d5'}`;
 
+  // SOLO punti interattivi (niente lista duplicata)
   const items = parseNumbered(INFO_TEXT[k] ?? "");
   const chips = document.createElement("div");
   chips.className = "info-chips";
-
-  const list = document.createElement("ol");
-  list.style.margin = "0 0 10px 22px";
-  list.style.padding = "0";
-
-  items.forEach((t, idx) => {
-    const b = document.createElement("button");
-    b.type = "button";
-    b.className = "info-chip";
-    b.dataset.text = t;
-    b.innerHTML = `<span class="n" style="background:${COLORS[k]}">${idx+1}</span><span>${t}</span>`;
-    chips.appendChild(b);
-
-    const li = document.createElement("li");
-    li.textContent = t;
-    list.appendChild(li);
-  });
-
-  body.innerHTML = "";
-  body.appendChild(chips);
-  body.appendChild(list);
-
-  // delega click: appende alle Note della S corrente e salva
-  const onChipClick = (e) => {
+  chips.addEventListener("click",(e)=>{
     const chip = e.target.closest(".info-chip");
-    if (!chip) return;
+    if(!chip) return;
     const txt = chip.dataset.text || "";
     const ta = document.querySelector(`#sheet-${currentInfoKey} textarea`);
-    if (!ta) return;
+    if(!ta) return;
     const prefix = ta.value && !ta.value.endsWith("\n") ? "\n" : "";
     ta.value = `${ta.value}${prefix}- ${txt}`;
     state.notes[currentInfoKey] = ta.value;
     setJSON(storageKey("state"), state);
-  };
-  chips.addEventListener("click", onChipClick, { once: true }); // una volta per apertura
+  });
+
+  chips.innerHTML = "";
+  items.forEach((t,i)=>{
+    const b = document.createElement("button");
+    b.type="button"; b.className="info-chip"; b.dataset.text=t;
+    b.innerHTML = `<span class="n" style="background:${COLORS[k]}">${i+1}</span><span>${t}</span>`;
+    chips.appendChild(b);
+  });
+
+  body.innerHTML="";
+  body.appendChild(chips);
 
   dlg.showModal();
 }
 
-/** ========== GRAFICO (HOME) + Pulsanti "S in ritardo" ========== */
+/** ===================== GRAFICO HOME ===================== */
 let chart;
 function renderChart(){
   const ctx = document.getElementById("progressChart");
-  if(!ctx || typeof Chart === "undefined") return;
+  if(!ctx || typeof Chart==="undefined") return;
 
   const vals = ["s1","s2","s3","s4","s5"].map(k=> (state.points[k]??0)*20 );
-  const delayedN = Object.keys(state.dates).filter(k=> isLate(k)).length;
+  const delayed = Object.keys(state.dates).filter(k=> isLate(k)).length;
 
   if(chart) chart.destroy();
-  chart = new Chart(ctx, {
+  chart = new Chart(ctx,{
     type:"bar",
     data:{
       labels:["1S","2S","3S","4S","5S","Ritardi"],
       datasets:[{
-        data:[...vals, delayedN],
+        data:[...vals, delayed],
         backgroundColor:[COLORS.s1,COLORS.s2,COLORS.s3,COLORS.s4,COLORS.s5,"#ef4444"]
       }]
     },
     options:{
       responsive:true,
-      plugins:{
-        legend:{ display:false },
-        tooltip:{ enabled:true },
-        datalabels: undefined
-      },
-      scales:{
-        y:{ beginAtZero:true, max:100, ticks:{ callback:v=>v+"%" } },
-        x:{ ticks:{ maxRotation:0 } }
-      }
+      plugins:{ legend:{display:false}, tooltip:{enabled:true} },
+      scales:{ y:{beginAtZero:true,max:100,ticks:{callback:v=>v+"%"}}, x:{ticks:{maxRotation:0}} }
     }
   });
 
   // Pulsanti “S in ritardo”
-  const late = [];
-  ["s1","s2","s3","s4","s5"].forEach((k,i)=>{ if(isLate(k)) late.push({k, label:`${i+1}S in ritardo`}); });
   const box = document.getElementById("lateBtns");
-  if (box) {
-    box.innerHTML = "";
-    late.forEach(({k,label})=>{
+  if (!box) return;
+  box.innerHTML = "";
+  ["s1","s2","s3","s4","s5"].forEach((k,i)=>{
+    if (isLate(k)){
       const b = document.createElement("button");
       b.className = `late-btn ${k}`;
-      b.textContent = label;
-      b.addEventListener("click", ()=> { window.location.href = `checklist.html#sheet-${k}`; });
+      b.textContent = `${i+1}S in ritardo`;
+      b.addEventListener("click", ()=> location.href = `checklist.html#sheet-${k}`);
       box.appendChild(b);
-    });
-  }
+    }
+  });
 }
 
-/** ========== ROUTER ========== */
+/** ===================== ROUTER ===================== */
 document.addEventListener("DOMContentLoaded", ()=>{
   refreshTitles();
-
   const page = document.body.dataset.page;
-  if (page === "home")      setupHome();
-  if (page === "checklist") setupChecklist();
+  if (page==="home")      setupHome();
+  if (page==="checklist") setupChecklist();
 });
