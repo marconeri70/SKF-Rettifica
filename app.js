@@ -270,11 +270,11 @@ function setupChecklist(){
 
   const wrap = document.getElementById("sheets");
   const defs = [
-    {k:"s1", name:"1S — Selezionare",   color:COLORS.s1},
-    {k:"s2", name:"2S — Sistemare",     color:COLORS.s2},
-    {k:"s3", name:"3S — Splendere",     color:COLORS.s3},
-    {k:"s4", name:"4S — Standardizzare",color:COLORS.s4},
-    {k:"s5", name:"5S — Sostenere",     color:COLORS.s5},
+    {k:"s1", name:"1S — Selezionare  Eliminare il superfluo",   color:COLORS.s1},
+    {k:"s2", name:"2S — Sistemare  Un posto per tutto e tutto al suo posto.",     color:COLORS.s2},
+    {k:"s3", name:"3S — Splendere  Pulire e prevenire lo sporco.",     color:COLORS.s3},
+    {k:"s4", name:"4S — Standardizzare  Regole e segnali chiari.",color:COLORS.s4},
+    {k:"s5", name:"5S — Sostenere  Abitudine e miglioramento continuo.",     color:COLORS.s5},
   ];
   const todayStr = ()=> new Date().toISOString().slice(0,10);
 
