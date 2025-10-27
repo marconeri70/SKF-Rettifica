@@ -1,4 +1,4 @@
-const CACHE = "skf5s-v4";
+const CACHE = "skf5s-v5";
 const ASSETS = [
   "./",
   "./index.html",
