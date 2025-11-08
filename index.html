@@ -1,75 +1,78 @@
 <!doctype html>
 <html lang="it">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>SKF 5S – Home</title>
-  <link rel="manifest" href="manifest.json" />
-  <link rel="stylesheet" href="style.css" />
-  <link rel="icon" href="skf-192.png" />
-  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>SKF 5S — Home</title>
+  <link rel="manifest" href="manifest.json">
+  <link rel="icon" href="skf-192.png" sizes="192x192">
+  <link rel="apple-touch-icon" href="skf-512.png">
+  <meta name="theme-color" content="#0A57C7">
+  <link rel="stylesheet" href="style.css">
 </head>
 <body data-page="home">
-  <header class="topbar">
+  <header class="header">
     <div class="brand">
-      <img src="skf-logo.png" alt="SKF" class="logo" />
+      <img src="skf-logo.png" alt="SKF" class="logo">
       <span class="brand-text">SKF 5S</span>
     </div>
-    <div class="actions">
-      <button id="lockBtn" class="btn ghost">🔒 PIN</button>
-      <a class="btn primary" href="checklist.html">Vai alla checklist</a>
+    <div class="header-actions">
+      <button id="btnNotes" class="btn ghost">Note</button>
+      <button id="btnImport" class="btn ghost">Importa</button>
+      <button id="btnUpdate" class="btn ghost" title="Aggiorna app">Aggiorna</button>
+      <button id="btnPin" class="btn icon" title="PIN">🔒</button>
+      <a class="btn primary" href="checklist.html">Vai alla checklist →</a>
     </div>
   </header>
 
   <main class="container">
-    <h1 id="chartTitle" class="page-title">Andamento CH 24 — Rettifica</h1>
-
-    <section class="hero">
-      <img src="5s-hero.png" alt="5S" class="hero-5s" />
-      <div class="hero-text">
-        <h2>Cosa sono le 5S</h2>
-        <p>Metodo di miglioramento continuo: Selezionare, Sistemare, Splendere, Standardizzare, Sostenere.</p>
+    <section class="hero card">
+      <div class="hero-grid">
+        <div class="hero-left">
+          <h2>Cosa sono le 5S</h2>
+          <ol class="what-5s">
+            <li><span class="pill s1">1S Selezionare</span> — Eliminare il superfluo.</li>
+            <li><span class="pill s2">2S Sistemare</span> — Un posto per tutto e tutto al suo posto.</li>
+            <li><span class="pill s3">3S Splendere</span> — Pulire e prevenire lo sporco.</li>
+            <li><span class="pill s4">4S Standardizzare</span> — Regole e segnali chiari.</li>
+            <li><span class="pill s5">5S Sostenere</span> — Abitudine e miglioramento continuo.</li>
+          </ol>
+        </div>
+        <div class="hero-right">
+          <img src="5s-hero.png" alt="5S" class="hero-img">
+        </div>
       </div>
     </section>
 
-    <section class="panel">
-      <canvas id="progressChart" height="140"></canvas>
-      <div id="lateBtns" class="chips"></div>
-      <!-- 🔔 AVVISO “miglioramento” per punteggi < 5 da più giorni -->
-      <div id="lowScoreAlert" class="alert"></div>
-    </section>
+    <section class="card">
+      <h3 id="chartTitle">Andamento CH — Panoramica</h3>
+      <canvas id="progressChart" height="120"></canvas>
 
-    <section class="stats">
-      <div class="stat">
-        <span class="k">Punteggio medio</span>
-        <span class="v" id="avgScore">0%</span>
+      <div id="lateBadge" class="badge-row" style="display:none;">
+        <span class="badge warn" id="lateText">Azioni in ritardo</span>
       </div>
-      <div class="stat">
-        <span class="k">Azioni in ritardo</span>
-        <span class="v" id="lateCount">0</span>
+
+      <div class="kpis">
+        <div class="kpi"><span>Punteggio medio</span><strong id="avgScore">0%</strong></div>
+        <div class="kpi"><span>Azioni in ritardo</span><strong id="lateCount">0</strong></div>
       </div>
+
+      <div id="chFilters" class="chips"></div>
     </section>
   </main>
 
-  <!-- PIN dialog -->
-  <dialog id="pinDialog" class="modal">
-    <form method="dialog" class="modal-box">
-      <h3>Impostazioni protette</h3>
-      <label class="field">
-        <span>PIN</span>
-        <input type="password" id="pinInput" inputmode="numeric" />
-      </label>
-      <label class="field">
-        <span>Canale (CH)</span>
-        <input id="channelInput" />
-      </label>
-      <div class="modal-actions">
-        <button id="pinCancel" class="btn ghost">Annulla</button>
-        <button id="pinConfirmBtn" class="btn primary">Conferma</button>
-      </div>
-    </form>
-  </dialog>
+  <footer class="footer">
+    <small>SKF Digital 5S — Supervisor</small>
+  </footer>
 
+  <!-- Chart.js prima di app.js -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+  <script>
+    // registra SW
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('sw.js');
+    }
+  </script>
   <script src="app.js"></script>
 </body>
 </html>
