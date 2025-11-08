@@ -1,4 +1,4 @@
-// sw.js — v5
+// sw.js — v5 (cache bust + update forzato)
 const CACHE = 'skf5s-v5';
 const ASSETS = [
   './',
@@ -14,6 +14,7 @@ const ASSETS = [
 ];
 
 self.addEventListener('install', (e) => {
+  // Prendi subito il controllo alla nuova versione
   self.skipWaiting();
   e.waitUntil(caches.open(CACHE).then((c) => c.addAll(ASSETS)));
 });
@@ -27,17 +28,21 @@ self.addEventListener('activate', (e) => {
 });
 
 self.addEventListener('fetch', (e) => {
-  const { request } = e;
-  // network-first per HTML/JS, cache-first per asset statici
-  if (request.destination === 'document' || request.url.endsWith('.js')) {
+  const req = e.request;
+
+  // network-first per HTML e JS, cache-first per il resto
+  const isDoc = req.destination === 'document';
+  const isJS  = req.url.endsWith('.js');
+
+  if (isDoc || isJS) {
     e.respondWith(
-      fetch(request).then((res) => {
+      fetch(req).then((res) => {
         const copy = res.clone();
-        caches.open(CACHE).then((c) => c.put(request, copy));
+        caches.open(CACHE).then((c) => c.put(req, copy));
         return res;
-      }).catch(() => caches.match(request))
+      }).catch(() => caches.match(req))
     );
   } else {
-    e.respondWith(caches.match(request).then((res) => res || fetch(request)));
+    e.respondWith(caches.match(req).then((res) => res || fetch(req)));
   }
 });
