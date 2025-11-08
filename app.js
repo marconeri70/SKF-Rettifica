@@ -1,338 +1,456 @@
-// SKF 5S Supervisor — v2.4.4 (stabile)
-(() => {
-  const STORAGE_KEY = 'skf5s:supervisor:data';
-  const PIN_KEY     = 'skf5s:pin';
+/** CONFIGURAZIONE */
+const CONFIG = {
+  AREA: "Rettifica",           // Per Montaggio cambia qui in "Montaggio"
+  CHANNEL_DEFAULT: "CH 24",
+  DEFAULT_PIN: "6170"
+};
+const COLORS = {
+  s1:"#7c3aed", s2:"#ef4444", s3:"#f59e0b", s4:"#10b981", s5:"#2563eb"
+};
 
-  const $  = (s, r=document) => r.querySelector(s);
-  const $$ = (s, r=document) => Array.from(r.querySelectorAll(s));
+/** TESTI INFO – formato "(1) ... (2) ... (3) ..." */
+const INFO_TEXT = {
+  s1: "(1) L'area pedonale è libera da ostacoli e pericoli di inciampo. (2) Nessun materiale/attrezzo non identificato sul pavimento. (3) Solo materiali/strumenti necessari presenti; il resto è rimosso. (4) Solo materiale necessario per il lavoro in corso. (5) Documenti/visualizzazioni necessari, aggiornati, in buono stato. (6) Definiti team e processo etichetta rossa; processo attivo. (7) Lavagna 5S aggiornata (piano, foto prima/dopo, audit). (8) Evidenze che garantiscono la sostenibilità di 1S. (9) 5S/1S compresi dal team; responsabilità definite. (10) Tutti i membri partecipano alle attività dell'area.",
+  s2: "(1) Area e team definiti; nessuna cosa non necessaria in zona. (2) Articoli di sicurezza chiaramente contrassegnati e accessibili. (3) Uscite/interruttori emergenza visibili e liberi. (4) Stazioni qualità definite e organizzate. (5) SWC seguito. (6) Posizioni prefissate per utenze/strumenti/pulizia con indicatori min/max. (7) Posizioni definite per contenitori e rifiuti con identificazione chiara. (8) WIP/accettati/rifiutati/quarantena con posizioni e identificazione. (9) Materie prime/componenti con posizioni designate. (10) Layout con corridoi/aree/pedonali e DPI definito. (11) File/documenti identificati e organizzati al punto d'uso. (12) Miglioramenti one-touch/poka-yoke/ergonomia. (13) Evidenze di sostenibilità 2S. (14) 5S/2S compresi; responsabilità definite. (15) Partecipazione di tutti.",
+  s3: "(1) Non si trovano cose inutili. (2) Miglioramenti 2S mantenuti. (3) Verifiche regolari e azioni su deviazioni. (4) Area/team definiti; 1S/2S compresi. (5) Pavimenti/pareti puliti e senza detriti/oli/trucioli ecc. (6) Segnali/etichette puliti, corretti e leggibili. (7) Documenti in buone condizioni e protetti. (8) Luci/ventilazione/AC in ordine e pulite. (9) Fonti sporco identificate e note. (10) Piani d'azione per eliminare fonti sporco. (11) Azioni eseguite. (12) Miglioramenti per prevenire pulizia (meno tappe, eliminazione fonte). (13) Riciclaggio attivo con corretto smistamento. (14) Demarcazioni rese permanenti. (15) Evidenze di sostenibilità 3S. (16) 5S/3S compresi; responsabilità definite; partecipazione di tutti.",
+  s4: "(1) Visual management/kanban/Min-Max implementati (gestire a vista). (2) Colori/segni standard per lubrificazioni, tubazioni, valvole, ecc. (3) Standard 5S consolidati e aggiornati come training/guida. (4) Istruzioni 5S integrate nella gestione quotidiana.",
+  s5: "(1) Tutti formati sugli standard 5S e coinvolti. (2) 5S come abitudine; standard seguiti da tutti. (3) Layered audit programmati. (4) Foto prima/dopo mantenute come riferimento. (5) Obiettivi 5S esposti."
+};
 
-  const store = {
-    load(){ try { return JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]'); }
-            catch(e){ console.warn('[store.load]', e); return []; } },
-    save(arr){ localStorage.setItem(STORAGE_KEY, JSON.stringify(arr)); }
+/** Helpers storage */
+const storageKey = k => `skf5s:${CONFIG.AREA}:${k}`;
+const getJSON = (k,d)=>{ try{ return JSON.parse(localStorage.getItem(k)) ?? d; }catch{ return d; } };
+const setJSON = (k,v)=> localStorage.setItem(k, JSON.stringify(v));
+
+/** Service worker */
+if ("serviceWorker" in navigator) {
+  window.addEventListener("load", ()=> navigator.serviceWorker.register("sw.js"));
+}
+
+/** Stato */
+let state = getJSON(storageKey("state"), {
+  channel: CONFIG.CHANNEL_DEFAULT,
+  pin: getJSON("skf5s:pin", CONFIG.DEFAULT_PIN),
+  points: { s1:0, s2:0, s3:0, s4:0, s5:0 },
+  notes:  { s1:"", s2:"", s3:"", s4:"", s5:"" },
+  dates:  { s1:null, s2:null, s3:null, s4:null, s5:null },
+  // scelte dei punti nel popup, per calcolare la media
+  detail: { s1:{}, s2:{}, s3:{}, s4:{}, s5:{} }   // es. detail.s1[0]=3  -> punto #1 di S1 valutato 3
+});
+function savePin(p){ state.pin = p; setJSON(storageKey("state"), state); localStorage.setItem("skf5s:pin", JSON.stringify(p)); }
+
+/** Titoli dinamici */
+function refreshTitles(){
+  const chartTitle = document.getElementById("chartTitle");
+  if (chartTitle) chartTitle.textContent = `Andamento ${state.channel} — ${CONFIG.AREA}`;
+  const pageTitle = document.getElementById("pageTitle");
+  if (pageTitle) pageTitle.textContent = `${state.channel} — ${CONFIG.AREA}`;
+}
+
+/** PIN dialog (con cambio PIN offline) */
+function openPinDialog(){
+  const dlg = document.getElementById("pinDialog");
+  if (!dlg) return;
+
+  dlg.showModal();
+  const pinInput = document.getElementById("pinInput");
+  const chInput  = document.getElementById("channelInput");
+  const np1 = document.getElementById("newPin1");
+  const np2 = document.getElementById("newPin2");
+  const okBtn = document.getElementById("pinConfirmBtn");
+  const cancel = document.getElementById("pinCancel");
+
+  pinInput.value = "";
+  chInput.value = state.channel ?? CONFIG.CHANNEL_DEFAULT;
+  np1.value = ""; np2.value = "";
+
+  okBtn.onclick = ()=>{
+    const entered = pinInput.value.trim();
+    if (entered !== String(state.pin)) { alert("PIN errato"); return; }
+    state.channel = chInput.value.trim() || CONFIG.CHANNEL_DEFAULT;
+
+    if (np1.value || np2.value){
+      if (np1.value !== np2.value) { alert("I due PIN non coincidono"); return; }
+      if (!/^\d{3,8}$/.test(np1.value)) { alert("PIN non valido"); return; }
+      savePin(np1.value);
+    }
+    setJSON(storageKey("state"), state);
+    refreshTitles();
+    dlg.close();
   };
+  cancel.onclick = ()=> dlg.close();
+}
 
-  const fmtPct = v => `${Math.round(Number(v)||0)}%`;
-  const mean   = p => Math.round(((+p.s1||0)+(+p.s2||0)+(+p.s3||0)+(+p.s4||0)+(+p.s5||0))/5);
+/** Utilità ritardi */
+function isLate(k){
+  const d = state.dates[k];
+  if(!d) return false;
+  const today = new Date(); today.setHours(0,0,0,0);
+  const chosen = new Date(d); chosen.setHours(0,0,0,0);
+  return chosen < today;
+}
+function updateStatsAndLate(){
+  const arr = Object.values(state.points);
+  const avg = arr.length ? Math.round(arr.reduce((a,b)=>a+b,0)/arr.length*20) : 0;
+  const lateList = Object.keys(state.dates).filter(k=> isLate(k));
+  document.getElementById("avgScore")?.replaceChildren(document.createTextNode(`${avg}%`));
+  document.getElementById("lateCount")?.replaceChildren(document.createTextNode(String(lateList.length)));
+  ["s1","s2","s3","s4","s5"].forEach(k=>{
+    document.getElementById(`sheet-${k}`)?.classList.toggle("late", isLate(k));
+  });
+}
 
-  function parseNotesFlexible(src, fallbackDate){
-    const out = [];
-    if (!src) return out;
-    if (Array.isArray(src)){
-      for (const n of src){
-        if (!n) continue;
-        out.push({ s:n.s||n.S||n.type||'', text:n.text||n.note||'', date:n.date||fallbackDate });
-      }
-      return out;
-    }
-    if (typeof src === 'object'){
-      for (const k of Object.keys(src)){
-        const val = src[k];
-        if (typeof val === 'string' && val.trim()){
-          for (const line of val.split(/\n+/)){
-            const t = line.trim(); if (t) out.push({ s:k, text:t, date:fallbackDate });
-          }
-        } else if (Array.isArray(val)){
-          for (const line of val){
-            const t = String(line||'').trim(); if (t) out.push({ s:k, text:t, date:fallbackDate });
+/** Utilità Note + parsing frasi */
+function parsePoints(txt){
+  const out = [];
+  const re = /\((\d+)\)\s*([^]+?)(?=\s*\(\d+\)\s*|$)/g;
+  let m;
+  while((m = re.exec(txt))){ out.push(m[2].trim()); }
+  return out;
+}
+function squaresSummaryColored(score){
+  // 🟦 = scelto, ⬜ = non scelto
+  const order = [0,1,3,5];
+  return order.map(v => (v===score ? `🟦${v}` : `⬜${v}`)).join(" ");
+}
+function appendNote(k, text, score){
+  const ta = document.querySelector(`#sheet-${k} textarea`);
+  if(!ta) return;
+  const line = `${squaresSummaryColored(score)} — ${text}`;
+  ta.value = (ta.value ? ta.value.replace(/\s*$/,"")+"\n" : "") + line;
+  state.notes[k] = ta.value;
+  setJSON(storageKey("state"), state);
+}
+function nearestScore(mean){
+  const choices = [0,1,3,5];
+  let best = 0, bestDiff = Infinity;
+  for (const c of choices){
+    const d = Math.abs(mean - c);
+    if (d < bestDiff) { bestDiff = d; best = c; }
+  }
+  return best;
+}
+function recalcFromDetailAndApply(k){
+  const picks = Object.values(state.detail[k]||{});
+  if (picks.length===0) return; // niente ancora
+  const mean = picks.reduce((a,b)=>a+b,0) / picks.length;
+  const newScore = nearestScore(mean);
+  // applica alla scheda
+  state.points[k] = newScore;
+  setJSON(storageKey("state"), state);
+  document.querySelectorAll(`#sheet-${k} .points button`).forEach(b=>{
+    b.classList.toggle("active", Number(b.dataset.p)===newScore);
+  });
+  const sv = document.querySelector(`#sheet-${k} .s-value`);
+  if (sv) sv.textContent = `Valore: ${newScore*20}%`;
+  updateStatsAndLate();
+}
+
+/** HOME */
+let chart;
+function renderChart(){
+  const ctx = document.getElementById("progressChart");
+  if(!ctx) return;
+
+  const vals = ["s1","s2","s3","s4","s5"].map(k=> (state.points[k]??0)*20 );
+  const delayed = Object.keys(state.dates).filter(k=> isLate(k)).length;
+
+  if(chart) chart.destroy();
+  chart = new Chart(ctx, {
+    type:"bar",
+    data:{
+      labels:["1S","2S","3S","4S","5S","Ritardi"],
+      datasets:[{
+        data:[...vals, delayed],
+        backgroundColor:["#7c3aed","#ef4444","#f59e0b","#10b981","#2563eb","#ef4444"],
+        borderWidth:0
+      }]
+    },
+    options:{
+      responsive:true,
+      plugins:{
+        legend:{display:false},
+        tooltip:{
+          enabled:true,
+          callbacks:{
+            label: (item)=>{
+              // riga valore principale
+              if (item.dataIndex===5) return "Ritardi: " + item.raw;
+              return `${item.label}: ${item.raw}%`;
+            },
+            afterBody: (items)=>{
+              // riassunto Note scelte nel popup per S1..S5
+              const idx = items[0].dataIndex;
+              if (idx<0 || idx>4) return;
+              const key = ["s1","s2","s3","s4","s5"][idx];
+              const det = state.detail[key]||{};
+              const pts = parsePoints(INFO_TEXT[key]||"");
+              const lines = Object.keys(det)
+                .map(n=>Number(n))
+                .sort((a,b)=>a-b)
+                .slice(0,6) // massimo 6 righe per non esagerare
+                .map(n=>{
+                  const score = det[n];
+                  const text  = pts[n] || "";
+                  return `${n+1}) ${squaresSummaryColored(score)} ${text}`;
+                });
+              return lines.length ? lines : ["Nessuna nota selezionata"];
+            }
           }
         }
+      },
+      scales:{
+        y:{beginAtZero:true,max:100,grid:{display:false},ticks:{callback:v=>v+"%"}},
+        x:{grid:{display:false},ticks:{maxRotation:0}}
       }
-    }
-    return out;
-  }
-
-  function parseRecord(obj){
-    const rec = {
-      area:    obj.area || '',
-      channel: obj.channel || obj.CH || obj.ch || '',
-      date:    obj.date || obj.timestamp || new Date().toISOString(),
-      points:  obj.points || obj.kpi || {},
-      notes:   []
-    };
-    rec.points = {
-      s1: Number(rec.points.s1 || rec.points.S1 || rec.points['1S'] || 0),
-      s2: Number(rec.points.s2 || rec.points.S2 || rec.points['2S'] || 0),
-      s3: Number(rec.points.s3 || rec.points.S3 || rec.points['3S'] || 0),
-      s4: Number(rec.points.s4 || rec.points.S4 || rec.points['4S'] || 0),
-      s5: Number(rec.points.s5 || rec.points.S5 || rec.points['5S'] || 0)
-    };
-    rec.notes = parseNotesFlexible(obj.notes, rec.date);
-    for (const k of Object.keys(obj||{})){
-      if (/^S[1-5]$/i.test(k) && Array.isArray(obj[k])){
-        for (const line of obj[k]){
-          const t = String(line||'').trim();
-          if (t) rec.notes.push({ s:k, text:t, date:rec.date });
-        }
-      }
-    }
-    return rec;
-  }
-
-  async function handleImport(files){
-    if (!files || !files.length) return;
-    const current = store.load();
-    const byKey = new Map(current.map(r => [r.area + '|' + r.channel + '|' + r.date, r]));
-    for (const f of files){
-      try{
-        const txt = await f.text();
-        const obj = JSON.parse(txt);
-        const rec = parseRecord(obj);
-        if (!rec.channel) throw new Error('CH mancante');
-        byKey.set(rec.area + '|' + rec.channel + '|' + rec.date, rec);
-      }catch(e){
-        console.error('[import]', f.name, e);
-        alert('Errore file: ' + f.name);
-      }
-    }
-    const merged = Array.from(byKey.values()).sort((a,b)=> new Date(a.date)-new Date(b.date));
-    store.save(merged);
-    render();
-  }
-
-  function exportAll(){
-    const pinSaved = localStorage.getItem(PIN_KEY);
-    const ask = prompt('Inserisci PIN (demo 1234):', '');
-    if ((pinSaved && ask !== pinSaved) || (!pinSaved && ask !== '1234')){ alert('PIN errato'); return; }
-    const blob = new Blob([JSON.stringify(store.load(), null, 2)], { type:'application/json' });
-    const a = document.createElement('a'); a.href = URL.createObjectURL(blob);
-    a.download = 'SKF-5S-supervisor-archive.json'; a.click();
-  }
-
-  function initLock(){
-    const btn = $('#btn-lock'); if (!btn) return;
-    const paint = () => { const pin = localStorage.getItem(PIN_KEY);
-      btn.textContent = pin ? '🔓' : '🔒'; btn.title = pin ? 'PIN impostato — clic per cambiare' : 'Imposta PIN'; };
-    paint();
-    btn.onclick = () => {
-      const old = localStorage.getItem(PIN_KEY);
-      if (old){
-        const chk = prompt('Inserisci PIN attuale:'); if (chk !== old){ alert('PIN errato'); return; }
-        const n1 = prompt('Nuovo PIN (4-10 cifre):'); if (!n1) return;
-        const n2 = prompt('Conferma nuovo PIN:'); if (n2 !== n1){ alert('Non coincide'); return; }
-        localStorage.setItem(PIN_KEY, n1); alert('PIN aggiornato.'); paint();
-      } else {
-        const n1 = prompt('Imposta PIN (demo 1234):'); if (!n1) return;
-        localStorage.setItem(PIN_KEY, n1); paint();
-      }
-    };
-  }
-
-  function renderDelays(){
-    const box = $('#delay-section'); if (!box) return;
-    const data = store.load();
-    const lastByCh = new Map();
-    for (const r of data){ (lastByCh.get(r.channel)||lastByCh.set(r.channel,[]).get(r.channel)).push(r); }
-    const now = Date.now(), delays = [];
-    for (const [ch, list] of lastByCh.entries()){
-      const last = list.sort((a,b)=> new Date(a.date)-new Date(b.date)).slice(-1)[0];
-      const days = Math.floor((now - new Date(last.date).getTime()) / 86400000);
-      if (days > 7){ delays.push({ ch, area:last.area, date:last.date, days }); }
-    }
-    if (!delays.length){ box.style.display='none'; return; }
-    box.style.display='block';
-    box.querySelector('.delay-list').innerHTML = delays.sort((a,b)=> b.days - a.days).map(d => `
-      <li>
-        <strong>${d.ch}</strong> • <span class="chip">${d.area||''}</span>
-        <span class="muted">${d.days} giorni di ritardo</span>
-        <button class="btn tiny outline go-card" data-ch="${d.ch}">Vai alla scheda</button>
-        <button class="btn tiny go-notes" data-ch="${d.ch}" data-date="${d.date}">Vedi note</button>
-      </li>`).join('');
-    $$('.go-notes', box).forEach(b=>{ b.onclick = () => {
-      const ch = b.dataset.ch; const date = b.dataset.date || '';
-      location.href = `notes.html?hlCh=${encodeURIComponent(ch)}${date?`&hlDate=${encodeURIComponent(date)}`:''}`;
-    }});
-    $$('.go-card', box).forEach(b=>{ b.onclick = () => {
-      const ch = b.dataset.ch; location.href = `checklist.html?hlCh=${encodeURIComponent(ch)}`;
-    }});
-  }
-
-  function renderHome(){
-    const wrap = $('#board-all'); if (!wrap) return;
-    const data = store.load();
-    const activeType = $('.segmented .seg.on')?.dataset.type || 'all';
-    const filt = (r) => activeType==='all' ? true : (r.area===activeType);
-
-    const byCh = new Map();
-    for (const r of data.filter(filt)){
-      const k = r.channel || 'CH?';
-      (byCh.get(k) || byCh.set(k, []).get(k)).push(r);
-    }
-    wrap.innerHTML = '';
-    const chips = $('#chip-strip'); if (chips) chips.innerHTML = '';
-
-    for (const [ch, arr] of Array.from(byCh.entries()).sort()){
-      const last = arr.sort((a,b)=> new Date(a.date)-new Date(b.date)).slice(-1)[0];
-      const p = last?.points || {s1:0,s2:0,s3:0,s4:0,s5:0};
-
-      const card = document.createElement('div');
-      card.className = 'board-mini';
-      card.innerHTML = `
-        <div class="bm-top"><div class="bm-title">${ch} <span class="muted">${last?.area||''}</span></div></div>
-        <div class="chart5s">
-          ${[['1S','l1','s1'],['2S','l2','s2'],['3S','l3','s3'],['4S','l4','s4'],['5S','l5','s5']]
-            .map(([lbl,cls,key]) => `
-              <div class="col">
-                <div class="colbar ${cls}" style="height:${Number(p[key])||0}%"></div>
-                <div class="colcap">${lbl}<span>${fmtPct(p[key])}</span></div>
-              </div>`).join('')}
-        </div>
-        <div class="bm-actions"><button class="btn link open-card">Apri scheda</button></div>`;
-      wrap.appendChild(card);
-      card.querySelector('.open-card').onclick = () => location.href = 'checklist.html#' + encodeURIComponent(ch);
-
-      const chip = document.createElement('button');
-      chip.className = 'chip'; chip.textContent = ch;
-      chip.onclick = () => location.href = 'checklist.html#' + encodeURIComponent(ch);
-      chips?.appendChild(chip);
-    }
-    $$('.segmented .seg').forEach(b=>{
-      b.onclick = () => { $$('.segmented .seg').forEach(x=>x.classList.remove('on')); b.classList.add('on'); renderHome(); };
-    });
-  }
-
-  function printCard(card){
-    const w = window.open('', '_blank');
-    w.document.write(`<title>Stampa CH</title><style>
-      body{font-family:Arial,sans-serif;margin:20px}
-      .pill{display:inline-block;margin-right:6px;padding:4px 8px;border-radius:12px;color:#fff;font-weight:bold}
-      .s1{background:${getComputedStyle(document.documentElement).getPropertyValue('--s1')}}
-      .s2{background:${getComputedStyle(document.documentElement).getPropertyValue('--s2')}}
-      .s3{background:${getComputedStyle(document.documentElement).getPropertyValue('--s3')}}
-      .s4{background:${getComputedStyle(document.documentElement).getPropertyValue('--s4')}}
-      .s5{background:${getComputedStyle(document.documentElement).getPropertyValue('--s5')}}
-      .bar{height:14px;border-radius:7px;background:#eee;margin:10px 0;position:relative}
-      .bar i{position:absolute;left:0;top:0;height:100%;border-radius:7px}
-    </style>`);
-    w.document.write(card.innerHTML.replaceAll('chart5s','').replaceAll('colbar','bar').replaceAll('col','div'));
-    w.document.close(); w.focus(); w.print(); setTimeout(()=>w.close(),100);
-  }
-
-  function renderChecklist(){
-    const wrap = $('#cards'); if (!wrap) return;
-    const data = store.load(); wrap.innerHTML = '';
-    const onlyCh = new URLSearchParams(location.search).get('hlCh');
-    const hash   = decodeURIComponent(location.hash.slice(1) || '');
-    const byCh = new Map();
-    for (const r of data){ const key = r.channel || 'CH?'; (byCh.get(key)||byCh.set(key,[]).get(key)).push(r); }
-
-    for (const [ch, arr] of Array.from(byCh.entries()).sort()){
-      if (onlyCh && ch !== onlyCh) continue;
-      if (hash   && ch !== hash)   continue;
-      const last = arr.sort((a,b)=> new Date(a.date)-new Date(b.date)).slice(-1)[0];
-      const p = last?.points || {s1:0,s2:0,s3:0,s4:0,s5:0};
-
-      const card = document.createElement('article');
-      card.className = 'card-line'; card.id = `CH-${CSS.escape(ch)}`;
-      card.innerHTML = `
-        <div class="top">
-          <div>
-            <div class="cl-title">CH ${ch.replace(/^CH\\s*/,'')}</div>
-            <div class="muted" style="font-size:.9rem">${last?.area||''} • Ultimo: ${last?.date||'-'}</div>
-          </div>
-          <div class="pills">
-            <span class="pill s1">S1 ${fmtPct(p.s1)}</span>
-            <span class="pill s2">S2 ${fmtPct(p.s2)}</span>
-            <span class="pill s3">S3 ${fmtPct(p.s3)}</span>
-            <span class="pill s4">S4 ${fmtPct(p.s4)}</span>
-            <span class="pill s5">S5 ${fmtPct(p.s5)}</span>
-            <span class="pill" style="background:#eef5ff;color:#0b3b8f">Voto medio ${fmtPct(mean(p))}</span>
-          </div>
-          <div class="buttons">
-            <button class="btn outline btn-print">Stampa PDF</button>
-            <button class="btn outline btn-toggle">Comprimi/Espandi</button>
-            <button class="btn link btn-notes">Vedi note</button>
-          </div>
-        </div>
-        <div class="chart5s mt">
-          ${[['1S','l1','s1'],['2S','l2','s2'],['3S','l3','s3'],['4S','l4','s4'],['5S','l5','s5']]
-            .map(([lbl,cls,key]) => `
-              <div class="col">
-                <div class="colbar ${cls}" style="height:${Number(p[key])||0}%"></div>
-                <div class="colcap">${lbl} <span>${fmtPct(p[key])}</span></div>
-              </div>`).join('')}
-        </div>`;
-      wrap.appendChild(card);
-      card.querySelector('.btn-print').onclick  = () => printCard(card);
-      card.querySelector('.btn-toggle').onclick = () => card.classList.toggle('compact');
-      card.querySelector('.btn-notes').onclick  = () => {
-        const lastDate = last?.date || '';
-        location.href = `notes.html?hlCh=${encodeURIComponent(ch)}${lastDate ? `&hlDate=${encodeURIComponent(lastDate)}`:''}`;
-      };
-    }
-    $('#btn-toggle-all')?.addEventListener('click', () => {
-      const makeCompact = !$('.card-line')?.classList.contains('compact');
-      $$('.card-line').forEach(c => c.classList.toggle('compact', makeCompact));
-    });
-    $('#btn-print-all')?.addEventListener('click', () => window.print());
-  }
-
-  function renderNotes(){
-    const box = $('#notes-list'); if (!box) return;
-    const rows = [];
-    for (const r of store.load()){
-      for (const n of (r.notes || [])){
-        rows.push({ ch:r.channel, area:r.area, s:n.s, text:n.text, date:n.date||r.date });
-      }
-    }
-    const typeVal = $('#f-type')?.value || 'all';
-    const fromVal = $('#f-from')?.value || '';
-    const toVal   = $('#f-to')?.value   || '';
-    const chVal   = ($('#f-ch')?.value  || '').trim().toLowerCase();
-    const inRange = (d) => { const t = new Date(d).getTime();
-      if (fromVal && t < new Date(fromVal).getTime()) return false;
-      if (toVal && t > new Date(toVal).getTime()+86400000-1) return false; return true; };
-    const list = rows.filter(r => (typeVal==='all'?true:r.area===typeVal))
-                     .filter(r => (!chVal?true:((''+r.ch).toLowerCase().includes(chVal))))
-                     .filter(r => inRange(r.date))
-                     .sort((a,b)=> new Date(b.date)-new Date(a.date));
-    box.innerHTML = '';
-    $('#notes-count') && ($('#notes-count').textContent = `(${list.length})`);
-    $('#notes-counter') && ($('#notes-counter').textContent = `${list.length} note`);
-    if (!list.length){ box.innerHTML = '<div class="muted">Nessuna nota con i filtri selezionati.</div>'; return; }
-    for (const n of list){
-      const S = (n.s||'').toString().match(/[1-5]/)?.[0] || '1';
-      const el = document.createElement('div');
-      el.className = 'note';
-      el.innerHTML = `
-        <div style="display:flex;justify-content:space-between;gap:.5rem;flex-wrap:wrap">
-          <div><strong>${n.ch}</strong> • <span class="pill s${S}">S${S}</span> <span class="chip">${n.area||''}</span></div>
-          <div class="muted">${n.date||''}</div>
-        </div>
-        <div style="margin-top:.45rem;white-space:pre-wrap">${n.text||''}</div>`;
-      box.appendChild(el);
-    }
-    const qp = new URLSearchParams(location.search);
-    const hlCh = qp.get('hlCh'); const hlDate = qp.get('hlDate');
-    if (hlCh){
-      const notes = $$('.note', box);
-      notes.forEach(n => { const head = n.querySelector('strong')?.textContent||''; if (head===hlCh){ n.classList.add('highlight'); }});
-      box.scrollIntoView({behavior:'smooth', block:'start'});
-    }
-  }
-
-  function initCommon(){
-    $('#btn-import')?.addEventListener('click', () => $('#import-input')?.click());
-    $('#import-input')?.addEventListener('change', (e) => handleImport(e.target.files));
-    $('#btn-export')?.addEventListener('click', exportAll);
-    $('#btn-export-supervisor')?.addEventListener('click', exportAll);
-    $('#btn-notes')?.addEventListener('click', () => { location.href = 'notes.html'; });
-    $('#f-apply')?.addEventListener('click', renderNotes);
-    $('#f-clear')?.addEventListener('click', () => {
-      if ($('#f-type')) $('#f-type').value = 'all';
-      if ($('#f-from')) $('#f-from').value = '';
-      if ($('#f-to'))   $('#f-to').value   = '';
-      if ($('#f-ch'))   $('#f-ch').value   = '';
-      renderNotes();
-    });
-  }
-
-  function render(){ renderHome(); renderChecklist(); renderNotes(); renderDelays(); }
-
-  window.addEventListener('DOMContentLoaded', () => {
-    initCommon(); initLock(); render();
-    if ('serviceWorker' in navigator){
-      navigator.serviceWorker.register('sw.js?v=244').catch(e=>console.warn('[SW]',e));
     }
   });
-})();
+
+  // pulsanti “in ritardo”
+  const late = [];
+  ["s1","s2","s3","s4","s5"].forEach((k,i)=>{ if(isLate(k)) late.push({k, label:`${i+1}S in ritardo`}); });
+  const box = document.getElementById("lateBtns");
+  if (!box) return;
+  box.innerHTML = "";
+  late.forEach(({k,label})=>{
+    const b = document.createElement("button");
+    b.className = `late-btn ${k}`;
+    b.style.borderColor = COLORS[k];
+    b.textContent = label;
+    b.addEventListener("click", ()=> { window.location.href = `checklist.html#sheet-${k}`; });
+    box.appendChild(b);
+  });
+}
+function setupHome(){
+  refreshTitles();
+  renderChart();
+  document.getElementById("lockBtn")?.addEventListener("click", openPinDialog);
+  document.getElementById("exportBtn")?.addEventListener("click", ()=>{
+    const entered = prompt("Inserisci PIN per esportare");
+    if (entered !== String(state.pin)) return;
+
+    const payload = {
+      area: CONFIG.AREA,
+      channel: state.channel,
+      date: new Date().toISOString(),
+      points: state.points,
+      notes: state.notes,
+      dates: state.dates,
+      detail: state.detail
+    };
+    const blob = new Blob([JSON.stringify(payload,null,2)], {type:"application/json"});
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+    a.download = `SKF-5S-${CONFIG.AREA}-${state.channel}.json`;
+    a.click();
+    URL.revokeObjectURL(a.href);
+  });
+}
+
+/** CHECKLIST */
+function setupChecklist(){
+  refreshTitles();
+  document.getElementById("lockBtn")?.addEventListener("click", openPinDialog);
+
+  const summary = document.getElementById("summaryBadges");
+  ["s1","s2","s3","s4","s5"].forEach(k=>{
+    const v = state.points[k] ?? 0;
+    const el = document.createElement("button");
+    el.className = `s-badge ${k}`;
+    el.textContent = `${k.toUpperCase()} ${v*20}%`;
+    el.addEventListener("click", ()=> {
+      document.getElementById(`sheet-${k}`)?.scrollIntoView({behavior:"smooth",block:"start"});
+    });
+    summary.appendChild(el);
+  });
+
+  document.getElementById("toggleAll")?.addEventListener("click", ()=>{
+    document.querySelectorAll(".s-details").forEach(det=> det.open = !det.open);
+  });
+
+  const wrap = document.getElementById("sheets");
+  const defs = [
+    {k:"s1", name:"1S — Selezionare",   color:COLORS.s1},
+    {k:"s2", name:"2S — Sistemare",     color:COLORS.s2},
+    {k:"s3", name:"3S — Splendere",     color:COLORS.s3},
+    {k:"s4", name:"4S — Standardizzare",color:COLORS.s4},
+    {k:"s5", name:"5S — Sostenere",     color:COLORS.s5},
+  ];
+  const todayStr = ()=> new Date().toISOString().slice(0,10);
+
+  defs.forEach(({k,name,color})=>{
+    const val = state.points[k] ?? 0;
+    const late = isLate(k);
+
+    const card = document.createElement("article");
+    card.className = "sheet" + (late ? " late":"");
+    card.id = `sheet-${k}`;
+    card.innerHTML = `
+      <div class="sheet-head">
+        <span class="s-color" style="background:${color}"></span>
+        <h3 class="s-title" style="color:${color}">${name}</h3>
+        <span class="s-value">Valore: ${(val*20)}%</span>
+        <button class="icon info" aria-label="Info" data-k="${k}">i</button>
+        <button class="icon add" aria-label="Duplica">+</button>
+      </div>
+
+      <details class="s-details" open>
+        <summary>▼ Dettagli</summary>
+
+        <label class="field">
+          <span>Responsabile / Operatore</span>
+          <input placeholder="Inserisci il nome..." value="">
+        </label>
+
+        <label class="field">
+          <span>Note</span>
+          <textarea rows="3" placeholder="Note...">${state.notes[k]??""}</textarea>
+        </label>
+
+        <div class="field">
+          <span>Data</span>
+          <div class="row">
+            <input type="date" value="${state.dates[k]??todayStr()}" data-date="${k}">
+            <div class="points">
+              ${[0,1,3,5].map(p=>`
+                <button data-k="${k}" data-p="${p}" class="${val===p?'active':''}">${p}</button>
+              `).join("")}
+            </div>
+            <button class="icon danger del">🗑</button>
+          </div>
+        </div>
+      </details>
+    `;
+    wrap.appendChild(card);
+  });
+
+  // punteggi scheda (manuali)
+  wrap.addEventListener("click",(e)=>{
+    const btn = e.target.closest(".points button");
+    if(!btn) return;
+    const k = btn.dataset.k;
+    const p = Number(btn.dataset.p);
+    state.points[k] = p;
+    setJSON(storageKey("state"), state);
+    document.querySelectorAll(`.points button[data-k="${k}"]`).forEach(b=>b.classList.toggle("active", Number(b.dataset.p)===p));
+    document.querySelector(`#sheet-${k} .s-value`).textContent = `Valore: ${p*20}%`;
+    updateStatsAndLate();
+  });
+
+  // date → ritardo
+  wrap.addEventListener("change",(e)=>{
+    const inp = e.target.closest('input[type="date"][data-date]');
+    if(!inp) return;
+    const k = inp.dataset.date;
+    state.dates[k] = inp.value;
+    setJSON(storageKey("state"), state);
+    updateStatsAndLate();
+  });
+
+  // elimina con PIN (reset scheda)
+  wrap.addEventListener("click",(e)=>{
+    const del = e.target.closest(".del");
+    if(!del) return;
+    const pin = prompt("Inserisci PIN per eliminare");
+    if (pin !== String(state.pin)) return;
+    const k = del.closest(".sheet").id.replace("sheet-","");
+    state.points[k]=0; state.notes[k]=""; state.dates[k]=null; state.detail[k]={};
+    setJSON(storageKey("state"), state);
+    const s = del.closest(".sheet");
+    s.querySelectorAll(".points button").forEach(b=>b.classList.remove("active"));
+    s.querySelector(".s-value").textContent="Valore: 0%";
+    s.querySelector('textarea').value="";
+    s.querySelector('input[type="date"]').value=new Date().toISOString().slice(0,10);
+    updateStatsAndLate();
+  });
+
+  // info popup
+  wrap.addEventListener("click",(e)=>{
+    const infoBtn = e.target.closest(".info");
+    if(!infoBtn) return;
+    openInfo(infoBtn.dataset.k);
+  });
+
+  // + duplicazione scheda (PIN)
+  wrap.addEventListener("click",(e)=>{
+    const add = e.target.closest(".add");
+    if(!add) return;
+    const pin = prompt("Inserisci PIN per duplicare");
+    if (pin !== String(state.pin)) return;
+    const card = add.closest(".sheet");
+    const clone = card.cloneNode(true);
+    const uid = Math.random().toString(36).slice(2,7);
+    clone.id = card.id + "-x" + uid;
+    clone.querySelectorAll("textarea").forEach(t=> t.value="");
+    clone.querySelectorAll('input[type="date"]').forEach(d=> d.value=new Date().toISOString().slice(0,10));
+    clone.querySelectorAll(".points button").forEach(b=> b.classList.remove("active"));
+    clone.querySelector(".s-value").textContent="Valore: 0%";
+    card.after(clone);
+  });
+
+  document.getElementById("infoCloseBtn")?.addEventListener("click", ()=> {
+    document.getElementById("infoDialog").close();
+  });
+
+  updateStatsAndLate();
+}
+
+/** Popup “i” con punti interattivi + media automatica */
+function openInfo(k){
+  const dlg = document.getElementById("infoDialog");
+  const title = document.getElementById("infoTitle");
+  const cont = document.getElementById("infoContent");
+  title.textContent = `${k.toUpperCase()} — Info`;
+  cont.innerHTML = "";
+
+  if (!state.detail[k]) state.detail[k] = {};
+  const pts = parsePoints(INFO_TEXT[k] || "");
+
+  const ol = document.createElement("ol");
+  pts.forEach((txt, idx)=>{
+    const li = document.createElement("li");
+    const already = state.detail[k][idx] ?? null;
+    const row = document.createElement("div");
+    row.className = "pointline";
+    row.innerHTML = `
+      <div>${idx+1}. ${txt}</div>
+      <div class="pick" data-k="${k}" data-idx="${idx}">
+        ${[0,1,3,5].map(v=>`<button type="button" data-score="${v}" class="${already===v?'picked':''}">${v}</button>`).join("")}
+      </div>
+      <div class="note-mini">Seleziona un valore per aggiungere la riga in Note.</div>
+    `;
+    li.appendChild(row);
+    ol.appendChild(li);
+  });
+  cont.appendChild(ol);
+
+  cont.onclick = (e)=>{
+    const btn = e.target.closest('.pick button');
+    if(!btn) return;
+    const pick = btn.closest('.pick');
+    const score = Number(btn.dataset.score);
+    const key = pick.dataset.k;
+    const idx = Number(pick.dataset.idx);
+    // evidenzia selezione
+    pick.querySelectorAll('button').forEach(b=> b.classList.toggle('picked', b===btn));
+    // salva scelta
+    if (!state.detail[key]) state.detail[key]={};
+    state.detail[key][idx] = score;
+    setJSON(storageKey("state"), state);
+    // aggiunge riga in Note (blu evidenziato via emoji)
+    const text = parsePoints(INFO_TEXT[key]||"")[idx];
+    appendNote(key, text, score);
+    // calcola media e aggiorna scheda
+    recalcFromDetailAndApply(key);
+  };
+
+  dlg.querySelector(".modal-box").style.borderTop = `6px solid ${COLORS[k]||'#0a57d5'}`;
+  dlg.showModal();
+}
+
+/** Router */
+document.addEventListener("DOMContentLoaded", ()=>{
+  refreshTitles();
+  if (document.body.dataset.page==="home") setupHome();
+  if (document.body.dataset.page==="checklist") setupChecklist();
+});
