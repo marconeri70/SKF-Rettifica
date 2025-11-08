@@ -4,16 +4,16 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>SKF 5S — Home</title>
-  <link rel="manifest" href="manifest.json">
-  <link rel="icon" href="skf-192.png" sizes="192x192">
-  <link rel="apple-touch-icon" href="skf-512.png">
   <meta name="theme-color" content="#0A57C7">
-  <link rel="stylesheet" href="style.css">
+  <link rel="manifest" href="./manifest.json">
+  <link rel="icon" href="./skf-192.png" sizes="192x192">
+  <link rel="apple-touch-icon" href="./skf-512.png">
+  <link rel="stylesheet" href="./style.css">
 </head>
 <body data-page="home">
   <header class="header">
     <div class="brand">
-      <img src="skf-logo.png" alt="SKF" class="logo">
+      <img src="./skf-logo.png" alt="SKF" class="logo" onerror="this.style.display='none'">
       <span class="brand-text">SKF 5S</span>
     </div>
     <div class="header-actions">
@@ -21,7 +21,7 @@
       <button id="btnImport" class="btn ghost">Importa</button>
       <button id="btnUpdate" class="btn ghost" title="Aggiorna app">Aggiorna</button>
       <button id="btnPin" class="btn icon" title="PIN">🔒</button>
-      <a class="btn primary" href="checklist.html">Vai alla checklist →</a>
+      <a class="btn primary" href="./checklist.html">Vai alla checklist →</a>
     </div>
   </header>
 
@@ -39,14 +39,16 @@
           </ol>
         </div>
         <div class="hero-right">
-          <img src="5s-hero.png" alt="5S" class="hero-img">
+          <img src="./5s-hero.png" alt="5S" class="hero-img" onerror="this.style.display='none'">
         </div>
       </div>
     </section>
 
     <section class="card">
       <h3 id="chartTitle">Andamento CH — Panoramica</h3>
-      <canvas id="progressChart" height="120"></canvas>
+      <div style="height: 280px">
+        <canvas id="progressChart"></canvas>
+      </div>
 
       <div id="lateBadge" class="badge-row" style="display:none;">
         <span class="badge warn" id="lateText">Azioni in ritardo</span>
@@ -65,14 +67,16 @@
     <small>SKF Digital 5S — Supervisor</small>
   </footer>
 
-  <!-- Chart.js prima di app.js -->
+  <!-- Chart.js PRIMA di app.js -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+
   <script>
-    // registra SW
+    // registra/aggiorna il SW
     if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.register('sw.js');
+      navigator.serviceWorker.register('./sw.js');
+      navigator.serviceWorker.addEventListener('controllerchange', ()=>location.reload());
     }
   </script>
-  <script src="app.js"></script>
+  <script src="./app.js"></script>
 </body>
 </html>
