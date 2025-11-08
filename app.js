@@ -1,340 +1,276 @@
-/** CONFIGURAZIONE */
-const CONFIG = {
-  PIN: "6170",
-  CHANNEL_DEFAULT: "CH 24",
-  AREA: "Rettifica",
-  LOW_SCORE_TARGET: 5,   // punteggio massimo atteso
-  LOW_SCORE_DAYS: 3      // giorni oltre i quali segnala “in miglioramento”
-};
+/* app.js — supervisor home essentials */
 
-const COLORS = {
-  s1: "#7c3aed", s2: "#ef4444", s3: "#f59e0b", s4: "#10b981", s5: "#2563eb",
-};
+// ---- Stato & persistenza ----------------------------------------------------
+const STORAGE_KEY = 'skf5s-data';
+const state = loadState();
 
-const INFO_TEXT = {
-  s1: "Criteri 1S …",
-  s2: "Criteri 2S …",
-  s3: "Criteri 3S …",
-  s4: "Criteri 4S …",
-  s5: "Criteri 5S …",
-};
-
-/** STORAGE helpers */
-const storageKey = (k)=>`skf5s:${CONFIG.AREA}:${k}`;
-const getJSON = (k,d)=>{ try{ return JSON.parse(localStorage.getItem(k))??d; }catch{ return d; } };
-const setJSON = (k,v)=> localStorage.setItem(k, JSON.stringify(v));
-
-/** PWA SW */
-if ("serviceWorker" in navigator) {
-  window.addEventListener("load", ()=> navigator.serviceWorker.register("sw.js"));
+function loadState() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (!raw) return { channels: {}, selectedCH: null };
+    const parsed = JSON.parse(raw);
+    if (!parsed.channels) parsed.channels = {};
+    return parsed;
+  } catch {
+    return { channels: {}, selectedCH: null };
+  }
 }
 
-/** Stato principale */
-let state = getJSON(storageKey("state"), {
-  channel: CONFIG.CHANNEL_DEFAULT,
-  points: { s1:0, s2:0, s3:0, s4:0, s5:0 },
-  notes:  { s1:"", s2:"", s3:"", s4:"", s5:"" },
-  dates:  { s1:null, s2:null, s3:null, s4:null, s5:null } // data ultima valutazione Sx
-});
-
-/** Utilità data */
-const todayStr = ()=> new Date().toISOString().slice(0,10);
-const daysBetween = (d1, d2) => Math.floor((d2 - d1)/(1000*60*60*24));
-
-/** Logiche ritardo e “miglioramento” */
-function isLate(k){
-  const d = state.dates[k];
-  if(!d) return false;
-  const today = new Date(); today.setHours(0,0,0,0);
-  const chosen = new Date(d); chosen.setHours(0,0,0,0);
-  return chosen < today; // non aggiornato oggi
+function saveState() {
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
 }
 
-function isLowScoreStuck(k){
-  const score = Number(state.points[k] ?? 0);
-  const d = state.dates[k];
-  if (isNaN(score) || !d) return false;
-  const last = new Date(d); last.setHours(0,0,0,0);
-  const now = new Date();  now.setHours(0,0,0,0);
-  const elapsed = daysBetween(last, now);
-  return score < CONFIG.LOW_SCORE_TARGET && elapsed >= CONFIG.LOW_SCORE_DAYS;
+// ---- Helpers ---------------------------------------------------------------
+function byId(id){ return document.getElementById(id); }
+function pct(n){ return `${Math.round(n)}%`; }
+
+function channelList(){
+  return Object.keys(state.channels);
 }
 
-/** PIN dialog */
-function openPinDialog(){
-  const dlg = document.getElementById("pinDialog");
-  if (!dlg) return;
-  dlg.showModal();
+function computeKPIs(ch){
+  // Ritorna [s1..s5] in %
+  const src = ch?.scores || { s1:0, s2:0, s3:0, s4:0, s5:0 };
+  const vals = ['s1','s2','s3','s4','s5'].map(k => Number(src[k]||0));
+  const avg = vals.length ? vals.reduce((a,b)=>a+b,0)/vals.length : 0;
 
-  const pinInput = document.getElementById("pinInput");
-  const chInput  = document.getElementById("channelInput");
-  pinInput.value = "";
-  chInput.value  = state.channel ?? CONFIG.CHANNEL_DEFAULT;
+  // Ritardi (conteggio semplice)
+  const late = Number(ch?.late || 0);
 
-  const confirm = document.getElementById("pinConfirmBtn");
-  const cancel  = document.getElementById("pinCancel");
-
-  const onConfirm = ()=>{
-    const ok = pinInput.value === CONFIG.PIN;
-    if (!ok) { alert("PIN errato"); return; }
-    state.channel = chInput.value.trim() || CONFIG.CHANNEL_DEFAULT;
-    setJSON(storageKey("state"), state);
-    refreshTitles();
-    dlg.close();
-  };
-  const onCancel = ()=> dlg.close();
-
-  confirm.onclick = onConfirm;
-  cancel.onclick  = onCancel;
+  return { vals, avg, late };
 }
 
-/** Titoli dinamici */
-function refreshTitles(){
-  const chartTitle = document.getElementById("chartTitle");
-  if (chartTitle) chartTitle.textContent = `Andamento ${state.channel} — ${CONFIG.AREA}`;
-  const pageTitle = document.getElementById("pageTitle");
-  if (pageTitle) pageTitle.textContent = `${state.channel} — ${CONFIG.AREA}`;
-}
-
-/** HOME */
-function setupHome(){
-  refreshTitles();
-  renderChart();
-  document.getElementById("lockBtn")?.addEventListener("click", openPinDialog);
-}
-
-/** CHECKLIST */
-function setupChecklist(){
-  refreshTitles();
-  document.getElementById("lockBtn")?.addEventListener("click", openPinDialog);
-
-  const summary = document.getElementById("summaryBadges");
-  ["s1","s2","s3","s4","s5"].forEach(k=>{
-    const v = state.points[k] ?? 0;
-    const el = document.createElement("button");
-    el.className = `s-badge ${k}`;
-    el.textContent = `${k.toUpperCase()} ${v*20}%`;
-    el.addEventListener("click", ()=> {
-      document.getElementById(`sheet-${k}`)?.scrollIntoView({behavior:"smooth",block:"start"});
-    });
-    summary.appendChild(el);
-  });
-
-  document.getElementById("toggleAll")?.addEventListener("click", ()=>{
-    document.querySelectorAll(".s-details").forEach(det=> det.open = !det.open);
-  });
-
-  const wrap = document.getElementById("sheets");
-  const defs = [
-    {k:"s1", name:"1S — Selezionare",   color:COLORS.s1},
-    {k:"s2", name:"2S — Sistemare",     color:COLORS.s2},
-    {k:"s3", name:"3S — Splendere",     color:COLORS.s3},
-    {k:"s4", name:"4S — Standardizzare",color:COLORS.s4},
-    {k:"s5", name:"5S — Sostenere",     color:COLORS.s5},
-  ];
-
-  defs.forEach(({k,name,color})=>{
-    const val = state.points[k] ?? 0;
-    const late = isLate(k);
-
-    const card = document.createElement("article");
-    card.className = "sheet" + (late ? " late":"");
-    card.id = `sheet-${k}`;
-    card.innerHTML = `
-      <div class="sheet-head">
-        <span class="s-color" style="background:${color}"></span>
-        <h3 class="s-title" style="color:${color}">${name}</h3>
-        <span class="s-value">Valore: ${(val*20)}%</span>
-        <button class="icon info" aria-label="Info" data-k="${k}">i</button>
-        <button class="icon add" aria-label="Duplica">+</button>
-      </div>
-
-      <details class="s-details" open>
-        <summary>▼ Dettagli</summary>
-
-        <label class="field">
-          <span>Responsabile / Operatore</span>
-          <input placeholder="Inserisci il nome..." value="">
-        </label>
-
-        <label class="field">
-          <span>Note</span>
-          <textarea rows="3" placeholder="Note...">${state.notes[k]??""}</textarea>
-        </label>
-
-        <div class="field">
-          <span>Data</span>
-          <div style="display:flex;gap:10px;align-items:center">
-            <input type="date" value="${state.dates[k]??todayStr()}" data-date="${k}">
-            <div class="points">
-              ${[0,1,3,5].map(p=>`
-                <button data-k="${k}" data-p="${p}" class="${val===p?'active':''}">${p}</button>
-              `).join("")}
-            </div>
-            <button class="icon danger del">🗑</button>
-          </div>
-        </div>
-      </details>
-    `;
-    wrap.appendChild(card);
-  });
-
-  // punteggi
-  wrap.addEventListener("click",(e)=>{
-    const btn = e.target.closest(".points button");
-    if(!btn) return;
-    const k = btn.dataset.k;
-    const p = Number(btn.dataset.p);
-    state.points[k] = p;
-    state.dates[k]  = todayStr();           // aggiorno data quando do un voto
-    setJSON(storageKey("state"), state);
-    document.querySelectorAll(`.points button[data-k="${k}"]`).forEach(b=>b.classList.toggle("active", Number(b.dataset.p)===p));
-    document.querySelector(`#sheet-${k} .s-value`).textContent = `Valore: ${p*20}%`;
-    updateStatsAndLate();
-  });
-
-  // date → ritardo
-  wrap.addEventListener("change",(e)=>{
-    const inp = e.target.closest('input[type="date"][data-date]');
-    if(!inp) return;
-    const k = inp.dataset.date;
-    state.dates[k] = inp.value;
-    setJSON(storageKey("state"), state);
-    updateStatsAndLate();
-  });
-
-  // elimina con PIN
-  wrap.addEventListener("click",(e)=>{
-    const del = e.target.closest(".del");
-    if(!del) return;
-    if (prompt("Inserisci PIN per eliminare") !== CONFIG.PIN) return;
-    const k = del.closest(".sheet").id.replace("sheet-","");
-    state.points[k]=0; state.notes[k]=""; state.dates[k]=todayStr();
-    setJSON(storageKey("state"), state);
-    del.closest(".sheet").querySelectorAll(".points button").forEach(b=>b.classList.remove("active"));
-    del.closest(".sheet").querySelector(".s-value").textContent="Valore: 0%";
-    del.closest(".sheet").querySelector('textarea').value="";
-    del.closest(".sheet").querySelector('input[type="date"]').value=todayStr();
-    updateStatsAndLate();
-  });
-
-  // info
-  wrap.addEventListener("click",(e)=>{
-    const infoBtn = e.target.closest(".info");
-    if(!infoBtn) return;
-    openInfo(infoBtn.dataset.k);
-  });
-
-  document.getElementById("infoCloseBtn")?.addEventListener("click", ()=> {
-    document.getElementById("infoDialog").close();
-  });
-
-  updateStatsAndLate();
-}
-
-/** Aggiornamento statistiche, badge “late” e avvisi “improvement” */
-function updateStatsAndLate(){
-  const arr = Object.values(state.points);
-  const avg = arr.length ? Math.round(arr.reduce((a,b)=>a+b,0)/arr.length*20) : 0;
-  document.getElementById("avgScore")?.replaceChildren(document.createTextNode(`${avg}%`));
-
-  const lateList = Object.keys(state.dates).filter(k=> isLate(k));
-  document.getElementById("lateCount")?.replaceChildren(document.createTextNode(String(lateList.length)));
-
-  // bordo rosso sulle schede in ritardo
-  ["s1","s2","s3","s4","s5"].forEach(k=>{
-    document.getElementById(`sheet-${k}`)?.classList.toggle("late", isLate(k));
-  });
-
-  // 🔔 Avvisi “in miglioramento” per punteggi <5 da N giorni
-  const lowList = ["s1","s2","s3","s4","s5"].filter(isLowScoreStuck);
-  const alertBox = document.getElementById("lowScoreAlert");
-  if (alertBox){
-    if (lowList.length === 0){
-      alertBox.innerHTML = "";
-    } else {
-      const labels = {s1:"1S",s2:"2S",s3:"3S",s4:"4S",s5:"5S"};
-      alertBox.innerHTML = `⚠️ ${lowList.length} area${lowList.length>1?"e":""} in miglioramento (punteggio &lt; ${CONFIG.LOW_SCORE_TARGET} da ≥ ${CONFIG.LOW_SCORE_DAYS} giorni): ` +
-        lowList.map(k=> `<button class="improve-btn" data-go="${k}">${labels[k]} in miglioramento</button>`).join("");
-      alertBox.querySelectorAll(".improve-btn").forEach(b=>{
-        b.addEventListener("click", ()=>{
-          // vai alla pagina checklist sulla S scelta
-          window.location.href = `checklist.html#sheet-${b.dataset.go}`;
+// ---- Import semplice (JSON dei CH) -----------------------------------------
+function importJSONFile() {
+  const inp = document.createElement('input');
+  inp.type = 'file';
+  inp.accept = 'application/json';
+  inp.onchange = () => {
+    const f = inp.files?.[0];
+    if (!f) return;
+    const reader = new FileReader();
+    reader.onload = () => {
+      try {
+        const data = JSON.parse(reader.result);
+        // Atteso: { "CH 24": { name:"Rettifica", scores:{s1..s5}, late:1 }, ... }
+        Object.entries(data).forEach(([key, val]) => {
+          state.channels[key] = val;
         });
+        if (!state.selectedCH) {
+          state.selectedCH = channelList()[0] || null;
+        }
+        saveState();
+        renderAll();
+      } catch (e) {
+        alert('File JSON non valido.');
+      }
+    };
+    reader.readAsText(f);
+  };
+  inp.click();
+}
+
+// ---- Chart ------------------------------------------------------------------
+let chart;
+
+function renderChart(){
+  const ctx = byId('progressChart');
+  if (!ctx) return;
+
+  // Etichette fisse in asse X
+  const labels = ["1S","2S","3S","4S","5S","Ritardi"];
+
+  // Dati (CH selezionato o media globale)
+  let title = 'Andamento CH — Panoramica';
+  let dataVals = [0,0,0,0,0,0];
+
+  const chKey = state.selectedCH;
+  if (chKey && state.channels[chKey]) {
+    const ch = state.channels[chKey];
+    const { vals, late } = computeKPIs(ch);
+    dataVals = [...vals, late];
+    title = `Andamento ${chKey} — ${ch.name || ''}`.trim();
+  } else {
+    // Panoramica su tutti i CH
+    const list = channelList();
+    if (list.length) {
+      let sum = [0,0,0,0,0];
+      let lateSum = 0;
+      list.forEach(k => {
+        const { vals, late } = computeKPIs(state.channels[k]);
+        sum = sum.map((v,i)=> v + (vals[i]||0));
+        lateSum += late;
       });
+      const avg = sum.map(v => v / list.length);
+      dataVals = [...avg, lateSum];
     }
   }
 
-  // ridisegna grafico per evidenziare barre “low score”
-  renderChart();
-}
+  byId('chartTitle').textContent = title;
 
-/** INFO dialog */
-function openInfo(k){
-  const dlg = document.getElementById("infoDialog");
-  document.getElementById("infoTitle").textContent = `${k.toUpperCase()} — Info`;
-  document.getElementById("infoText").textContent = INFO_TEXT[k] ?? "";
-  dlg.querySelector(".modal-box").style.borderTop = `6px solid ${COLORS[k]||'#0a57d5'}`;
-  dlg.showModal();
-}
+  // Destroy precedente
+  if (chart) { chart.destroy(); }
 
-/** Grafico */
-let chart;
-function renderChart(){
-  const ctx = document.getElementById("progressChart");
-  if(!ctx) return;
-
-  const vals = ["s1","s2","s3","s4","s5"].map(k=> (state.points[k]??0)*20 );
-  const delayed = Object.keys(state.dates).filter(k=> isLate(k)).length;
-  const lowList = ["s1","s2","s3","s4","s5"].filter(isLowScoreStuck);
-  const labels = ["1S","2S","3S","4S","5S","Ritardi"];
-
-  const bg = ["#7c3aed","#ef4444","#f59e0b","#10b981","#2563eb","#ef4444"];
-  const border = ["s1","s2","s3","s4","s5"].map(k=> lowList.includes(k) ? "#E2001A" : bg[["s1","s2","s3","s4","s5"].indexOf(k)]);
-  const data = [...vals, delayed];
-  const borderAll = [...border, "#ef4444"];
-
-  if(chart) chart.destroy();
   chart = new Chart(ctx, {
-    type:"bar",
-    data:{
+    type: 'bar',
+    data: {
       labels,
-      datasets:[{
-        data,
-        backgroundColor:bg,
-        borderColor:borderAll,
-        borderWidth: lowList.length ? 3 : 1
+      datasets: [{
+        data: dataVals,
+        borderWidth: 0
       }]
     },
-    options:{
-      responsive:true,
-      plugins:{ legend:{display:false}, tooltip:{enabled:true} },
-      scales:{
-        y:{beginAtZero:true,max:100,ticks:{callback:v=>v+"%"}, grid:{display:false}},
-        x:{ticks:{maxRotation:0}, grid:{display:false}}
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: { display:false },
+        tooltip: {
+          callbacks: {
+            title: (items)=> items[0]?.label || '',
+            label: (item)=> {
+              const l = item.label;
+              const v = item.parsed.y;
+              if (l === 'Ritardi') return ` ${v} azioni`;
+              return ` ${v}%`;
+            }
+          }
+        }
+      },
+      scales: {
+        x: { grid: { display:false } },
+        y: {
+          beginAtZero:true,
+          max: 100,
+          ticks: { callback:(v)=> v + '%' },
+          grid: { display:false }
+        }
       }
     }
   });
 
-  // Pulsanti “in ritardo” (sulla data)
-  const late = [];
-  ["s1","s2","s3","s4","s5"].forEach((k,i)=>{ if(isLate(k)) late.push({k, label:`${i+1}S in ritardo`}); });
-  const box = document.getElementById("lateBtns");
-  if (box){
-    box.innerHTML = "";
-    late.forEach(({k,label})=>{
-      const b = document.createElement("button");
-      b.className = `late-btn ${k}`;
-      b.textContent = label;
-      b.addEventListener("click", ()=> { window.location.href = `checklist.html#sheet-${k}`; });
-      box.appendChild(b);
-    });
+  // KPI e badge ritardi
+  let avg = 0, lateCount = 0;
+  if (state.selectedCH && state.channels[state.selectedCH]) {
+    const k = computeKPIs(state.channels[state.selectedCH]);
+    avg = k.avg; lateCount = k.late;
+  } else {
+    const list = channelList();
+    if (list.length){
+      let a=0, l=0;
+      list.forEach(k=>{
+        const x = computeKPIs(state.channels[k]);
+        a += x.avg; l += x.late;
+      });
+      avg = a / list.length; lateCount = l;
+    }
+  }
+  byId('avgScore').textContent  = pct(avg);
+  byId('lateCount').textContent = lateCount;
+  const badge = byId('lateBadge');
+  if (lateCount > 0) {
+    badge.style.display = '';
+    byId('lateText').textContent = `Azioni in ritardo: ${lateCount}`;
+  } else {
+    badge.style.display = 'none';
   }
 }
 
-/** Router */
-document.addEventListener("DOMContentLoaded", ()=>{
-  refreshTitles();
-  if (document.body.dataset.page==="home") setupHome();
-  if (document.body.dataset.page==="checklist") setupChecklist();
+// ---- Filtri CH (chips) ------------------------------------------------------
+function renderCHFilters(){
+  const wrap = byId('chFilters');
+  if (!wrap) return;
+  wrap.innerHTML = '';
+
+  const list = channelList();
+  if (!list.length) {
+    const info = document.createElement('div');
+    info.className = 'muted';
+    info.textContent = 'Importa i report CH per vedere i dati.';
+    wrap.appendChild(info);
+    return;
+  }
+
+  list.forEach(key=>{
+    const chip = document.createElement('button');
+    chip.className = 'chip';
+    const active = state.selectedCH === key || (!state.selectedCH && list[0]===key);
+    if (active) chip.classList.add('active');
+
+    const name = state.channels[key]?.name ? ` — ${state.channels[key].name}` : '';
+    chip.textContent = `${key}${name}`;
+    chip.onclick = ()=>{
+      state.selectedCH = key;
+      saveState();
+      renderAll();
+    };
+    wrap.appendChild(chip);
+  });
+
+  // chip "Tutti i CH"
+  const all = document.createElement('button');
+  all.className = 'chip';
+  if (!state.selectedCH) all.classList.add('active');
+  all.textContent = 'Tutti i CH';
+  all.onclick = ()=>{
+    state.selectedCH = null;
+    saveState();
+    renderAll();
+  };
+  wrap.appendChild(all);
+}
+
+// ---- Aggiorna SW da bottone -------------------------------------------------
+async function forceUpdateSW(){
+  if (!('serviceWorker' in navigator)) return;
+  const reg = await navigator.serviceWorker.getRegistration();
+  if (!reg) { alert('Service Worker non registrato'); return; }
+  try {
+    await reg.update();
+    // se c’è una waiting, attivala
+    if (reg.waiting) {
+      reg.waiting.postMessage({ type:'SKIP_WAITING' });
+    }
+    // micro delay e ricarico
+    setTimeout(()=>location.reload(), 300);
+  } catch(e){
+    location.reload();
+  }
+}
+
+// ---- Init -------------------------------------------------------------------
+function renderAll(){
+  renderCHFilters();
+  renderChart();
+}
+
+function wireUI(){
+  const p = document.body.getAttribute('data-page');
+  if (p !== 'home') return;
+
+  const btnImport = document.getElementById('btnImport');
+  if (btnImport) btnImport.addEventListener('click', importJSONFile);
+
+  const btnUpdate = document.getElementById('btnUpdate');
+  if (btnUpdate) btnUpdate.addEventListener('click', forceUpdateSW);
+}
+
+document.addEventListener('DOMContentLoaded', ()=>{
+  wireUI();
+  renderAll();
+});
+
+// Accorcia l’attesa se il SW invia skipWaiting
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.addEventListener('controllerchange', () => {
+    // quando cambia il controller, ricarico per usare subito i nuovi file
+    location.reload();
+  });
+}
+
+// opzionale: ascolta messaggi dal SW
+navigator.serviceWorker?.addEventListener?.('message', (e)=>{
+  if (e.data?.type === 'SKIP_WAITING_DONE') {
+    location.reload();
+  }
 });
