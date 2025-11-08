@@ -1,48 +1,32 @@
 <!doctype html>
 <html lang="it">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>SKF 5S – Checklist</title>
-  <link rel="manifest" href="manifest.json" />
-  <link rel="stylesheet" href="style.css" />
-  <link rel="icon" href="skf-192.png" />
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>SKF 5S — Checklist</title>
+  <link rel="icon" href="assets/skf-192.png">
+  <link rel="stylesheet" href="style.css">
 </head>
 <body data-page="checklist">
-  <header class="topbar">
-    <div class="brand">
-      <img src="skf-logo.png" alt="SKF" class="logo" />
-      <span class="brand-text">SKF 5S</span>
-    </div>
-    <div class="actions">
-      <a class="btn ghost" href="index.html">⬅︎ Indietro</a>
-      <button id="lockBtn" class="btn ghost">🔒 PIN</button>
-    </div>
-  </header>
+<header class="appbar">
+  <div class="brand">
+    <img src="assets/skf-logo.png" class="brand-logo" alt="SKF">
+    <span class="brand-title">SKF 5S</span>
+    <span class="brand-badge">Supervisor</span>
+  </div>
+  <nav class="actions">
+    <a href="index.html" class="btn big">← Home</a>
+    <button id="btn-toggle-all" class="btn outline">Comprimi/Espandi tutti</button>
+  </nav>
+</header>
 
-  <main class="container">
-    <h1 id="pageTitle" class="page-title">CH 24 — Rettifica</h1>
+<main class="container">
+  <div id="cards"></div>
+  <div style="margin-top:12px">
+    <button id="btn-print-all" class="btn outline">Stampa tutti i CH</button>
+  </div>
+</main>
 
-    <div id="summaryBadges" class="badges"></div>
-
-    <div class="toolbar">
-      <button id="toggleAll" class="btn">Comprimi/Espandi tutte</button>
-    </div>
-
-    <section id="sheets" class="sheets"><!-- creato da app.js --></section>
-  </main>
-
-  <!-- Popup info -->
-  <dialog id="infoDialog" class="modal">
-    <form method="dialog" class="modal-box">
-      <h3 id="infoTitle">Info</h3>
-      <div id="infoText" class="info-text"></div>
-      <div class="modal-actions">
-        <button id="infoCloseBtn" class="btn primary">Chiudi</button>
-      </div>
-    </form>
-  </dialog>
-
-  <script src="app.js"></script>
+<script src="app.js"></script>
 </body>
 </html>
