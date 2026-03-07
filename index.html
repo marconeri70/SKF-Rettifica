@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>SKF 5S — App</title>
 
-  <link rel="manifest" href="manifest.json?v=7">
+  <link rel="manifest" href="manifest.json?v=8">
   <meta name="theme-color" content="#0a57d5" />
   <link rel="icon" href="assets/pwa-192.png" />
 
@@ -31,35 +31,20 @@
   </header>
 
   <main class="container">
-    <div class="hero-header" style="margin-bottom: 12px; padding: 12px 16px;">
-      <div class="hero-text">
-        <h2 style="font-size: 1.4rem;">Metodologia 5S</h2>
-        <p style="font-size: 0.85rem;">Scorri per leggere i principi base.</p>
+    
+    <section class="card hero-modern">
+      <div class="hero-stack">
+        <h2 style="margin: 0 0 10px 0; color: #1e293b; font-size: 1.4rem;">Cosa è 5S</h2>
+        <div class="stack-item"><span class="tag s1">1S Selezionare</span> <span class="desc">— Eliminare il superfluo.</span></div>
+        <div class="stack-item"><span class="tag s2">2S Sistemare</span> <span class="desc">— Un posto per tutto e tutto al suo posto.</span></div>
+        <div class="stack-item"><span class="tag s3">3S Splendere</span> <span class="desc">— Pulire e prevenire lo sporco.</span></div>
+        <div class="stack-item"><span class="tag s4">4S Standardizzare</span> <span class="desc">— Regole e segnali chiari.</span></div>
+        <div class="stack-item"><span class="tag s5">5S Sostenere</span> <span class="desc">— Abitudine e miglioramento continuo.</span></div>
       </div>
-    </div>
-
-    <div class="five-slider">
-      <div class="five-card" style="--card-color: var(--s1);">
-        <h4><span class="dot"></span> 1S Selezionare</h4>
-        <p>Elimina il superfluo dalla tua area.</p>
+      <div class="hero-img-wrap">
+        <img src="assets/5s-hero.png" alt="Grafica 5S" />
       </div>
-      <div class="five-card" style="--card-color: var(--s2);">
-        <h4><span class="dot"></span> 2S Sistemare</h4>
-        <p>Un posto per tutto, tutto al suo posto.</p>
-      </div>
-      <div class="five-card" style="--card-color: var(--s3);">
-        <h4><span class="dot"></span> 3S Splendere</h4>
-        <p>Pulisci e previeni lo sporco.</p>
-      </div>
-      <div class="five-card" style="--card-color: var(--s4);">
-        <h4><span class="dot"></span> 4S Standardizzare</h4>
-        <p>Regole visive e segnali chiari.</p>
-      </div>
-      <div class="five-card" style="--card-color: var(--s5);">
-        <h4><span class="dot"></span> 5S Sostenere</h4>
-        <p>Abitudine e miglioramento continuo.</p>
-      </div>
-    </div>
+    </section>
 
     <div class="section-title-wrapper">
       <h3 id="chartTitle" class="section-title">Andamento CH 24</h3>
@@ -67,7 +52,11 @@
     </div>
 
     <section class="card premium-card" style="padding-top: 10px;">
-      <canvas id="progressChart" height="240"></canvas>
+      
+      <div style="position: relative; height: 260px; width: 100%;">
+        <canvas id="progressChart"></canvas>
+      </div>
+      
       <div id="lateBtns" class="late-box"></div>
       
       <div class="divider"></div>
