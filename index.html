@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>SKF 5S — App</title>
 
-  <link rel="manifest" href="manifest.json?v=6">
+  <link rel="manifest" href="manifest.json?v=7">
   <meta name="theme-color" content="#0a57d5" />
   <link rel="icon" href="assets/pwa-192.png" />
 
@@ -31,15 +31,14 @@
   </header>
 
   <main class="container">
-    <section class="hero-header">
+    <div class="hero-header" style="margin-bottom: 12px; padding: 12px 16px;">
       <div class="hero-text">
-        <h2>Metodologia 5S</h2>
-        <p>L'eccellenza operativa inizia dall'ordine e dalla standardizzazione.</p>
+        <h2 style="font-size: 1.4rem;">Metodologia 5S</h2>
+        <p style="font-size: 0.85rem;">Scorri per leggere i principi base.</p>
       </div>
-      <img src="assets/5s-hero.png" alt="5S" class="hero-image" />
-    </section>
+    </div>
 
-    <div class="five-grid">
+    <div class="five-slider">
       <div class="five-card" style="--card-color: var(--s1);">
         <h4><span class="dot"></span> 1S Selezionare</h4>
         <p>Elimina il superfluo dalla tua area.</p>
@@ -63,11 +62,12 @@
     </div>
 
     <div class="section-title-wrapper">
-      <h3 id="chartTitle" class="section-title">Andamento CH 24 — Rettifica</h3>
+      <h3 id="chartTitle" class="section-title">Andamento CH 24</h3>
+      <p style="margin: 0; font-size: 0.85rem; color: #64748b; padding-left: 6px;">Tocca una colonna per aprire la scheda corrispondente.</p>
     </div>
 
-    <section class="card premium-card">
-      <canvas id="progressChart" height="120"></canvas>
+    <section class="card premium-card" style="padding-top: 10px;">
+      <canvas id="progressChart" height="240"></canvas>
       <div id="lateBtns" class="late-box"></div>
       
       <div class="divider"></div>
