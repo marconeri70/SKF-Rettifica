@@ -12,7 +12,7 @@ const COLORS = {
 const INFO_TEXT = {
   s1: "(1) L'area pedonale è libera da ostacoli e pericoli di inciampo. (2) Nessun materiale/attrezzo non identificato sul pavimento. (3) Solo materiali/strumenti necessari presenti; il resto è rimosso. (4) Solo materiale necessario per il lavoro in corso. (5) Documenti/visualizzazioni necessari, aggiornati, in buono stato. (6) Definiti team e processo etichetta rossa; processo attivo. (7) Lavagna 5S aggiornata (piano, foto prima/dopo, audit). (8) Evidenze che garantiscono la sostenibilità di 1S. (9) 5S/1S compresi dal team; responsabilità definite. (10) Tutti i membri partecipano alle attività dell'area.",
   s2: "(1) Area e team definiti; nessuna cosa non necessaria in zona. (2) Articoli di sicurezza chiaramente contrassegnati e accessibili. (3) Uscite/interruttori emergenza visibili e liberi. (4) Stazioni qualità definite e organizzate. (5) SWC seguito. (6) Posizioni prefissate per utenze/strumenti/pulizia con indicatori min/max. (7) Posizioni definite per contenitori e rifiuti con identificazione chiara. (8) WIP/accettati/rifiutati/quarantena con posizioni e identificazione. (9) Materie prime/componenti con posizioni designate. (10) Layout con corridoi/aree/pedonali e DPI definito. (11) File/documenti identificati e organizzati al punto d'uso. (12) Miglioramenti one-touch/poka-yoke/ergonomia. (13) Evidenze di sostenibilità 2S. (14) 5S/2S compresi; responsabilità definite. (15) Partecipazione di tutti.",
-  s3: "(1) Non si trovano cose inutili. (2) Miglioramenti 2S mantenuti. (3) Verifiche regolari e azioni su deviazioni. (4) Area/team definiti; 1S/2S compresi. (5) Pavimenti/pareti puliti e senza detriti/oli/trucioli ecc. (6) Segnali/etichette puliti, corretti e leggibili. (7) Documenti in buone condizioni e protetti. (8) Luci/ventilazione/AC in ordine e pulite. (9) Fonti sporco identificate e note. (10) Piani d'azione per eliminare fonti sporco. (11) Azioni eseguite. (12) Miglioramenti per prevenire pulizia (meno tappe, eliminazione fonte). (13) Riciclaggio attivo con corretto smistamento. (14) Demarcazioni rese permanenti. (15) Evidenze di sostenibilità 3S. (16) 5S/3S compresi; responsabilità definite; partecipazione di tutti.",
+  s3: "(1) Non si trovano cose inutili. (2) Miglioramenti 2S mantenuti. (3) Verifiche regolari e azioni su deviazioni. (4) Area/team definiti; 1S/2S compresi. (5) Pavimenti/pareti puliti e senza detriti/oli/trucioli ecc. (6) Segnali/etichette puliti, corretti e leggibili. (7) Documenti in buone condizioni e protetti. (8) Luci/ventilazione/AC in ordine e pulite. (9) Fonti sporco identificate e note. (10) Piani d'action per eliminare fonti sporco. (11) Azioni eseguite. (12) Miglioramenti per prevenire pulizia (meno tappe, eliminazione fonte). (13) Riciclaggio attivo con corretto smistamento. (14) Demarcazioni rese permanenti. (15) Evidenze di sostenibilità 3S. (16) 5S/3S compresi; responsabilità definite; partecipazione di tutti.",
   s4: "(1) Visual management/kanban/Min-Max implementati (gestire a vista). (2) Colori/segni standard per lubrificazioni, tubazioni, valvole, ecc. (3) Standard 5S consolidati e aggiornati come training/guida. (4) Istruzioni 5S integrate nella gestione quotidiana.",
   s5: "(1) Tutti formati sugli standard 5S e coinvolti. (2) 5S come abitudine; standard seguiti da tutti. (3) Layered audit programmati. (4) Foto prima/dopo mantenute come riferimento. (5) Obiettivi 5S esposti."
 };
@@ -31,7 +31,7 @@ if ("serviceWorker" in navigator) {
 let state = getJSON(storageKey("state"), {
   channel: CONFIG.CHANNEL_DEFAULT,
   pin: getJSON("skf5s:pin", CONFIG.DEFAULT_PIN),
-  operator: "", // <--- Nuovo campo per salvare il nome dell'operatore globale
+  operator: "", 
   points: { s1:0, s2:0, s3:0, s4:0, s5:0 },
   notes:  { s1:"", s2:"", s3:"", s4:"", s5:"" },
   dates:  { s1:null, s2:null, s3:null, s4:null, s5:null },
@@ -219,38 +219,30 @@ function setupHome(){
   renderChart();
   document.getElementById("lockBtn")?.addEventListener("click", openPinDialog);
   
-  // SINCRONIZZAZIONE AL SERVER PRIVATO
-  document.getElementById("exportBtn")?.addEventListener("click", async ()=>{
-    const entered = prompt("Inserisci PIN per inviare i dati al server");
+  // ==========================================
+  // RIPRISTINATO IL SALVATAGGIO LOCALE (DOWNLOAD)
+  // ==========================================
+  document.getElementById("exportBtn")?.addEventListener("click", ()=>{
+    const entered = prompt("Inserisci PIN per esportare i dati");
     if (entered !== String(state.pin)) return;
 
     const payload = {
       area: CONFIG.AREA,
       channel: state.channel,
-      operator: state.operator,
+      operator: state.operator, // Esporta anche il nome dell'operatore
       date: new Date().toISOString(),
       points: state.points,
       notes: state.notes,
       dates: state.dates,
       detail: state.detail
     };
-    
-    try {
-      const response = await fetch('/api/sync', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify([payload]) 
-      });
 
-      if (response.ok) {
-        alert("✅ Dati inviati e sincronizzati con successo sul Server!");
-      } else {
-        alert("❌ Errore del server durante il salvataggio.");
-      }
-    } catch (err) {
-      console.error(err);
-      alert("❌ Impossibile connettersi. Assicurati che il tablet sia connesso alla rete aziendale.");
-    }
+    const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = `SKF_5S_${CONFIG.AREA}_${state.channel}_${new Date().toISOString().split('T')[0]}.json`;
+    a.click();
+    URL.revokeObjectURL(a.href);
   });
 }
 
@@ -269,7 +261,6 @@ function setupChecklist(){
         state.operator = name.trim();
         setJSON(storageKey("state"), state);
         btnOp.textContent = state.operator ? `👤 Operatore: ${state.operator}` : "👤 Imposta Operatore";
-        // Aggiorna anche i campi testuali nelle schede
         document.querySelectorAll(".op-input").forEach(inp => inp.value = state.operator);
       }
     });
@@ -373,7 +364,7 @@ function setupChecklist(){
   });
 
   document.getElementById("infoCloseBtn")?.addEventListener("click", (e)=> {
-    e.preventDefault(); // Evita il ricaricamento del form
+    e.preventDefault(); 
     document.getElementById("infoDialog").close();
   });
 
