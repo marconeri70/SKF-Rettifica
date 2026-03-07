@@ -27,15 +27,25 @@ a { color: inherit; text-decoration: none; }
 .container { max-width: 1100px; margin: 1rem auto; padding: 0 1rem; padding-bottom: 2rem; }
 .card { background: var(--card); border-radius: 16px; padding: 16px; box-shadow: 0 4px 20px rgba(0,0,0,0.04); margin-bottom: 1rem; }
 
-/* HOME: SLIDER 5S ORIZZONTALE */
-.hero-header { background: #fff; border-radius: 16px; box-shadow: 0 4px 15px rgba(0,0,0,0.03); }
-.hero-text h2 { margin: 0 0 4px 0; color: var(--skf); }
-.five-slider { display: flex; overflow-x: auto; gap: 12px; padding-bottom: 16px; scroll-snap-type: x mandatory; -webkit-overflow-scrolling: touch; }
-.five-slider::-webkit-scrollbar { display: none; } /* Nasconde barra scorrimento su mobile */
-.five-card { flex: 0 0 200px; scroll-snap-align: start; background: #fff; border-radius: 14px; padding: 14px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); border-top: 4px solid var(--card-color); }
-.five-card h4 { margin: 0 0 6px 0; font-size: 0.95rem; display: flex; align-items: center; gap: 6px; color: #1e293b; }
-.five-card p { margin: 0; font-size: 0.8rem; color: #64748b; line-height: 1.3; }
-.five-card .dot { width: 10px; height: 10px; border-radius: 50%; background: var(--card-color); display: inline-block; }
+/* HOME: HERO MODERNA (Lista a Sinistra, Immagine a Destra) */
+.hero-modern { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 20px; }
+.hero-stack { display: flex; flex-direction: column; gap: 12px; flex: 1; }
+.stack-item { font-size: 0.95rem; color: #334155; line-height: 1.4; }
+.stack-item .tag { display: inline-block; padding: 4px 8px; border-radius: 6px; color: #fff; font-weight: bold; font-size: 0.85rem; margin-right: 6px; }
+.stack-item .desc { color: #64748b; }
+.stack-item .tag.s1 { background: var(--s1); }
+.stack-item .tag.s2 { background: var(--s2); }
+.stack-item .tag.s3 { background: var(--s3); }
+.stack-item .tag.s4 { background: var(--s4); }
+.stack-item .tag.s5 { background: var(--s5); }
+
+.hero-img-wrap { width: 110px; flex-shrink: 0; display: flex; justify-content: center; }
+.hero-img-wrap img { width: 100%; height: auto; filter: drop-shadow(0 6px 10px rgba(0,0,0,0.1)); }
+
+@media (max-width: 480px) {
+  .hero-modern { flex-direction: column-reverse; align-items: center; text-align: left; }
+  .hero-img-wrap { width: 90px; margin-bottom: 10px; }
+}
 
 /* GRAFICO */
 .section-title-wrapper { margin: 12px 0 8px 0; padding-left: 6px; }
@@ -55,15 +65,9 @@ a { color: inherit; text-decoration: none; }
 .summary-badges .s-badge:active { transform: scale(0.95); }
 .s-badge.s1 { border-color: var(--s1); } .s-badge.s2 { border-color: var(--s2); } .s-badge.s3 { border-color: var(--s3); } .s-badge.s4 { border-color: var(--s4); } .s-badge.s5 { border-color: var(--s5); }
 
-/* SCHEDE CHECKLIST (Animazione Evidenziazione) */
+/* SCHEDE CHECKLIST */
 .sheets { display: flex; flex-direction: column; gap: 16px; }
-.sheet { 
-  background: #fff; border-radius: 16px; padding: 14px; 
-  box-shadow: 0 4px 18px rgba(0,0,0,0.05); 
-  border: 2px solid transparent; 
-  transition: all 0.4s ease; 
-  scroll-margin-top: 80px; /* Evita sovrapposizione header blu */
-}
+.sheet { background: #fff; border-radius: 16px; padding: 14px; box-shadow: 0 4px 18px rgba(0,0,0,0.05); border: 2px solid transparent; transition: all 0.4s ease; scroll-margin-top: 80px; }
 .sheet.late { background: var(--late); box-shadow: 0 0 0 3px rgba(239,68,68,0.25) inset; }
 
 .sheet-head { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; margin-bottom: 10px; }
@@ -75,7 +79,7 @@ a { color: inherit; text-decoration: none; }
 .icon { background: #edf2f7; border: 0; border-radius: 8px; width: 34px; height: 34px; display: inline-flex; align-items: center; justify-content: center; cursor: pointer; flex-shrink: 0; font-size: 1.1rem; }
 .icon.danger { background: #fee2e2; color: #ef4444; }
 
-/* ANIMAZIONE SCHEDA (:target FUNZIONA ORA) */
+/* ANIMAZIONE SCHEDA */
 @keyframes highlightPulse {
   0% { transform: scale(1); box-shadow: 0 0 0 0 var(--glow); }
   50% { transform: scale(1.02); box-shadow: 0 0 0 10px rgba(0,0,0,0); }
