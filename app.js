@@ -1,6 +1,6 @@
 /** CONFIGURAZIONE */
 const CONFIG = {
-  AREA: "Rettifica",           // Per Montaggio cambia qui in "Montaggio"
+  AREA: "Rettifica",           // ⚠️ Per Montaggio cambia qui in "Montaggio"
   CHANNEL_DEFAULT: "CH 24",
   DEFAULT_PIN: "6170"
 };
@@ -31,11 +31,11 @@ if ("serviceWorker" in navigator) {
 let state = getJSON(storageKey("state"), {
   channel: CONFIG.CHANNEL_DEFAULT,
   pin: getJSON("skf5s:pin", CONFIG.DEFAULT_PIN),
+  operator: "", // <--- Nuovo campo per salvare il nome dell'operatore globale
   points: { s1:0, s2:0, s3:0, s4:0, s5:0 },
   notes:  { s1:"", s2:"", s3:"", s4:"", s5:"" },
   dates:  { s1:null, s2:null, s3:null, s4:null, s5:null },
-  // scelte dei punti nel popup, per calcolare la media
-  detail: { s1:{}, s2:{}, s3:{}, s4:{}, s5:{} }   // es. detail.s1[0]=3  -> punto #1 di S1 valutato 3
+  detail: { s1:{}, s2:{}, s3:{}, s4:{}, s5:{} }   
 });
 function savePin(p){ state.pin = p; setJSON(storageKey("state"), state); localStorage.setItem("skf5s:pin", JSON.stringify(p)); }
 
@@ -47,7 +47,7 @@ function refreshTitles(){
   if (pageTitle) pageTitle.textContent = `${state.channel} — ${CONFIG.AREA}`;
 }
 
-/** PIN dialog (con cambio PIN offline) */
+/** PIN dialog */
 function openPinDialog(){
   const dlg = document.getElementById("pinDialog");
   if (!dlg) return;
@@ -109,7 +109,6 @@ function parsePoints(txt){
   return out;
 }
 function squaresSummaryColored(score){
-  // 🟦 = scelto, ⬜ = non scelto
   const order = [0,1,3,5];
   return order.map(v => (v===score ? `🟦${v}` : `⬜${v}`)).join(" ");
 }
@@ -132,15 +131,11 @@ function nearestScore(mean){
 }
 function recalcFromDetailAndApply(k){
   const picks = Object.values(state.detail[k]||{});
-  if (picks.length===0) return; // niente ancora
+  if (picks.length===0) return; 
   const mean = picks.reduce((a,b)=>a+b,0) / picks.length;
   const newScore = nearestScore(mean);
-  // applica alla scheda
   state.points[k] = newScore;
   setJSON(storageKey("state"), state);
-  document.querySelectorAll(`#sheet-${k} .points button`).forEach(b=>{
-    b.classList.toggle("active", Number(b.dataset.p)===newScore);
-  });
   const sv = document.querySelector(`#sheet-${k} .s-value`);
   if (sv) sv.textContent = `Valore: ${newScore*20}%`;
   updateStatsAndLate();
@@ -174,12 +169,10 @@ function renderChart(){
           enabled:true,
           callbacks:{
             label: (item)=>{
-              // riga valore principale
               if (item.dataIndex===5) return "Ritardi: " + item.raw;
               return `${item.label}: ${item.raw}%`;
             },
             afterBody: (items)=>{
-              // riassunto Note scelte nel popup per S1..S5
               const idx = items[0].dataIndex;
               if (idx<0 || idx>4) return;
               const key = ["s1","s2","s3","s4","s5"][idx];
@@ -188,7 +181,7 @@ function renderChart(){
               const lines = Object.keys(det)
                 .map(n=>Number(n))
                 .sort((a,b)=>a-b)
-                .slice(0,6) // massimo 6 righe per non esagerare
+                .slice(0,6) 
                 .map(n=>{
                   const score = det[n];
                   const text  = pts[n] || "";
@@ -206,7 +199,6 @@ function renderChart(){
     }
   });
 
-  // pulsanti “in ritardo”
   const late = [];
   ["s1","s2","s3","s4","s5"].forEach((k,i)=>{ if(isLate(k)) late.push({k, label:`${i+1}S in ritardo`}); });
   const box = document.getElementById("lateBtns");
@@ -221,29 +213,44 @@ function renderChart(){
     box.appendChild(b);
   });
 }
+
 function setupHome(){
   refreshTitles();
   renderChart();
   document.getElementById("lockBtn")?.addEventListener("click", openPinDialog);
-  document.getElementById("exportBtn")?.addEventListener("click", ()=>{
-    const entered = prompt("Inserisci PIN per esportare");
+  
+  // SINCRONIZZAZIONE AL SERVER PRIVATO
+  document.getElementById("exportBtn")?.addEventListener("click", async ()=>{
+    const entered = prompt("Inserisci PIN per inviare i dati al server");
     if (entered !== String(state.pin)) return;
 
     const payload = {
       area: CONFIG.AREA,
       channel: state.channel,
+      operator: state.operator,
       date: new Date().toISOString(),
       points: state.points,
       notes: state.notes,
       dates: state.dates,
       detail: state.detail
     };
-    const blob = new Blob([JSON.stringify(payload,null,2)], {type:"application/json"});
-    const a = document.createElement("a");
-    a.href = URL.createObjectURL(blob);
-    a.download = `SKF-5S-${CONFIG.AREA}-${state.channel}.json`;
-    a.click();
-    URL.revokeObjectURL(a.href);
+    
+    try {
+      const response = await fetch('/api/sync', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify([payload]) 
+      });
+
+      if (response.ok) {
+        alert("✅ Dati inviati e sincronizzati con successo sul Server!");
+      } else {
+        alert("❌ Errore del server durante il salvataggio.");
+      }
+    } catch (err) {
+      console.error(err);
+      alert("❌ Impossibile connettersi. Assicurati che il tablet sia connesso alla rete aziendale.");
+    }
   });
 }
 
@@ -251,6 +258,22 @@ function setupHome(){
 function setupChecklist(){
   refreshTitles();
   document.getElementById("lockBtn")?.addEventListener("click", openPinDialog);
+
+  // Gestione Bottone Operatore Globale
+  const btnOp = document.getElementById("btnOperatore");
+  if (btnOp) {
+    if (state.operator) btnOp.textContent = `👤 Operatore: ${state.operator}`;
+    btnOp.addEventListener("click", () => {
+      const name = prompt("Inserisci il tuo nome/cognome:", state.operator || "");
+      if (name !== null) {
+        state.operator = name.trim();
+        setJSON(storageKey("state"), state);
+        btnOp.textContent = state.operator ? `👤 Operatore: ${state.operator}` : "👤 Imposta Operatore";
+        // Aggiorna anche i campi testuali nelle schede
+        document.querySelectorAll(".op-input").forEach(inp => inp.value = state.operator);
+      }
+    });
+  }
 
   const summary = document.getElementById("summaryBadges");
   ["s1","s2","s3","s4","s5"].forEach(k=>{
@@ -290,33 +313,27 @@ function setupChecklist(){
         <span class="s-color" style="background:${color}"></span>
         <h3 class="s-title" style="color:${color}">${name}</h3>
         <span class="s-value">Valore: ${(val*20)}%</span>
-        <button class="icon info" aria-label="Info" data-k="${k}">i</button>
-        <button class="icon add" aria-label="Duplica">+</button>
+        <button class="btn-compila" data-k="${k}">📝 Compila</button>
+        <button class="icon danger del" title="Azzera scheda">🗑</button>
       </div>
 
       <details class="s-details" open>
-        <summary>▼ Dettagli</summary>
+        <summary>▼ Note ed extra</summary>
 
-        <label class="field">
+        <label class="field" style="display:none;">
           <span>Responsabile / Operatore</span>
-          <input placeholder="Inserisci il nome..." value="">
+          <input class="op-input" placeholder="Nome automatico..." value="${state.operator}" readonly>
         </label>
 
         <label class="field">
           <span>Note</span>
-          <textarea rows="3" placeholder="Note...">${state.notes[k]??""}</textarea>
+          <textarea rows="3" placeholder="Scrivi qui eventuali note aggiuntive...">${state.notes[k]??""}</textarea>
         </label>
 
         <div class="field">
-          <span>Data</span>
+          <span>Data aggiornamento</span>
           <div class="row">
-            <input type="date" value="${state.dates[k]??todayStr()}" data-date="${k}">
-            <div class="points">
-              ${[0,1,3,5].map(p=>`
-                <button data-k="${k}" data-p="${p}" class="${val===p?'active':''}">${p}</button>
-              `).join("")}
-            </div>
-            <button class="icon danger del">🗑</button>
+            <input type="date" value="${state.dates[k]??todayStr()}" data-date="${k}" style="flex-grow:1;">
           </div>
         </div>
       </details>
@@ -324,20 +341,6 @@ function setupChecklist(){
     wrap.appendChild(card);
   });
 
-  // punteggi scheda (manuali)
-  wrap.addEventListener("click",(e)=>{
-    const btn = e.target.closest(".points button");
-    if(!btn) return;
-    const k = btn.dataset.k;
-    const p = Number(btn.dataset.p);
-    state.points[k] = p;
-    setJSON(storageKey("state"), state);
-    document.querySelectorAll(`.points button[data-k="${k}"]`).forEach(b=>b.classList.toggle("active", Number(b.dataset.p)===p));
-    document.querySelector(`#sheet-${k} .s-value`).textContent = `Valore: ${p*20}%`;
-    updateStatsAndLate();
-  });
-
-  // date → ritardo
   wrap.addEventListener("change",(e)=>{
     const inp = e.target.closest('input[type="date"][data-date]');
     if(!inp) return;
@@ -347,103 +350,93 @@ function setupChecklist(){
     updateStatsAndLate();
   });
 
-  // elimina con PIN (reset scheda)
   wrap.addEventListener("click",(e)=>{
     const del = e.target.closest(".del");
     if(!del) return;
-    const pin = prompt("Inserisci PIN per eliminare");
+    const pin = prompt("Inserisci PIN per azzerare questa scheda");
     if (pin !== String(state.pin)) return;
     const k = del.closest(".sheet").id.replace("sheet-","");
     state.points[k]=0; state.notes[k]=""; state.dates[k]=null; state.detail[k]={};
     setJSON(storageKey("state"), state);
     const s = del.closest(".sheet");
-    s.querySelectorAll(".points button").forEach(b=>b.classList.remove("active"));
     s.querySelector(".s-value").textContent="Valore: 0%";
     s.querySelector('textarea').value="";
     s.querySelector('input[type="date"]').value=new Date().toISOString().slice(0,10);
     updateStatsAndLate();
   });
 
-  // info popup
+  // Apertura nuovo popup Compila
   wrap.addEventListener("click",(e)=>{
-    const infoBtn = e.target.closest(".info");
-    if(!infoBtn) return;
-    openInfo(infoBtn.dataset.k);
+    const compilaBtn = e.target.closest(".btn-compila");
+    if(!compilaBtn) return;
+    openInfo(compilaBtn.dataset.k);
   });
 
-  // + duplicazione scheda (PIN)
-  wrap.addEventListener("click",(e)=>{
-    const add = e.target.closest(".add");
-    if(!add) return;
-    const pin = prompt("Inserisci PIN per duplicare");
-    if (pin !== String(state.pin)) return;
-    const card = add.closest(".sheet");
-    const clone = card.cloneNode(true);
-    const uid = Math.random().toString(36).slice(2,7);
-    clone.id = card.id + "-x" + uid;
-    clone.querySelectorAll("textarea").forEach(t=> t.value="");
-    clone.querySelectorAll('input[type="date"]').forEach(d=> d.value=new Date().toISOString().slice(0,10));
-    clone.querySelectorAll(".points button").forEach(b=> b.classList.remove("active"));
-    clone.querySelector(".s-value").textContent="Valore: 0%";
-    card.after(clone);
-  });
-
-  document.getElementById("infoCloseBtn")?.addEventListener("click", ()=> {
+  document.getElementById("infoCloseBtn")?.addEventListener("click", (e)=> {
+    e.preventDefault(); // Evita il ricaricamento del form
     document.getElementById("infoDialog").close();
   });
 
   updateStatsAndLate();
 }
 
-/** Popup “i” con punti interattivi + media automatica */
+/** Popup a "Schede" grandi e interattive */
 function openInfo(k){
   const dlg = document.getElementById("infoDialog");
   const title = document.getElementById("infoTitle");
   const cont = document.getElementById("infoContent");
-  title.textContent = `${k.toUpperCase()} — Info`;
+  title.textContent = `Compila ${k.toUpperCase()}`;
   cont.innerHTML = "";
 
   if (!state.detail[k]) state.detail[k] = {};
   const pts = parsePoints(INFO_TEXT[k] || "");
 
-  const ol = document.createElement("ol");
+  let htmlString = "";
+  
   pts.forEach((txt, idx)=>{
-    const li = document.createElement("li");
     const already = state.detail[k][idx] ?? null;
-    const row = document.createElement("div");
-    row.className = "pointline";
-    row.innerHTML = `
-      <div>${idx+1}. ${txt}</div>
-      <div class="pick" data-k="${k}" data-idx="${idx}">
-        ${[0,1,3,5].map(v=>`<button type="button" data-score="${v}" class="${already===v?'picked':''}">${v}</button>`).join("")}
+    htmlString += `
+      <div class="compilation-card">
+        <div class="compilation-text">${idx+1}. ${txt}</div>
+        <div class="score-options" data-k="${k}" data-idx="${idx}">
+          ${[0,1,3,5].map(v => `
+            <button type="button" class="score-btn ${already === v ? 'picked' : ''}" data-score="${v}">${v}</button>
+          `).join("")}
+        </div>
       </div>
-      <div class="note-mini">Seleziona un valore per aggiungere la riga in Note.</div>
     `;
-    li.appendChild(row);
-    ol.appendChild(li);
   });
-  cont.appendChild(ol);
+  
+  cont.innerHTML = htmlString;
 
+  // Gestione click sui bottoni giganti
   cont.onclick = (e)=>{
-    const btn = e.target.closest('.pick button');
+    const btn = e.target.closest('.score-btn');
     if(!btn) return;
-    const pick = btn.closest('.pick');
+    
+    const optionsContainer = btn.closest('.score-options');
     const score = Number(btn.dataset.score);
-    const key = pick.dataset.k;
-    const idx = Number(pick.dataset.idx);
-    // evidenzia selezione
-    pick.querySelectorAll('button').forEach(b=> b.classList.toggle('picked', b===btn));
-    // salva scelta
+    const key = optionsContainer.dataset.k;
+    const idx = Number(optionsContainer.dataset.idx);
+    
+    // Evidenzia solo il bottone cliccato
+    optionsContainer.querySelectorAll('.score-btn').forEach(b => b.classList.remove('picked'));
+    btn.classList.add('picked');
+    
+    // Salva nello stato
     if (!state.detail[key]) state.detail[key]={};
     state.detail[key][idx] = score;
     setJSON(storageKey("state"), state);
-    // aggiunge riga in Note (blu evidenziato via emoji)
+    
+    // Aggiungi alla text area delle note in automatico
     const text = parsePoints(INFO_TEXT[key]||"")[idx];
     appendNote(key, text, score);
-    // calcola media e aggiorna scheda
+    
+    // Calcola media e applica subito al badge della scheda dietro
     recalcFromDetailAndApply(key);
   };
 
+  // Colore intestazione popup in base alla 'S'
   dlg.querySelector(".modal-box").style.borderTop = `6px solid ${COLORS[k]||'#0a57d5'}`;
   dlg.showModal();
 }
