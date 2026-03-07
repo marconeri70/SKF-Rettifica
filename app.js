@@ -8,11 +8,11 @@ const COLORS = {
   s1:"#7c3aed", s2:"#ef4444", s3:"#f59e0b", s4:"#10b981", s5:"#2563eb"
 };
 
-/** TESTI INFO – formato "(1) ... (2) ... (3) ..." */
+/** TESTI INFO */
 const INFO_TEXT = {
   s1: "(1) L'area pedonale è libera da ostacoli e pericoli di inciampo. (2) Nessun materiale/attrezzo non identificato sul pavimento. (3) Solo materiali/strumenti necessari presenti; il resto è rimosso. (4) Solo materiale necessario per il lavoro in corso. (5) Documenti/visualizzazioni necessari, aggiornati, in buono stato. (6) Definiti team e processo etichetta rossa; processo attivo. (7) Lavagna 5S aggiornata (piano, foto prima/dopo, audit). (8) Evidenze che garantiscono la sostenibilità di 1S. (9) 5S/1S compresi dal team; responsabilità definite. (10) Tutti i membri partecipano alle attività dell'area.",
   s2: "(1) Area e team definiti; nessuna cosa non necessaria in zona. (2) Articoli di sicurezza chiaramente contrassegnati e accessibili. (3) Uscite/interruttori emergenza visibili e liberi. (4) Stazioni qualità definite e organizzate. (5) SWC seguito. (6) Posizioni prefissate per utenze/strumenti/pulizia con indicatori min/max. (7) Posizioni definite per contenitori e rifiuti con identificazione chiara. (8) WIP/accettati/rifiutati/quarantena con posizioni e identificazione. (9) Materie prime/componenti con posizioni designate. (10) Layout con corridoi/aree/pedonali e DPI definito. (11) File/documenti identificati e organizzati al punto d'uso. (12) Miglioramenti one-touch/poka-yoke/ergonomia. (13) Evidenze di sostenibilità 2S. (14) 5S/2S compresi; responsabilità definite. (15) Partecipazione di tutti.",
-  s3: "(1) Non si trovano cose inutili. (2) Miglioramenti 2S mantenuti. (3) Verifiche regolari e azioni su deviazioni. (4) Area/team definiti; 1S/2S compresi. (5) Pavimenti/pareti puliti e senza detriti/oli/trucioli ecc. (6) Segnali/etichette puliti, corretti e leggibili. (7) Documenti in buone condizioni e protetti. (8) Luci/ventilazione/AC in ordine e pulite. (9) Fonti sporco identificate e note. (10) Piani d'action per eliminare fonti sporco. (11) Azioni eseguite. (12) Miglioramenti per prevenire pulizia (meno tappe, eliminazione fonte). (13) Riciclaggio attivo con corretto smistamento. (14) Demarcazioni rese permanenti. (15) Evidenze di sostenibilità 3S. (16) 5S/3S compresi; responsabilità definite; partecipazione di tutti.",
+  s3: "(1) Non si trovano cose inutili. (2) Miglioramenti 2S mantenuti. (3) Verifiche regolari e azioni su deviazioni. (4) Area/team definiti; 1S/2S compresi. (5) Pavimenti/pareti puliti e senza detriti/oli/trucioli ecc. (6) Segnali/etichette puliti, corretti e leggibili. (7) Documenti in buone condizioni e protetti. (8) Luci/ventilazione/AC in ordine e pulite. (9) Fonti sporco identificate e note. (10) Piani d'azione per eliminare fonti sporco. (11) Azioni eseguite. (12) Miglioramenti per prevenire pulizia (meno tappe, eliminazione fonte). (13) Riciclaggio attivo con corretto smistamento. (14) Demarcazioni rese permanenti. (15) Evidenze di sostenibilità 3S. (16) 5S/3S compresi; responsabilità definite; partecipazione di tutti.",
   s4: "(1) Visual management/kanban/Min-Max implementati (gestire a vista). (2) Colori/segni standard per lubrificazioni, tubazioni, valvole, ecc. (3) Standard 5S consolidati e aggiornati come training/guida. (4) Istruzioni 5S integrate nella gestione quotidiana.",
   s5: "(1) Tutti formati sugli standard 5S e coinvolti. (2) 5S come abitudine; standard seguiti da tutti. (3) Layered audit programmati. (4) Foto prima/dopo mantenute come riferimento. (5) Obiettivi 5S esposti."
 };
@@ -22,7 +22,6 @@ const storageKey = k => `skf5s:${CONFIG.AREA}:${k}`;
 const getJSON = (k,d)=>{ try{ return JSON.parse(localStorage.getItem(k)) ?? d; }catch{ return d; } };
 const setJSON = (k,v)=> localStorage.setItem(k, JSON.stringify(v));
 
-/** Service worker */
 if ("serviceWorker" in navigator) {
   window.addEventListener("load", ()=> navigator.serviceWorker.register("sw.js"));
 }
@@ -81,7 +80,7 @@ function openPinDialog(){
   cancel.onclick = ()=> dlg.close();
 }
 
-/** Utilità ritardi */
+/** Utilità ritardi e aggiornamento UI */
 function isLate(k){
   const d = state.dates[k];
   if(!d) return false;
@@ -93,14 +92,26 @@ function updateStatsAndLate(){
   const arr = Object.values(state.points);
   const avg = arr.length ? Math.round(arr.reduce((a,b)=>a+b,0)/arr.length*20) : 0;
   const lateList = Object.keys(state.dates).filter(k=> isLate(k));
-  document.getElementById("avgScore")?.replaceChildren(document.createTextNode(`${avg}%`));
+  
+  // Aggiorna punteggio medio
+  const avgEl = document.getElementById("avgScore");
+  if(avgEl) {
+      avgEl.textContent = `${avg}%`;
+      // Effetto flash per far notare il ricalcolo immediato
+      avgEl.style.color = 'var(--skf)';
+      setTimeout(()=> avgEl.style.color = '#0f172a', 300);
+  }
+  
   document.getElementById("lateCount")?.replaceChildren(document.createTextNode(String(lateList.length)));
+  
+  // Aggiorna i testi dei badge riassuntivi della checklist
   ["s1","s2","s3","s4","s5"].forEach(k=>{
     document.getElementById(`sheet-${k}`)?.classList.toggle("late", isLate(k));
+    const badgeBtn = document.querySelector(`.s-badge.${k}`);
+    if (badgeBtn) badgeBtn.textContent = `${k.toUpperCase()} ${(state.points[k] ?? 0)*20}%`;
   });
 }
 
-/** Utilità Note + parsing frasi */
 function parsePoints(txt){
   const out = [];
   const re = /\((\d+)\)\s*([^]+?)(?=\s*\(\d+\)\s*|$)/g;
@@ -137,7 +148,12 @@ function recalcFromDetailAndApply(k){
   state.points[k] = newScore;
   setJSON(storageKey("state"), state);
   const sv = document.querySelector(`#sheet-${k} .s-value`);
-  if (sv) sv.textContent = `Valore: ${newScore*20}%`;
+  if (sv) {
+      sv.textContent = `Valore: ${newScore*20}%`;
+      sv.style.background = 'var(--skf)';
+      sv.style.color = '#fff';
+      setTimeout(()=>{ sv.style.background = '#f1f5f9'; sv.style.color = 'var(--skf)'; }, 400);
+  }
   updateStatsAndLate();
 }
 
@@ -158,43 +174,34 @@ function renderChart(){
       datasets:[{
         data:[...vals, delayed],
         backgroundColor:["#7c3aed","#ef4444","#f59e0b","#10b981","#2563eb","#ef4444"],
-        borderWidth:0
+        borderWidth:0,
+        borderRadius: 4
       }]
     },
     options:{
       responsive:true,
-      plugins:{
-        legend:{display:false},
-        tooltip:{
-          enabled:true,
-          callbacks:{
-            label: (item)=>{
-              if (item.dataIndex===5) return "Ritardi: " + item.raw;
-              return `${item.label}: ${item.raw}%`;
-            },
-            afterBody: (items)=>{
-              const idx = items[0].dataIndex;
-              if (idx<0 || idx>4) return;
-              const key = ["s1","s2","s3","s4","s5"][idx];
-              const det = state.detail[key]||{};
-              const pts = parsePoints(INFO_TEXT[key]||"");
-              const lines = Object.keys(det)
-                .map(n=>Number(n))
-                .sort((a,b)=>a-b)
-                .slice(0,6) 
-                .map(n=>{
-                  const score = det[n];
-                  const text  = pts[n] || "";
-                  return `${n+1}) ${squaresSummaryColored(score)} ${text}`;
-                });
-              return lines.length ? lines : ["Nessuna nota selezionata"];
+      maintainAspectRatio: false,
+      // Azione di tocco sulle colonne (naviga direttamente alla scheda)
+      onClick: (e, elements) => {
+        if (elements.length > 0) {
+            const idx = elements[0].index;
+            if (idx < 5) {
+                const keys = ['s1', 's2', 's3', 's4', 's5'];
+                window.location.href = `checklist.html#sheet-${keys[idx]}`;
             }
-          }
         }
       },
+      onHover: (e, elements) => {
+        e.native.target.style.cursor = elements[0] ? 'pointer' : 'default';
+      },
+      plugins:{
+        legend:{display:false},
+        // Tolto completamente l'odioso tooltip testuale
+        tooltip:{ enabled: false }
+      },
       scales:{
-        y:{beginAtZero:true,max:100,grid:{display:false},ticks:{callback:v=>v+"%"}},
-        x:{grid:{display:false},ticks:{maxRotation:0}}
+        y:{beginAtZero:true,max:100,grid:{color:'#f1f5f9'},ticks:{callback:v=>v+"%", font: {size: 10}}},
+        x:{grid:{display:false},ticks:{maxRotation:0, font: {weight: 'bold'}}}
       }
     }
   });
@@ -219,9 +226,7 @@ function setupHome(){
   renderChart();
   document.getElementById("lockBtn")?.addEventListener("click", openPinDialog);
   
-  // ==========================================
-  // RIPRISTINATO IL SALVATAGGIO LOCALE (DOWNLOAD)
-  // ==========================================
+  // DOWNLOAD MANUALE JSON
   document.getElementById("exportBtn")?.addEventListener("click", ()=>{
     const entered = prompt("Inserisci PIN per esportare i dati");
     if (entered !== String(state.pin)) return;
@@ -229,7 +234,7 @@ function setupHome(){
     const payload = {
       area: CONFIG.AREA,
       channel: state.channel,
-      operator: state.operator, // Esporta anche il nome dell'operatore
+      operator: state.operator,
       date: new Date().toISOString(),
       points: state.points,
       notes: state.notes,
@@ -251,7 +256,6 @@ function setupChecklist(){
   refreshTitles();
   document.getElementById("lockBtn")?.addEventListener("click", openPinDialog);
 
-  // Gestione Bottone Operatore Globale
   const btnOp = document.getElementById("btnOperatore");
   if (btnOp) {
     if (state.operator) btnOp.textContent = `👤 Operatore: ${state.operator}`;
@@ -272,8 +276,11 @@ function setupChecklist(){
     const el = document.createElement("button");
     el.className = `s-badge ${k}`;
     el.textContent = `${k.toUpperCase()} ${v*20}%`;
+    
+    // QUI LA MODIFICA: Invece di scrollIntoView, cambia l'hash della barra degli indirizzi, innescando l'evidenziatore luminoso CSS!
     el.addEventListener("click", ()=> {
-      document.getElementById(`sheet-${k}`)?.scrollIntoView({behavior:"smooth",block:"start"});
+      window.location.hash = ''; // resetta per permettere il ri-click
+      setTimeout(()=> { window.location.hash = `sheet-${k}`; }, 10);
     });
     summary.appendChild(el);
   });
@@ -356,7 +363,6 @@ function setupChecklist(){
     updateStatsAndLate();
   });
 
-  // Apertura nuovo popup Compila
   wrap.addEventListener("click",(e)=>{
     const compilaBtn = e.target.closest(".btn-compila");
     if(!compilaBtn) return;
@@ -400,7 +406,6 @@ function openInfo(k){
   
   cont.innerHTML = htmlString;
 
-  // Gestione click sui bottoni giganti
   cont.onclick = (e)=>{
     const btn = e.target.closest('.score-btn');
     if(!btn) return;
@@ -410,24 +415,19 @@ function openInfo(k){
     const key = optionsContainer.dataset.k;
     const idx = Number(optionsContainer.dataset.idx);
     
-    // Evidenzia solo il bottone cliccato
     optionsContainer.querySelectorAll('.score-btn').forEach(b => b.classList.remove('picked'));
     btn.classList.add('picked');
     
-    // Salva nello stato
     if (!state.detail[key]) state.detail[key]={};
     state.detail[key][idx] = score;
     setJSON(storageKey("state"), state);
     
-    // Aggiungi alla text area delle note in automatico
     const text = parsePoints(INFO_TEXT[key]||"")[idx];
     appendNote(key, text, score);
     
-    // Calcola media e applica subito al badge della scheda dietro
     recalcFromDetailAndApply(key);
   };
 
-  // Colore intestazione popup in base alla 'S'
   dlg.querySelector(".modal-box").style.borderTop = `6px solid ${COLORS[k]||'#0a57d5'}`;
   dlg.showModal();
 }
