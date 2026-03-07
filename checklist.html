@@ -13,7 +13,6 @@
   <script defer src="app.js"></script>
 </head>
 <body data-page="checklist">
-  <!-- HEADER -->
   <header class="topbar">
     <div class="brand">
       <a class="back" href="index.html">← Indietro</a>
@@ -29,7 +28,6 @@
   </header>
 
   <main class="container">
-    <!-- Statistiche -->
     <section class="stats">
       <div class="stat">
         <span>Voto medio</span>
@@ -41,28 +39,29 @@
       </div>
     </section>
 
-    <!-- Badge riassuntivi -->
     <div id="summaryBadges" class="summary-badges"></div>
-    <div class="actions-row">
-      <button id="toggleAll" class="pill blue">Comprimi / Espandi</button>
+    
+    <div class="actions-row" style="display: flex; gap: 10px; flex-wrap: wrap;">
+      <button id="btnOperatore" class="pill" style="border: 2px solid var(--skf); color: var(--skf); font-weight: bold; background: #fff; flex-grow: 1;">👤 Imposta Operatore</button>
+      <button id="toggleAll" class="pill blue" style="flex-grow: 1;">Comprimi / Espandi</button>
     </div>
 
-    <!-- Schede -->
     <section id="sheets" class="sheets"></section>
   </main>
 
-  <!-- DIALOG INFO (punti interattivi) -->
   <dialog id="infoDialog" class="modal">
-    <form method="dialog" class="modal-box">
-      <div class="sticky-top">
-        <h4 id="infoTitle">Info</h4>
-        <button id="infoCloseBtn" class="pill blue small">Chiudi</button>
+    <form method="dialog" class="modal-box" style="background: #f1f5f9;">
+      <div class="sticky-top" style="background: #f1f5f9; border-bottom: none;">
+        <h4 id="infoTitle" style="font-size: 1.3rem;">Compilazione</h4>
+        <button id="infoCloseBtn" class="pill blue small">Salva e Chiudi</button>
       </div>
+      <p style="margin: 0 14px 14px 14px; font-size: 0.9rem; color: #64748b;">
+        Seleziona il punteggio per ogni voce. Il sistema calcolerà automaticamente la media e compilerà le note.
+      </p>
       <div id="infoContent" class="info-content"></div>
     </form>
   </dialog>
 
-  <!-- DIALOG PIN (stesso della home) -->
   <dialog id="pinDialog" class="modal">
     <form method="dialog" class="modal-box">
       <h4>Impostazioni canale & PIN</h4>
