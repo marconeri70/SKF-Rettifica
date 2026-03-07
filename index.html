@@ -3,24 +3,19 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>SKF 5S — Rettifica</title>
+  <title>SKF 5S — App</title>
 
-  <!-- PWA -->
-  <link rel="manifest" href="manifest.json?v=5">
+  <link rel="manifest" href="manifest.json?v=6">
   <meta name="theme-color" content="#0a57d5" />
   <link rel="icon" href="assets/pwa-192.png" />
 
-  <!-- Stili -->
   <link rel="stylesheet" href="style.css" />
 
-  <!-- Chart.js -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 
-  <!-- App -->
   <script defer src="app.js"></script>
 </head>
 <body data-page="home">
-  <!-- HEADER -->
   <header class="topbar">
     <div class="brand">
       <img src="assets/skf-logo.png" alt="SKF" class="brand-logo" />
@@ -35,38 +30,56 @@
     </div>
   </header>
 
-  <!-- HERO + COSA È 5S -->
   <main class="container">
-    <section class="card hero">
-      <div class="hero-ill">
-        <img src="assets/5s-hero.png" alt="5S" />
+    <section class="hero-header">
+      <div class="hero-text">
+        <h2>Metodologia 5S</h2>
+        <p>L'eccellenza operativa inizia dall'ordine e dalla standardizzazione.</p>
       </div>
-      <div class="hero-copy">
-        <h2>Cosa è 5S</h2>
-        <ul class="five-list">
-          <li><span class="tag s1">1S Selezionare</span> — Eliminare il superfluo.</li>
-          <li><span class="tag s2">2S Sistemare</span> — Un posto per tutto e tutto al suo posto.</li>
-          <li><span class="tag s3">3S Splendere</span> — Pulire e prevenire lo sporco.</li>
-          <li><span class="tag s4">4S Standardizzare</span> — Regole e segnali chiari.</li>
-          <li><span class="tag s5">5S Sostenere</span> — Abitudine e miglioramento continuo.</li>
-        </ul>
-      </div>
+      <img src="assets/5s-hero.png" alt="5S" class="hero-image" />
     </section>
 
-    <!-- TITOLO GRAFICO -->
-    <h3 id="chartTitle" class="section-title">Andamento CH 24 — Rettifica</h3>
+    <div class="five-grid">
+      <div class="five-card" style="--card-color: var(--s1);">
+        <h4><span class="dot"></span> 1S Selezionare</h4>
+        <p>Elimina il superfluo dalla tua area.</p>
+      </div>
+      <div class="five-card" style="--card-color: var(--s2);">
+        <h4><span class="dot"></span> 2S Sistemare</h4>
+        <p>Un posto per tutto, tutto al suo posto.</p>
+      </div>
+      <div class="five-card" style="--card-color: var(--s3);">
+        <h4><span class="dot"></span> 3S Splendere</h4>
+        <p>Pulisci e previeni lo sporco.</p>
+      </div>
+      <div class="five-card" style="--card-color: var(--s4);">
+        <h4><span class="dot"></span> 4S Standardizzare</h4>
+        <p>Regole visive e segnali chiari.</p>
+      </div>
+      <div class="five-card" style="--card-color: var(--s5);">
+        <h4><span class="dot"></span> 5S Sostenere</h4>
+        <p>Abitudine e miglioramento continuo.</p>
+      </div>
+    </div>
 
-    <!-- GRAFICO -->
-    <section class="card">
-      <canvas id="progressChart" height="110"></canvas>
+    <div class="section-title-wrapper">
+      <h3 id="chartTitle" class="section-title">Andamento CH 24 — Rettifica</h3>
+    </div>
+
+    <section class="card premium-card">
+      <canvas id="progressChart" height="120"></canvas>
       <div id="lateBtns" class="late-box"></div>
+      
+      <div class="divider"></div>
+      
       <div class="actions-row">
-        <button id="exportBtn" class="pill blue">Esporta dati per Supervisore (PIN)</button>
+        <button id="exportBtn" class="pill blue premium-btn">
+          <span style="margin-right: 6px;">☁️</span> Invia dati al Supervisore (PIN)
+        </button>
       </div>
     </section>
   </main>
 
-  <!-- DIALOG PIN -->
   <dialog id="pinDialog" class="modal">
     <form method="dialog" class="modal-box">
       <h4>Impostazioni canale & PIN</h4>
