@@ -43,9 +43,9 @@ a{color:inherit;text-decoration:none}
 
 /* Chart area */
 .late-box{display:flex;flex-wrap:wrap;gap:.5rem;margin-top:.75rem}
-.late-btn{background:#fff;border:2px solid #ddd;padding:.35rem .6rem;border-radius:999px}
+.late-btn{background:#fff;border:2px solid #ddd;padding:.35rem .6rem;border-radius:999px;cursor:pointer;}
 .actions-row{margin-top:12px}
-.pill{background:#e5e7eb;border:0;padding:.55rem .9rem;border-radius:999px}
+.pill{background:#e5e7eb;border:0;padding:.55rem .9rem;border-radius:999px;cursor:pointer;}
 .pill.blue{background:var(--skf);color:#fff}
 .pill.small{padding:.35rem .6rem}
 
@@ -55,7 +55,7 @@ a{color:inherit;text-decoration:none}
 .stat span{color:var(--muted)}
 .stat strong{font-size:1.6rem}
 .summary-badges{display:flex;flex-wrap:wrap;gap:.5rem;margin:10px 0}
-.summary-badges .s-badge{border-radius:999px;padding:.35rem .6rem;border:1px solid #e5e7eb;background:#fff}
+.summary-badges .s-badge{border-radius:999px;padding:.35rem .6rem;border:1px solid #e5e7eb;background:#fff;cursor:pointer;}
 .s-badge.s1{border-color:var(--s1)}.s-badge.s2{border-color:var(--s2)}.s-badge.s3{border-color:var(--s3)}
 .s-badge.s4{border-color:var(--s4)}.s-badge.s5{border-color:var(--s5)}
 
@@ -66,35 +66,52 @@ a{color:inherit;text-decoration:none}
 .sheet-head{display:grid;grid-template-columns:auto 1fr auto auto auto;align-items:center;gap:10px;margin-bottom:6px}
 .s-color{width:28px;height:18px;border-radius:8px;display:inline-block}
 .s-title{margin:0}
-.s-value{background:#eef2ff;padding:.3rem .5rem;border-radius:.7rem}
-.icon{background:#edf2f7;border:0;border-radius:10px;padding:.35rem .55rem}
-.icon.add{font-weight:700}
-.icon.danger{background:#fee2e2}
+.s-value{background:#eef2ff;padding:.3rem .5rem;border-radius:.7rem; font-weight: bold; color: var(--skf);}
 
-.s-details>summary{cursor:pointer;color:#374151;margin:.2rem 0}
+/* Nuovo bottone compila al posto della "i" anonima */
+.btn-compila { background: var(--skf); color: #fff; border: none; border-radius: 8px; padding: 6px 14px; font-weight: bold; cursor: pointer; display: flex; align-items: center; gap: 4px; box-shadow: 0 2px 6px rgba(10,87,213,0.3); }
+
+.icon{background:#edf2f7;border:0;border-radius:10px;padding:.35rem .55rem; cursor:pointer;}
+.icon.add{font-weight:700}
+.icon.danger{background:#fee2e2; color: #ef4444;}
+
+.s-details>summary{cursor:pointer;color:#374151;margin:.2rem 0; font-weight: bold; padding: 8px 0;}
 .field{display:flex;flex-direction:column;margin:6px 0}
-.field>span{color:#6b7280;margin-bottom:4px}
+.field>span{color:#6b7280;margin-bottom:4px; font-weight: 600; font-size: 0.9rem;}
 .row{display:flex;gap:10px;align-items:center}
-.points button{border:1px solid #cbd5e1;background:#fff;padding:.35rem .55rem;border-radius:.6rem}
-.points button.active{background:var(--skf);color:#fff;border-color:var(--skf)}
+
+/* Nascondiamo i vecchi bottoni dei punteggi nella scheda esterna (si farà tutto dal popup) */
+.sheet .points { display: none; }
 
 /* Modal */
 .modal{border:0;padding:0}
-.modal::backdrop{background:rgba(0,0,0,.35)}
-/* popup più piccolo */
-.modal-box{background:#fff;border-radius:16px;max-width:620px;width:min(96vw,620px);margin:auto;padding:14px;position:relative}
-.modal-box .sticky-top{position:sticky;top:0;background:#fff;padding:6px 0 8px;margin:-14px -14px 8px;border-bottom:1px solid #f1f5f9;display:flex;align-items:center;justify-content:space-between;gap:8px}
+.modal::backdrop{background:rgba(0,0,0,.5)}
+.modal-box{background:#fff;border-radius:16px;max-width:620px;width:min(96vw,620px);margin:auto;padding:14px;position:relative; box-shadow: 0 10px 25px rgba(0,0,0,0.2);}
+.modal-box .sticky-top{position:sticky;top:0;background:#fff;padding:6px 0 8px;margin:-14px -14px 8px;border-bottom:1px solid #f1f5f9;display:flex;align-items:center;justify-content:space-between;gap:8px; z-index: 10;}
 .modal-box h4{margin:10px 14px}
 .modal-actions{display:flex;justify-content:flex-end;gap:8px;margin-top:10px}
 .grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
 
-.info-content ol{margin:0;padding:0 0 0 1rem}
-.pointline{padding:8px 10px;border-radius:12px;background:#f8fafc;margin:8px 0}
-.pointline .pick{margin-top:6px;display:flex;gap:6px}
-.pointline .pick button{border:1px solid #cbd5e1;background:#fff;padding:.25rem .5rem;border-radius:.6rem;font-weight:600}
-.pointline .pick button.picked{background:var(--skf);border-color:var(--skf);color:#fff}
-.note-mini{margin-top:6px;font-family:ui-monospace,Consolas,monospace;color:#111827}
+/* NUOVO STILE POPUP COMPILAZIONE (Schede interattive) */
+.info-content { display: flex; flex-direction: column; gap: 14px; padding: 0 14px 14px 14px; }
+.compilation-card { background: #fff; border-radius: 12px; padding: 16px; box-shadow: 0 2px 8px rgba(0,0,0,0.06); border: 1px solid #e2e8f0; }
+.compilation-text { font-size: 1.05rem; font-weight: 600; color: #1e293b; margin-bottom: 14px; line-height: 1.4; }
+.score-options { display: flex; justify-content: space-between; gap: 10px; }
+.score-btn { 
+  flex: 1; 
+  padding: 14px 0; 
+  border-radius: 10px; 
+  border: 2px solid #cbd5e1; 
+  background: #f8fafc; 
+  font-size: 1.3rem; 
+  font-weight: 800; 
+  color: #475569; 
+  cursor: pointer; 
+  transition: all 0.2s ease;
+}
+.score-btn:active { transform: scale(0.95); }
+.score-btn.picked { background: var(--skf); border-color: var(--skf); color: #fff; box-shadow: 0 4px 12px rgba(10,87,213,0.3); }
 
 /* Forms */
-input,textarea{border:1px solid #cbd5e1;border-radius:10px;padding:.55rem .6rem}
-textarea{resize:vertical}
+input,textarea{border:1px solid #cbd5e1;border-radius:10px;padding:10px; font-family: inherit; font-size: 1rem;}
+textarea{resize:vertical; min-height: 80px;}
