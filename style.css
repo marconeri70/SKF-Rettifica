@@ -59,6 +59,10 @@ a { color: inherit; text-decoration: none; }
   align-items: flex-start;
   gap: 2px;
 }
+
+/* =========================================
+   ANIMAZIONE A ONDA (WAVE) PER LE ETICHETTE 5S
+========================================= */
 .stack-item .tag {
   display: inline-block;
   padding: 3px 6px;
@@ -67,13 +71,34 @@ a { color: inherit; text-decoration: none; }
   font-weight: bold;
   font-size: 0.75rem;
   box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  
+  /* 🪄 Effetto Onda: partono ancorate da sinistra e si animano a loop ogni 3.5 secondi */
+  transform-origin: left center;
+  animation: pulseWave 3.5s infinite cubic-bezier(0.4, 0, 0.2, 1);
 }
+
+/* Assegniamo i colori e un ritardo a "gradinata" per l'effetto a catena */
+.stack-item .tag.s1 { background: var(--s1); animation-delay: 0.0s; }
+.stack-item .tag.s2 { background: var(--s2); animation-delay: 0.3s; }
+.stack-item .tag.s3 { background: var(--s3); animation-delay: 0.6s; }
+.stack-item .tag.s4 { background: var(--s4); animation-delay: 0.9s; }
+.stack-item .tag.s5 { background: var(--s5); animation-delay: 1.2s; }
+
 .stack-item .desc { font-size: 0.8rem; color: #475569; line-height: 1.2; }
-.stack-item .tag.s1 { background: var(--s1); }
-.stack-item .tag.s2 { background: var(--s2); }
-.stack-item .tag.s3 { background: var(--s3); }
-.stack-item .tag.s4 { background: var(--s4); }
-.stack-item .tag.s5 { background: var(--s5); }
+
+/* ⚙️ MOTORE DELL'ONDA */
+@keyframes pulseWave {
+  0%, 25%, 100% { 
+    transform: scale(1); 
+    filter: brightness(1);
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  }
+  10% { 
+    transform: scale(1.15) translateX(3px); /* Si ingrandisce del 15% e fa un passetto avanti */
+    filter: brightness(1.25); /* Il colore si illumina */
+    box-shadow: 0 8px 15px rgba(0,0,0,0.25); /* L'ombra diventa più profonda */
+  }
+}
 
 /* Colonna Immagine */
 .hero-left {
@@ -108,7 +133,7 @@ a { color: inherit; text-decoration: none; }
   animation-play-state: paused; /* Ferma la levitazione per dare l'illusione di averlo bloccato */
 }
 
-/* ⚙️ MOTORI DELLE ANIMAZIONI */
+/* ⚙️ MOTORE DELLA LEVITAZIONE */
 @keyframes levitateMagic {
   0% { transform: translateY(0px) rotate(0deg); }
   50% { transform: translateY(-18px) rotate(2deg); } /* Sale di 18px e ruota impercettibilmente */
