@@ -246,21 +246,6 @@ function renderChart(){
   });
 }
 
-  const late = [];
-  ["s1","s2","s3","s4","s5"].forEach((k,i)=>{ if(isLate(k)) late.push({k, label:`${i+1}S in ritardo`}); });
-  const box = document.getElementById("lateBtns");
-  if (!box) return;
-  box.innerHTML = "";
-  late.forEach(({k,label})=>{
-    const b = document.createElement("button");
-    b.className = `late-btn ${k}`;
-    b.style.borderColor = COLORS[k];
-    b.textContent = label;
-    b.addEventListener("click", ()=> { window.location.href = `checklist.html#sheet-${k}`; });
-    box.appendChild(b);
-  });
-}
-
 function setupHome(){
   refreshTitles();
   renderChart();
