@@ -157,7 +157,7 @@ function recalcFromDetailAndApply(k){
   updateStatsAndLate();
 }
 
-/** HOME */
+/** HOME - GRAFICO */
 let chart;
 function renderChart(){
   const ctx = document.getElementById("progressChart");
@@ -166,9 +166,30 @@ function renderChart(){
   const vals = ["s1","s2","s3","s4","s5"].map(k=> (state.points[k]??0)*20 );
   const delayed = Object.keys(state.dates).filter(k=> isLate(k)).length;
 
+  // 🪄 PLUGIN MAGICO: Disegna le percentuali direttamente SOPRA le colonne
+  const topLabelsPlugin = {
+    id: 'topLabels',
+    afterDatasetsDraw(chart, args, pluginOptions) {
+      const { ctx, data } = chart;
+      ctx.save();
+      chart.getDatasetMeta(0).data.forEach((bar, index) => {
+        const val = data.datasets[0].data[index];
+        const text = index === 5 ? (val > 0 ? val : '') : (val + '%'); // Se ritardi metti il numero, altrimenti %
+        if (text !== '0%' && text !== '') {
+          ctx.font = 'bold 13px system-ui';
+          ctx.fillStyle = '#334155';
+          ctx.textAlign = 'center';
+          ctx.fillText(text, bar.x, bar.y - 8); // Posiziona il testo 8 pixel sopra la barra
+        }
+      });
+      ctx.restore();
+    }
+  };
+
   if(chart) chart.destroy();
   chart = new Chart(ctx, {
     type:"bar",
+    plugins: [topLabelsPlugin], // <- Attiviamo il plugin magico!
     data:{
       labels:["1S","2S","3S","4S","5S","Ritardi"],
       datasets:[{
@@ -179,25 +200,28 @@ function renderChart(){
       }]
     },
     options:{
+      layout: { padding: { top: 25 } }, // <- Facciamo spazio in alto per farci stare i numerini
       responsive:true,
       maintainAspectRatio: false,
-      // Azione di tocco sulle colonne (naviga direttamente alla scheda)
+      
+      // RENDIAMO IL GRAFICO CLICCABILE!
       onClick: (e, elements) => {
         if (elements.length > 0) {
             const idx = elements[0].index;
             if (idx < 5) {
+                // Se clicca su una barra (es. 2S), lo manda giù dritto a quella scheda!
                 const keys = ['s1', 's2', 's3', 's4', 's5'];
                 window.location.href = `checklist.html#sheet-${keys[idx]}`;
             }
         }
       },
       onHover: (e, elements) => {
-        e.native.target.style.cursor = elements[0] ? 'pointer' : 'default';
+        // Fa comparire la "manina" se si passa sopra una colonna
+        e.native.target.style.cursor = elements.length > 0 ? 'pointer' : 'default';
       },
       plugins:{
         legend:{display:false},
-        // Tolto completamente l'odioso tooltip testuale
-        tooltip:{ enabled: false }
+        tooltip:{ enabled: false } // Spegniamo il popup nero di default
       },
       scales:{
         y:{beginAtZero:true,max:100,grid:{color:'#f1f5f9'},ticks:{callback:v=>v+"%", font: {size: 10}}},
@@ -205,6 +229,22 @@ function renderChart(){
       }
     }
   });
+
+  // Bottoni in ritardo sotto il grafico
+  const late = [];
+  ["s1","s2","s3","s4","s5"].forEach((k,i)=>{ if(isLate(k)) late.push({k, label:`${i+1}S in ritardo`}); });
+  const box = document.getElementById("lateBtns");
+  if (!box) return;
+  box.innerHTML = "";
+  late.forEach(({k,label})=>{
+    const b = document.createElement("button");
+    b.className = `late-btn ${k}`;
+    b.style.borderColor = COLORS[k];
+    b.textContent = label;
+    b.addEventListener("click", ()=> { window.location.href = `checklist.html#sheet-${k}`; });
+    box.appendChild(b);
+  });
+}
 
   const late = [];
   ["s1","s2","s3","s4","s5"].forEach((k,i)=>{ if(isLate(k)) late.push({k, label:`${i+1}S in ritardo`}); });
