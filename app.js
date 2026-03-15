@@ -194,7 +194,7 @@ function renderChart(){
       labels:["1S","2S","3S","4S","5S","Ritardi"],
       datasets:[{
         data:[...vals, delayed],
-        backgroundColor:["#7c3aed","#ef4444","#f59e0b","#10b981","#2563eb","#ef4444"],
+        backgroundColor:["#7c3aed","#ef4444","#f59e0b","#10b981","#2563eb","#475569"],
         borderWidth:0,
         borderRadius: 4
       }]
