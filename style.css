@@ -28,31 +28,18 @@ a { color: inherit; text-decoration: none; }
 .card { background: var(--card); border-radius: 16px; padding: 16px; box-shadow: 0 4px 20px rgba(0,0,0,0.04); margin-bottom: 1rem; }
 
 /* =========================================
-   HOME: HERO SPLIT 50/50 CON ANIMAZIONI 
+   SUPER FIX GRAFICA HOME: LOGO 5S GRANDE E ANIMAZIONE "WOW"
 ========================================= */
 .hero-split {
-  display: grid;
-  grid-template-columns: 1fr 1fr; /* Esattamente metà a testa */
-  gap: 12px;
+  display: grid !important;
+  /* 1.2 parti al testo, 1 parte all'immagine: bilanciamento visivo perfetto */
+  grid-template-columns: 1.2fr 1fr !important; 
+  gap: 30px;
   padding: 20px 16px;
   align-items: center;
 }
 
-/* Colonna Sinistra: Immagine Fluttuante */
-.hero-left {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-}
-.floating-img {
-  width: 100%;
-  max-width: 140px;
-  height: auto;
-  filter: drop-shadow(0 15px 15px rgba(0,0,0,0.15));
-  animation: float 4s ease-in-out infinite; /* L'effetto fluttuante */
-}
-
-/* Colonna Destra: Testi Incolonnati */
+/* Colonna Testi */
 .hero-right {
   display: flex;
   flex-direction: column;
@@ -68,7 +55,7 @@ a { color: inherit; text-decoration: none; }
 
 .stack-item {
   display: flex;
-  flex-direction: column; /* Etichetta sopra, testo sotto per non schiacciare tutto */
+  flex-direction: column;
   align-items: flex-start;
   gap: 2px;
 }
@@ -81,22 +68,51 @@ a { color: inherit; text-decoration: none; }
   font-size: 0.75rem;
   box-shadow: 0 2px 4px rgba(0,0,0,0.1);
 }
-.stack-item .desc {
-  font-size: 0.8rem;
-  color: #475569;
-  line-height: 1.2;
-}
+.stack-item .desc { font-size: 0.8rem; color: #475569; line-height: 1.2; }
 .stack-item .tag.s1 { background: var(--s1); }
 .stack-item .tag.s2 { background: var(--s2); }
 .stack-item .tag.s3 { background: var(--s3); }
 .stack-item .tag.s4 { background: var(--s4); }
 .stack-item .tag.s5 { background: var(--s5); }
 
-/* Animazioni CSS */
-@keyframes float {
-  0% { transform: translateY(0px); }
-  50% { transform: translateY(-8px); }
-  100% { transform: translateY(0px); }
+/* Colonna Immagine */
+.hero-left {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100%;
+  perspective: 1000px; /* Profondità per l'effetto 3D */
+}
+
+.floating-img {
+  width: 100%;
+  max-width: 320px !important; /* Grandezza aumentata per pareggiare i testi */
+  height: auto;
+  object-fit: contain;
+  
+  /* 🪄 ANIMAZIONE CONTINUA: Levitazione Magica */
+  animation: levitateMagic 6s ease-in-out infinite;
+  
+  /* Ombra azzurra profonda che si proietta in basso */
+  filter: drop-shadow(0 20px 25px rgba(10, 87, 213, 0.25));
+  
+  /* Transizione ultra-fluida stile "molla" per il tocco */
+  transition: all 0.6s cubic-bezier(0.34, 1.56, 0.64, 1); 
+  cursor: pointer;
+}
+
+/* 🪄 EFFETTO HOVER/TOUCH: Cosa succede se lo tocchi */
+.floating-img:hover, .floating-img:active {
+  transform: scale(1.12) rotate(5deg); /* Si ingrandisce e ruota leggermente verso destra */
+  filter: drop-shadow(0 35px 45px rgba(10, 87, 213, 0.45)) brightness(1.1); /* Luce e ombra aumentano */
+  animation-play-state: paused; /* Ferma la levitazione per dare l'illusione di averlo bloccato */
+}
+
+/* ⚙️ MOTORI DELLE ANIMAZIONI */
+@keyframes levitateMagic {
+  0% { transform: translateY(0px) rotate(0deg); }
+  50% { transform: translateY(-18px) rotate(2deg); } /* Sale di 18px e ruota impercettibilmente */
+  100% { transform: translateY(0px) rotate(0deg); }
 }
 
 .slide-in {
@@ -107,9 +123,18 @@ a { color: inherit; text-decoration: none; }
 }
 
 @keyframes slideInFade {
-  to {
-    opacity: 1;
-    transform: translateX(0);
+  to { opacity: 1; transform: translateX(0); }
+}
+
+/* Adattamento per Tablet e Smartphone piccoli */
+@media (max-width: 768px) {
+  .hero-split {
+    grid-template-columns: 1fr !important;
+    gap: 25px;
+  }
+  .floating-img {
+    max-width: 220px !important;
+    margin: 10px auto;
   }
 }
 
