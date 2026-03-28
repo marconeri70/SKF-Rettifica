@@ -242,3 +242,35 @@ textarea { resize: vertical; min-height: 80px; }
 .score-btn { flex: 1; padding: 16px 0; border-radius: 12px; border: 2px solid #cbd5e1; background: #f8fafc; font-size: 1.4rem; font-weight: 800; color: #475569; cursor: pointer; transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1); }
 .score-btn:active { transform: scale(0.92); }
 .score-btn.picked { background: var(--skf); border-color: var(--skf); color: #fff; box-shadow: 0 6px 16px rgba(10,87,213,0.35); transform: translateY(-2px); }
+
+/* =========================================
+   ALLARME EMERGENZA RITARDI
+========================================= */
+@keyframes emergencyFlash {
+  0%, 100% { background-color: #ef4444; color: white; box-shadow: 0 0 15px rgba(239, 68, 68, 0.4); transform: scale(1); }
+  50% { background-color: #991b1b; color: white; box-shadow: 0 0 30px rgba(153, 27, 27, 0.8); transform: scale(1.02); }
+}
+
+.emergency-banner {
+  animation: emergencyFlash 1.5s infinite ease-in-out;
+  padding: 16px;
+  border-radius: 14px;
+  margin-bottom: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  font-weight: 900;
+  font-size: 1.15rem;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  cursor: pointer;
+  border: 2px solid #fca5a5;
+  transition: opacity 0.3s;
+}
+
+.emergency-banner:active {
+  transform: scale(0.95);
+  animation: none;
+  background-color: #7f1d1d;
+}
