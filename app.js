@@ -80,14 +80,20 @@ function openPinDialog(){
   cancel.onclick = ()=> dlg.close();
 }
 
-/** Utilità ritardi e aggiornamento UI */
-function isLate(k){
+/** 🚨 NUOVO MOTORE RITARDI (Ciclo 7 Giorni) */
+function getDelayDays(k){
   const d = state.dates[k];
-  if(!d) return false;
+  if(!d) return 999; // Se mai compilata, considerala in ritardo massimo
   const today = new Date(); today.setHours(0,0,0,0);
   const chosen = new Date(d); chosen.setHours(0,0,0,0);
-  return chosen < today;
+  return Math.floor((today - chosen) / (1000 * 60 * 60 * 24));
 }
+
+function isLate(k){
+  // È in ritardo SOLO se sono passati 7 o più giorni dall'ultima compilazione
+  return getDelayDays(k) >= 7; 
+}
+
 function updateStatsAndLate(){
   const arr = Object.values(state.points);
   const avg = arr.length ? Math.round(arr.reduce((a,b)=>a+b,0)/arr.length*20) : 0;
@@ -97,7 +103,6 @@ function updateStatsAndLate(){
   const avgEl = document.getElementById("avgScore");
   if(avgEl) {
       avgEl.textContent = `${avg}%`;
-      // Effetto flash per far notare il ricalcolo immediato
       avgEl.style.color = 'var(--skf)';
       setTimeout(()=> avgEl.style.color = '#0f172a', 300);
   }
@@ -166,7 +171,6 @@ function renderChart(){
   const vals = ["s1","s2","s3","s4","s5"].map(k=> (state.points[k]??0)*20 );
   const delayed = Object.keys(state.dates).filter(k=> isLate(k)).length;
 
-  // 🪄 PLUGIN MAGICO: Disegna le percentuali direttamente SOPRA le colonne
   const topLabelsPlugin = {
     id: 'topLabels',
     afterDatasetsDraw(chart, args, pluginOptions) {
@@ -174,12 +178,12 @@ function renderChart(){
       ctx.save();
       chart.getDatasetMeta(0).data.forEach((bar, index) => {
         const val = data.datasets[0].data[index];
-        const text = index === 5 ? (val > 0 ? val : '') : (val + '%'); // Se ritardi metti il numero, altrimenti %
+        const text = index === 5 ? (val > 0 ? val : '') : (val + '%');
         if (text !== '0%' && text !== '') {
           ctx.font = 'bold 13px system-ui';
           ctx.fillStyle = '#334155';
           ctx.textAlign = 'center';
-          ctx.fillText(text, bar.x, bar.y - 8); // Posiziona il testo 8 pixel sopra la barra
+          ctx.fillText(text, bar.x, bar.y - 8);
         }
       });
       ctx.restore();
@@ -189,39 +193,36 @@ function renderChart(){
   if(chart) chart.destroy();
   chart = new Chart(ctx, {
     type:"bar",
-    plugins: [topLabelsPlugin], // <- Attiviamo il plugin magico!
+    plugins: [topLabelsPlugin],
     data:{
       labels:["1S","2S","3S","4S","5S","Ritardi"],
       datasets:[{
         data:[...vals, delayed],
+        // Colori aggiornati: grigio scuro (#475569) per la colonna Ritardi
         backgroundColor:["#7c3aed","#ef4444","#f59e0b","#10b981","#2563eb","#475569"],
         borderWidth:0,
         borderRadius: 4
       }]
     },
     options:{
-      layout: { padding: { top: 25 } }, // <- Facciamo spazio in alto per farci stare i numerini
+      layout: { padding: { top: 25 } },
       responsive:true,
       maintainAspectRatio: false,
-      
-      // RENDIAMO IL GRAFICO CLICCABILE!
       onClick: (e, elements) => {
         if (elements.length > 0) {
             const idx = elements[0].index;
             if (idx < 5) {
-                // Se clicca su una barra (es. 2S), lo manda giù dritto a quella scheda!
                 const keys = ['s1', 's2', 's3', 's4', 's5'];
                 window.location.href = `checklist.html#sheet-${keys[idx]}`;
             }
         }
       },
       onHover: (e, elements) => {
-        // Fa comparire la "manina" se si passa sopra una colonna
         e.native.target.style.cursor = elements.length > 0 ? 'pointer' : 'default';
       },
       plugins:{
         legend:{display:false},
-        tooltip:{ enabled: false } // Spegniamo il popup nero di default
+        tooltip:{ enabled: false }
       },
       scales:{
         y:{beginAtZero:true,max:100,grid:{color:'#f1f5f9'},ticks:{callback:v=>v+"%", font: {size: 10}}},
@@ -230,9 +231,15 @@ function renderChart(){
     }
   });
 
-  // Bottoni in ritardo sotto il grafico
+  // Bottoni in ritardo sotto il grafico (Mostrano i giorni)
   const late = [];
-  ["s1","s2","s3","s4","s5"].forEach((k,i)=>{ if(isLate(k)) late.push({k, label:`${i+1}S in ritardo`}); });
+  ["s1","s2","s3","s4","s5"].forEach((k,i)=>{ 
+    if(isLate(k)) {
+      const days = getDelayDays(k);
+      const daysText = days === 999 ? "Mai compilata" : `da ${days} gg`;
+      late.push({k, label:`${i+1}S Scaduta ${daysText}`}); 
+    }
+  });
   const box = document.getElementById("lateBtns");
   if (!box) return;
   box.innerHTML = "";
@@ -276,7 +283,7 @@ function setupHome(){
   });
 }
 
-/** CHECKLIST */
+/** CHECKLIST BLINDATA */
 function setupChecklist(){
   refreshTitles();
   document.getElementById("lockBtn")?.addEventListener("click", openPinDialog);
@@ -302,9 +309,8 @@ function setupChecklist(){
     el.className = `s-badge ${k}`;
     el.textContent = `${k.toUpperCase()} ${v*20}%`;
     
-    // QUI LA MODIFICA: Invece di scrollIntoView, cambia l'hash della barra degli indirizzi, innescando l'evidenziatore luminoso CSS!
     el.addEventListener("click", ()=> {
-      window.location.hash = ''; // resetta per permettere il ri-click
+      window.location.hash = ''; 
       setTimeout(()=> { window.location.hash = `sheet-${k}`; }, 10);
     });
     summary.appendChild(el);
@@ -322,11 +328,25 @@ function setupChecklist(){
     {k:"s4", name:"4S — Standardizzare",color:COLORS.s4},
     {k:"s5", name:"5S — Sostenere",     color:COLORS.s5},
   ];
-  const todayStr = ()=> new Date().toISOString().slice(0,10);
 
   defs.forEach(({k,name,color})=>{
     const val = state.points[k] ?? 0;
     const late = isLate(k);
+    const days = getDelayDays(k);
+
+    // Generazione del testo di stato inviolabile
+    let dateDisplay = "Mai compilata";
+    let dateStyle = "background: #f1f5f9; color: #64748b;";
+    
+    if (state.dates[k]) {
+        if (late) {
+            dateDisplay = `⚠️ Scaduta da ${days} giorni (Ultimo: ${new Date(state.dates[k]).toLocaleDateString('it-IT')})`;
+            dateStyle = "background: #fee2e2; color: #ef4444; border: 1px solid #fca5a5;";
+        } else {
+            dateDisplay = `✅ Valida (Aggiornata ${days === 0 ? 'oggi' : days + ' gg fa'})`;
+            dateStyle = "background: #f0fdf4; color: #10b981; border: 1px solid #86efac;";
+        }
+    }
 
     const card = document.createElement("article");
     card.className = "sheet" + (late ? " late":"");
@@ -354,23 +374,14 @@ function setupChecklist(){
         </label>
 
         <div class="field">
-          <span>Data aggiornamento</span>
-          <div class="row">
-            <input type="date" value="${state.dates[k]??todayStr()}" data-date="${k}" style="flex-grow:1;">
+          <span>Stato Audit (Ciclo 7 Giorni)</span>
+          <div style="padding: 10px; border-radius: 8px; font-weight: bold; font-size: 0.95rem; ${dateStyle}">
+            ${dateDisplay}
           </div>
         </div>
       </details>
     `;
     wrap.appendChild(card);
-  });
-
-  wrap.addEventListener("change",(e)=>{
-    const inp = e.target.closest('input[type="date"][data-date]');
-    if(!inp) return;
-    const k = inp.dataset.date;
-    state.dates[k] = inp.value;
-    setJSON(storageKey("state"), state);
-    updateStatsAndLate();
   });
 
   wrap.addEventListener("click",(e)=>{
@@ -381,11 +392,7 @@ function setupChecklist(){
     const k = del.closest(".sheet").id.replace("sheet-","");
     state.points[k]=0; state.notes[k]=""; state.dates[k]=null; state.detail[k]={};
     setJSON(storageKey("state"), state);
-    const s = del.closest(".sheet");
-    s.querySelector(".s-value").textContent="Valore: 0%";
-    s.querySelector('textarea').value="";
-    s.querySelector('input[type="date"]').value=new Date().toISOString().slice(0,10);
-    updateStatsAndLate();
+    window.location.reload(); // Aggiorna graficamente tutto in modo sicuro
   });
 
   wrap.addEventListener("click",(e)=>{
@@ -397,12 +404,13 @@ function setupChecklist(){
   document.getElementById("infoCloseBtn")?.addEventListener("click", (e)=> {
     e.preventDefault(); 
     document.getElementById("infoDialog").close();
+    window.location.reload(); // Per rinfrescare lo stato verde/rosso dopo la compilazione
   });
 
   updateStatsAndLate();
 }
 
-/** Popup a "Schede" grandi e interattive */
+/** Popup a "Schede" interattive con TIMESTAMP AUTOMATICO */
 function openInfo(k){
   const dlg = document.getElementById("infoDialog");
   const title = document.getElementById("infoTitle");
@@ -445,6 +453,10 @@ function openInfo(k){
     
     if (!state.detail[key]) state.detail[key]={};
     state.detail[key][idx] = score;
+    
+    // 🪄 TIMESTAMP AUTOMATICO E INVIOLABILE
+    state.dates[key] = new Date().toISOString().slice(0,10);
+    
     setJSON(storageKey("state"), state);
     
     const text = parsePoints(INFO_TEXT[key]||"")[idx];
