@@ -240,6 +240,29 @@ function renderChart(){
       late.push({k, label:`${i+1}S Scaduta ${daysText}`}); 
     }
   });
+
+  // 🚨 NUOVO SISTEMA: BANNER DI EMERGENZA LAMPEGGIANTE 🚨
+  let alertBox = document.getElementById("emergencyAlertBox");
+  if (!alertBox) {
+    alertBox = document.createElement("div");
+    alertBox.id = "emergencyAlertBox";
+    // Inseriamo il banner esattamente in cima alla pagina, prima di tutto il resto
+    const mainContainer = document.querySelector("main.container");
+    if (mainContainer) mainContainer.insertBefore(alertBox, mainContainer.firstChild);
+  }
+
+  if (late.length > 0) {
+    alertBox.innerHTML = `
+      <div class="emergency-banner" onclick="window.location.href='checklist.html'">
+        ⚠️ ATTENZIONE: ${late.length} AUDIT SCADUTI! COMPILARE SUBITO ⚠️
+      </div>
+    `;
+    alertBox.style.display = "block";
+  } else {
+    alertBox.style.display = "none";
+  }
+  // --------------------------------------------------------
+
   const box = document.getElementById("lateBtns");
   if (!box) return;
   box.innerHTML = "";
